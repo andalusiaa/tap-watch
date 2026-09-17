@@ -10,7 +10,7 @@ Everything needed to fill Tap Watch with pubs and beers for an area. Repeat thes
 | `pubs-<area>.review.csv` | Pubs found in OpenStreetMap, with `include` yes/no | Script writes it once, then Tristan |
 | `beers.json` | The master beer list (draught only, regular beers only) | Tristan |
 | `operators.json` | Pub companies, breweries and `Free house` | Tristan |
-| `raw/`, `out/` | Downloads and map files the scripts make (not in git) | Nobody |
+| `raw/` | Downloads the scripts make (not in git) | Nobody |
 
 ## 1. Find the pubs
 
@@ -28,7 +28,13 @@ It writes `pubs-e17.review.csv`. Open it in Numbers or Excel and check each row:
 
 The script never overwrites your edited file. If you run it again, it writes `pubs-e17.review.new.csv` for you to compare.
 
-To see the pubs on a map, drag `out/pubs-e17.geojson` onto <https://geojson.io>. Green pins are included, grey pins are not.
+To see the pubs on a map, run:
+
+```bash
+npm run seed:map
+```
+
+A map opens in your web browser. Green pins are pubs set to `yes`; grey pins are the other places in the postcode district. Click a pin to see its name. Run it again after editing the CSV to see your changes.
 
 ## 2. Check the beer list
 

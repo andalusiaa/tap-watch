@@ -41,6 +41,7 @@ You need Node.js (installed with `brew install node`). Run `npm install` once fi
 | `npm run build` | Builds the site into `dist/` |
 | `npm run preview` | Builds, then runs it the way Cloudflare will (security headers, 404 page) at <http://localhost:8787> |
 | `npm run seed:pubs` | Fetches pubs from OpenStreetMap for review |
+| `npm run seed:map` | Opens a map of the pubs in the review file |
 | `npm run seed:sample` | Rebuilds the sample data file |
 
 ## Security

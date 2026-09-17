@@ -9,6 +9,7 @@
     "preview": "wrangler dev",
     "check": "tsc --noEmit",
     "seed:pubs": "node seed/fetch-pubs.mjs",
+    "seed:map": "node seed/open-map.mjs",
     "seed:sample": "node seed/build-sample-snapshot.mjs"
   },
   "devDependencies": {

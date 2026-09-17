@@ -7,8 +7,8 @@
 //    but some real pubs are tagged as bars in OpenStreetMap.
 // 2. Asks postcodes.io for the nearest postcode to each pub, to find its postcode district.
 // 3. Writes seed/pubs-<area>.review.csv for Tristan to check (set include to yes/no and
-//    fill in operator_id from seed/operators.json, or "free-house"),
-//    and seed/out/pubs-<area>.geojson to view the pubs on a map.
+//    fill in operator_id from seed/operators.json, or "free-house").
+//    `npm run seed:map` then shows them on a map.
 //
 // The review CSV is never overwritten: if it already exists, a .new.csv is written instead.
 
@@ -161,25 +161,6 @@ const reviewPath = new URL(`pubs-${area.id}.review.csv`, seedDir);
 const outPath = existsSync(reviewPath) ? new URL(`pubs-${area.id}.review.new.csv`, seedDir) : reviewPath;
 await writeFile(outPath, toCsv(columns, rows));
 
-// GeoJSON for checking the boundary on a map (e.g. geojson.io). Green = included.
-const geojson = {
-  type: 'FeatureCollection',
-  features: rows.map((r) => ({
-    type: 'Feature',
-    geometry: { type: 'Point', coordinates: [Number(r.lng), Number(r.lat)] },
-    properties: {
-      name: r.name || '(no name)',
-      district: r.district,
-      include: r.include,
-      notes: r.notes,
-      'marker-color': r.include === 'yes' ? '#1f7a4d' : '#8c8c8c',
-      'marker-size': 'small',
-    },
-  })),
-};
-await mkdir(new URL('out/', seedDir), { recursive: true });
-await writeFile(new URL(`out/pubs-${area.id}.geojson`, seedDir), JSON.stringify(geojson));
-
 // --- Summary -----------------------------------------------------------------
 
 const included = rows.filter((r) => r.include === 'yes');
@@ -195,3 +176,4 @@ if (included.length) {
   const bbox = [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)].map((n) => Number(n.toFixed(4)));
   console.log('Extent of included pubs [minLng, minLat, maxLng, maxLat]:', JSON.stringify(bbox));
 }
+console.log('To see them on a map: npm run seed:map');

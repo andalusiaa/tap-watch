@@ -19,9 +19,8 @@ node_modules/
 # Build output
 dist/
 
-# Seed script working files (raw OSM downloads, generated map files)
+# Seed script downloads (raw OpenStreetMap data)
 seed/raw/
-seed/out/
 *.osm.pbf
 
 # Logs
