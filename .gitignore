@@ -1,0 +1,40 @@
+# Keep secrets, local state and generated files out of git.
+
+# Secrets and local environment values (never commit these)
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+*.pem
+*.key
+
+# Cloudflare Wrangler local state (local database copies, caches)
+.wrangler/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.astro/
+
+# Seed script working files (raw OSM downloads, large map source files)
+seed/raw/
+*.osm.pbf
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS and editor clutter
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Personal Claude Code settings (launch.json points at a machine-specific temp folder)
+.claude/settings.local.json
+.claude/launch.json

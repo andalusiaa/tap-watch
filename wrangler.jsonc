@@ -1,0 +1,12 @@
+// Cloudflare configuration for Tap Watch.
+// Phase 0: a static site only. Everything in ./public is served as-is.
+// The API (/api/*), database (D1) and photo storage (R2) are added in later phases.
+{
+  // Must match the Worker name you pick in the Cloudflare dashboard.
+  "name": "tap-watch",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page"
+  }
+}
