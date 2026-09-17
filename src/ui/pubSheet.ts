@@ -20,13 +20,8 @@ interface Options {
   onClose: () => void;
 }
 
-const isApple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
-
+/** Google Maps on every device. On phones this opens the Google Maps app if it's installed. */
 function mapsUrl(pub: Pub): string {
-  if (isApple) {
-    const q = new URLSearchParams({ q: pub.name, ll: `${pub.lat},${pub.lng}` });
-    return `https://maps.apple.com/?${q}`;
-  }
   const q = new URLSearchParams({ api: '1', query: [pub.name, pub.address, pub.postcode].filter(Boolean).join(', ') });
   return `https://www.google.com/maps/search/?${q}`;
 }
