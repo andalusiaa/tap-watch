@@ -14,6 +14,8 @@ interface Options {
   catalogue: Catalogue;
   origin: () => LatLng;
   hasVoted: (listingId: number) => boolean;
+  /** A message to show by a beer's vote buttons, e.g. why a vote failed. */
+  voteNote: (listingId: number) => string | undefined;
   onVote: (listingId: number, direction: VoteDirection) => void;
   onClose: () => void;
 }
@@ -50,9 +52,10 @@ export function setupPubSheet(o: Options) {
     if (e.target === o.dialog) o.dialog.close();
   });
 
-  function voteControls(listing: Listing, beer: Beer): HTMLElement {
+  function voteControls(listing: Listing, beer: Beer, note: string | undefined): HTMLElement | null {
     if (o.hasVoted(listing.id)) {
-      return h('p', { class: 'vote vote--done', tabindex: '-1', 'data-vote-status': String(listing.id) }, 'Thanks');
+      // With a note (e.g. "already voted today") the note says it all.
+      return note ? null : h('p', { class: 'vote vote--done', tabindex: '-1', 'data-vote-status': '' }, 'Thanks');
     }
     const vote = (direction: VoteDirection) => () => o.onVote(listing.id, direction);
     return h(
@@ -68,6 +71,7 @@ export function setupPubSheet(o: Options) {
     const beer = o.catalogue.beer(listing.beer_id);
     if (!beer) return null;
     const gone = listing.status === 'reported_gone';
+    const note = o.voteNote(listing.id);
     return h(
       'li',
       { class: gone ? 'tap tap--gone' : 'tap', 'data-listing': String(listing.id) },
@@ -80,7 +84,8 @@ export function setupPubSheet(o: Options) {
         beer.af ? [' ', alcoholFreeLabel(beer)] : null,
       ),
       h('p', { class: 'tap-status' }, freshnessBadge(listing, now)),
-      voteControls(listing, beer),
+      voteControls(listing, beer, note),
+      note ? h('p', { class: 'vote-note', tabindex: '-1', 'data-vote-status': '' }, note) : null,
     );
   }
 
@@ -173,14 +178,15 @@ export function setupPubSheet(o: Options) {
       if (pub && el) el.textContent = distanceText(pub);
     },
 
-    /** Re-draws one beer after a vote and moves focus to its "Thanks". */
-    refreshListing(listingId: number, now: number) {
+    /** Re-draws one beer after a vote and moves focus to its "Thanks" or message. */
+    refreshListing(listingId: number, now: number, { focus = true } = {}) {
       const listing = o.catalogue.listing(listingId);
       const old = o.dialog.querySelector(`[data-listing="${listingId}"]`);
       const fresh = listing && tapRow(listing, now);
       if (!old || !fresh) return;
+      const hadFocus = old.contains(document.activeElement);
       old.replaceWith(fresh);
-      fresh.querySelector<HTMLElement>('[data-vote-status]')?.focus();
+      if (focus || hadFocus) fresh.querySelector<HTMLElement>('[data-vote-status]')?.focus();
     },
   };
 }

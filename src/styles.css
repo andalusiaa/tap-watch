@@ -729,7 +729,8 @@ input {
   grid-template-columns: 1fr auto;
   grid-template-areas:
     "name name"
-    "status vote";
+    "status vote"
+    "note note";
   align-items: center;
   column-gap: 0.75rem;
   row-gap: 0.15rem;
@@ -798,6 +799,23 @@ input {
 
 .vote-button:active {
   transform: scale(0.94);
+}
+
+.trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.vote-note {
+  grid-area: note;
+  margin-top: 0.2rem;
+  padding-left: 0.6rem;
+  border-left: 4px solid var(--ink);
+  font-size: var(--step--1);
+  font-weight: 600;
 }
 
 .vote--done {

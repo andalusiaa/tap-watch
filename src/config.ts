@@ -4,7 +4,6 @@ import type { Category } from './types';
 
 export const SITE_NAME = 'Tap Watch';
 export const AREA_ID = 'e17';
-export const SNAPSHOT_URL = `/data/snapshot-${AREA_ID}.json`;
 
 /** Freshness thresholds in days (SPEC section 8). */
 export const FRESH_MAX_DAYS = 14;

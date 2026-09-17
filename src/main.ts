@@ -1,7 +1,7 @@
+import { loadSnapshot, sendVote } from './api';
 import { createCatalogue, type Catalogue, type DispenseFilter } from './catalogue';
-import { SNAPSHOT_URL } from './config';
 import { applyVote, type VoteDirection } from './rules';
-import type { Snapshot } from './types';
+import { voteMemory } from './voteMemory';
 import { setupAutocomplete } from './ui/autocomplete';
 import { byId, h } from './ui/dom';
 import { setupLocationBar } from './ui/locationBar';
@@ -51,17 +51,13 @@ const els = {
   results: byId('results'),
   status: byId('app-status'),
   sheet: byId<HTMLDialogElement>('pub-sheet'),
+  honeypot: byId<HTMLInputElement>('website'),
 };
-
-async function loadSnapshot(): Promise<Snapshot> {
-  const res = await fetch(SNAPSHOT_URL, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`Snapshot request failed: ${res.status}`);
-  return res.json();
-}
 
 function start(catalogue: Catalogue) {
   let state = stateFromUrl();
-  const votedThisVisit = new Set<number>();
+  /** Messages shown next to a beer's vote buttons, by listing id. */
+  const voteNotes = new Map<number, string>();
 
   els.banner.hidden = !catalogue.sample;
 
@@ -92,8 +88,9 @@ function start(catalogue: Catalogue) {
     dialog: els.sheet,
     catalogue,
     origin: () => locationBar.origin(),
-    hasVoted: (id) => votedThisVisit.has(id),
-    onVote: (listingId, direction) => vote(listingId, direction),
+    hasVoted: (id) => voteMemory.hasVoted(id),
+    voteNote: (id) => voteNotes.get(id),
+    onVote: (listingId, direction) => void vote(listingId, direction),
     onClose: () => {
       if (!state.pubId) return;
       // Opening the sheet added a history entry; going back removes it.
@@ -111,14 +108,32 @@ function start(catalogue: Catalogue) {
     },
   });
 
-  function vote(listingId: number, direction: VoteDirection) {
+  async function vote(listingId: number, direction: VoteDirection) {
     const listing = catalogue.listing(listingId);
-    if (!listing) return;
-    // Phase 1: votes only change this page. Phase 2 sends them to the server.
+    if (!listing || voteMemory.hasVoted(listingId)) return;
+
+    // Show the result straight away; undo it if the server says no.
+    const before = { ...listing };
     const { status, ...times } = applyVote(listing, direction, { now: new Date().toISOString(), fromDifferentDevice: false });
     if (status !== 'removed') Object.assign(listing, { status, ...times });
-    votedThisVisit.add(listingId);
+    voteMemory.remember(listingId);
+    voteNotes.delete(listingId);
     sheet.refreshListing(listingId, Date.now());
+    renderList();
+
+    const result = await sendVote(listingId, direction, els.honeypot.value);
+    if (result.ok) {
+      if (result.listing) {
+        catalogue.applyServerListing(result.listing);
+        voteMemory.remember(listingId, result.listing);
+      }
+    } else {
+      Object.assign(listing, before);
+      // Already voted today (perhaps on another visit): keep the buttons off.
+      if (result.error !== 'already_voted') voteMemory.forget(listingId);
+      voteNotes.set(listingId, result.message);
+    }
+    sheet.refreshListing(listingId, Date.now(), { focus: false });
     renderList();
   }
 
@@ -186,7 +201,12 @@ function start(catalogue: Catalogue) {
 }
 
 loadSnapshot()
-  .then((snapshot) => start(createCatalogue(snapshot)))
+  .then((snapshot) => {
+    const catalogue = createCatalogue(snapshot);
+    // Votes from this device that the shared snapshot may not include yet.
+    for (const listing of voteMemory.newerThan(snapshot.generated_at)) catalogue.applyServerListing(listing);
+    start(catalogue);
+  })
   .catch((error: unknown) => {
     console.error(error);
     byId('results').replaceChildren(

@@ -16,11 +16,13 @@
 # Dependencies
 node_modules/
 
-# Build output
+# Build output and generated Worker types
 dist/
+worker/worker-configuration.d.ts
 
-# Seed script downloads (raw OpenStreetMap data)
+# Seed script output (raw OpenStreetMap data, generated SQL)
 seed/raw/
+seed/out/
 *.osm.pbf
 
 # Logs

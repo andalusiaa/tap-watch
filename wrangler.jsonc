@@ -1,17 +1,54 @@
 // Cloudflare configuration for Tap Watch.
-// Phase 1: a static site. Vite builds it into ./dist, which Cloudflare serves.
-// The API (/api/*), database (D1) and photo storage (R2) are added in later phases.
+// Static pages are built by Vite into ./dist. Requests to /api/* go to the Worker in
+// worker/index.ts, which talks to the D1 database.
 {
   // Must match the Worker name in the Cloudflare dashboard.
   "name": "tap-watch",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-09-01",
+
   // Wrangler runs this before every deploy (including Cloudflare's automatic
   // deploys from GitHub) and before `wrangler dev`.
   "build": {
     "command": "npm run build"
   },
+
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    // Send API calls straight to the Worker, never to the static 404 page.
+    "run_worker_first": ["/api/*"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tap-watch",
+      "database_id": "749d7d92-2b1a-4266-a3b7-29856f89d16f"
+    }
+  ],
+
+  // First line of defence against floods, before anything touches the database.
+  // Counted per Cloudflare location, so it is approximate; exact limits live in D1.
+  "ratelimits": [
+    {
+      "name": "WRITE_LIMITER",
+      "namespace_id": "1701",
+      "simple": { "limit": 20, "period": 60 }
+    }
+  ],
+
+  // Daily housekeeping (SPEC section 7) at 03:17 UTC.
+  "triggers": {
+    "crons": ["17 3 * * *"]
+  },
+
+  // Keep our own error logs, but don't log every request: request logs would
+  // include visitors' IP addresses, which the privacy rules forbid.
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "invocation_logs": false
+    }
   }
 }

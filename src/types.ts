@@ -54,6 +54,9 @@ export interface Listing {
   reported_gone_at: string | null;
 }
 
+/** A listing as the API returns it after a vote, which may have just been removed. */
+export type ServerListing = Omit<Listing, 'status'> & { status: ListingStatus | 'removed' };
+
 export interface Snapshot {
   version: 1;
   generated_at: string;

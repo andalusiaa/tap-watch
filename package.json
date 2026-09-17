@@ -5,12 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "wrangler dev --port 8787 --test-scheduled",
     "build": "vite build",
     "preview": "wrangler dev",
-    "check": "tsc --noEmit",
+    "check": "wrangler types worker/worker-configuration.d.ts > /dev/null && tsc --noEmit && tsc --noEmit -p worker",
+    "check:api": "node scripts/check-api.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply tap-watch --local",
+    "db:migrate:remote": "wrangler d1 migrations apply tap-watch --remote",
+    "db:seed:local": "node seed/build-seed-sql.mjs e17 --sample-listings && wrangler d1 execute tap-watch --local --file seed/out/seed-e17.sql",
+    "db:seed:remote": "node seed/build-seed-sql.mjs e17 --sample-listings && wrangler d1 execute tap-watch --remote --file seed/out/seed-e17.sql",
     "seed:pubs": "node seed/fetch-pubs.mjs",
-    "seed:map": "node seed/open-map.mjs",
-    "seed:sample": "node seed/build-sample-snapshot.mjs"
+    "seed:map": "node seed/open-map.mjs"
   },
   "devDependencies": {
     "typescript": "7.0.2",

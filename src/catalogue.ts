@@ -3,7 +3,7 @@
 import { freshnessRank } from './freshness';
 import { distanceKm, type LatLng } from './geo';
 import { buildBeerIndex } from './search';
-import type { Beer, Dispense, Listing, Operator, Pub, Snapshot } from './types';
+import type { Beer, Dispense, Listing, Operator, Pub, ServerListing, Snapshot } from './types';
 
 export type DispenseFilter = Dispense | 'any';
 
@@ -68,6 +68,24 @@ export function createCatalogue(snapshot: Snapshot) {
     listing: (id: number): Listing | undefined => listingById.get(id),
     listingsAt: (pubId: string): Listing[] => listingsByPub.get(pubId) ?? [],
     pubCount,
+
+    /** Applies a listing returned by the server (after a vote). */
+    applyServerListing(update: ServerListing) {
+      const existing = listingById.get(update.id);
+      if (!existing) return;
+      if (update.status === 'removed') {
+        listingById.delete(update.id);
+        const without = (list: Listing[] | undefined) => {
+          const index = list?.indexOf(existing) ?? -1;
+          if (index >= 0) list?.splice(index, 1);
+        };
+        without(listingsByPub.get(existing.pub_id));
+        without(listingsByBeer.get(existing.beer_id));
+        without(snapshot.listings);
+        return;
+      }
+      Object.assign(existing, { ...update, status: update.status });
+    },
 
     searchBeers(query: string, limit: number): Beer[] {
       return beerIndex.search(query, { limit, popularity: pubCount });

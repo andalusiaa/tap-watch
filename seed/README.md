@@ -10,7 +10,7 @@ Everything needed to fill Tap Watch with pubs and beers for an area. Repeat thes
 | `pubs-<area>.review.csv` | Pubs found in OpenStreetMap, with `include` yes/no | Script writes it once, then Tristan |
 | `beers.json` | The master beer list (draught only, regular beers only) | Tristan |
 | `operators.json` | Pub companies, breweries and `Free house` | Tristan |
-| `raw/` | Downloads the scripts make (not in git) | Nobody |
+| `raw/`, `out/` | Downloads and generated SQL (not in git) | Nobody |
 
 ## 1. Find the pubs
 
@@ -50,10 +50,13 @@ Rules (SPEC section 4):
 
 The scripts check the list for mistakes (duplicate ids, clashing aliases, ABVs that don't match the alcohol-free flag) and stop with a message if they find one.
 
-## 3. Build the prototype data
+## 3. Load the database
 
 ```bash
-npm run seed:sample
+npm run db:seed:local    # your computer's copy
+npm run db:seed:remote   # the live database
 ```
 
-This writes `public/data/snapshot-e17.json` from the included pubs and the beer list. **The tap lists it makes are invented**, so every freshness colour can be seen. The site shows a "prototype" banner while this sample file is in use. Phase 2 replaces it with real data from the database.
+This turns the included pubs, the beer list and the operators into SQL (`out/seed-e17.sql`) and runs it. It is safe to run again: rows are updated, and pubs or beers you have removed are hidden rather than deleted.
+
+It also adds **invented tap lists**, so every freshness colour can be seen, but only while the area is marked as sample data. The site shows a "prototype" banner while that is the case. Once real tap lists are in (Phase 5), the area is switched off sample mode and this step leaves the listings alone.
