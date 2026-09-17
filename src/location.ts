@@ -39,13 +39,58 @@ export async function locationPermission(): Promise<LocationPermission> {
   }
 }
 
-/** Asks the browser where the device is. The browser shows its own permission prompt. */
-export function devicePosition(): Promise<LatLng> {
+export interface DeviceFix {
+  point: LatLng;
+  /** How far off the position may be, in metres, as reported by the device. */
+  accuracy: number;
+}
+
+/** Stop listening once the device is at least this sure of its position. */
+const GOOD_ENOUGH_M = 25;
+/** Never listen for longer than this. */
+const MAX_WAIT_MS = 10_000;
+
+export const PERMISSION_DENIED = 1;
+
+/**
+ * Asks the browser where the device is (it shows its own permission prompt).
+ *
+ * The first answer is often a rough guess from Wi-Fi or phone masts, so this keeps
+ * listening for a few seconds and resolves with the most accurate reading.
+ * onBetterFix is called each time a more accurate reading arrives, so the page can
+ * show distances straight away and refine them.
+ */
+export function devicePosition(onBetterFix?: (fix: DeviceFix) => void): Promise<DeviceFix> {
   return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve([p.coords.latitude, p.coords.longitude]),
-      reject,
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 30_000 },
+    let best: DeviceFix | null = null;
+    let lastError: { code: number } = { code: 3 }; // TIMEOUT unless told otherwise
+    let watchId = -1;
+    let done = false;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      navigator.geolocation.clearWatch(watchId);
+      if (best) resolve(best);
+      else reject(lastError);
+    };
+    const timer = setTimeout(finish, MAX_WAIT_MS);
+
+    watchId = navigator.geolocation.watchPosition(
+      (p) => {
+        const fix: DeviceFix = { point: [p.coords.latitude, p.coords.longitude], accuracy: p.coords.accuracy };
+        if (!best || fix.accuracy < best.accuracy) {
+          best = fix;
+          if (!done) onBetterFix?.(fix);
+        }
+        if (fix.accuracy <= GOOD_ENOUGH_M) finish();
+      },
+      (error) => {
+        lastError = error;
+        if (error.code === PERMISSION_DENIED) finish();
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_WAIT_MS },
     );
   });
 }

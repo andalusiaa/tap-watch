@@ -12,5 +12,6 @@ export function distanceKm([lat1, lng1]: LatLng, [lat2, lng2]: LatLng): number {
 }
 
 export function formatDistance(km: number): string {
+  if (km < 0.1) return 'Under 100 m';
   return km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`;
 }

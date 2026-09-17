@@ -410,6 +410,12 @@ input {
   font-weight: 600;
 }
 
+.location-tip {
+  margin-top: 0.3rem;
+  padding-left: 0.6rem;
+  border-left: 4px solid var(--ageing);
+}
+
 .location-privacy {
   color: var(--ink-muted);
 }

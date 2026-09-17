@@ -46,7 +46,10 @@
     </div>
 
     <div class="location">
-      <p class="location-status" id="location-status" role="status">Distances are from central Walthamstow.</p>
+      <div role="status">
+        <p class="location-status" id="location-status">Distances are in a straight line from central Walthamstow.</p>
+        <p class="location-tip" id="location-tip" hidden></p>
+      </div>
       <div class="location-actions">
         <button type="button" class="link-button" id="use-location">Use my location</button>
         <button type="button" class="link-button" id="show-postcode" aria-expanded="false" aria-controls="postcode-form">Enter a postcode</button>
