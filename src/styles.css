@@ -27,6 +27,7 @@
   --on-ageing: #000000;
   --stale: #8c8c8c;
   --on-stale: #000000;
+  --gone: #c4c4c4;
   --backdrop: rgb(0 0 0 / 0.5);
 
   /* The street-sign plate stays white with a black border in both modes. */
@@ -55,6 +56,7 @@
     --ink-muted: #b3b3b3;
     --rule: #3a3a3a;
     --wash: #161616;
+    --gone: #5a5a5a;
     --backdrop: rgb(0 0 0 / 0.7);
   }
 }
@@ -354,6 +356,99 @@ input {
   outline: 3px solid var(--ink);
   outline-offset: -6px;
   box-shadow: inset 0 0 0 4px var(--plate);
+}
+
+/* --- Map --------------------------------------------------------------------------- */
+
+.map-view {
+  margin-top: 0.75rem;
+}
+
+.map {
+  height: min(68vh, 34rem);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--wash);
+}
+
+.map-status:not(:empty) {
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.map-hint {
+  margin-top: 0.5rem;
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--step--1);
+}
+
+.map-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.key {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  border: 2px solid var(--plate);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+
+.key--fresh { background: var(--fresh); }
+.key--ageing { background: var(--ageing); }
+.key--stale { background: var(--stale); }
+.key--likely { background: var(--plate); border-color: var(--ink); box-shadow: none; }
+.key--gone { background: var(--gone); }
+
+/* MapLibre's own controls, in the site's colours. */
+.maplibregl-ctrl-group {
+  background: var(--plate) !important;
+  border: 2px solid var(--ink);
+  box-shadow: none !important;
+}
+
+.maplibregl-ctrl-group button {
+  width: var(--tap) !important;
+  height: var(--tap) !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--rule) !important;
+}
+
+.map-centre-button {
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.maplibregl-ctrl-attrib {
+  font-size: 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .maplibregl-ctrl-group .maplibregl-ctrl-icon,
+  .maplibregl-ctrl-attrib-button {
+    filter: invert(1);
+  }
+
+  .maplibregl-ctrl-attrib.maplibregl-compact-show,
+  .maplibregl-ctrl-attrib-inner {
+    color: #000;
+  }
 }
 
 /* --- Location ----------------------------------------------------------------------- */

@@ -11,7 +11,7 @@ Live at <https://tap-watch.gage-tristan.workers.dev>.
 
 ## Status
 
-Phase 2 (database and votes). Pubs, beers and tap lists live in a Cloudflare D1 database, and "Still on?" votes are saved, with rate limits and spam checks. Distances come from your location or a postcode. **The tap lists are still made up** and the site says so.
+Phase 3 (map). Pubs, beers and tap lists live in a Cloudflare D1 database, "Still on?" votes are saved, and pubs can be shown as a list or on a map. Distances come from your location or a postcode. **The tap lists are still made up** and the site says so.
 
 ## How it's built
 
@@ -20,7 +20,8 @@ Phase 2 (database and votes). Pubs, beers and tap lists live in a Cloudflare D1 
 - **API:** a Cloudflare Worker (`worker/`) answers `/api/snapshot` and `/api/vote`.
 - **Database:** Cloudflare D1, structure in `migrations/`, data loaded from [`seed/`](seed/README.md).
 - **Clean-up:** a daily scheduled job clears device hashes after 30 days and deletes old rate-limit counters.
-- Coming in later phases: a map, and a private R2 bucket for photos waiting to be checked.
+- **Map:** MapLibre (loaded only when someone opens the map) drawing an OpenStreetMap basemap from Protomaps. The map tiles are ordinary files in `public/map/`, so no map company sees visitors.
+- Coming in later phases: photo reports, suggestions and the admin page.
 
 ## Folders
 
@@ -28,7 +29,8 @@ Phase 2 (database and votes). Pubs, beers and tap lists live in a Cloudflare D1 
 |---|---|
 | `index.html`, `404.html` | The pages |
 | `src/` | TypeScript and CSS for the site |
-| `src/ui/` | The search box, results list, pub sheet and location bar |
+| `src/ui/` | The search box, results list, pub sheet, location bar and map |
+| `public/map/` | Map tiles (`tiles/`), label fonts (`fonts/`) and `e17.json`, made by `npm run map:build` |
 | `worker/` | The API: snapshot, votes, spam checks, rate limits, daily clean-up |
 | `migrations/` | Database structure, applied in order |
 | `public/` | Files served as they are: fonts, icon, security headers (`_headers`) |
@@ -63,6 +65,7 @@ Then, in two terminal tabs:
 | `npm run db:seed:local` / `:remote` | Loads pubs, beers and sample tap lists locally / into the live database |
 | `npm run seed:pubs` | Fetches pubs from OpenStreetMap for review |
 | `npm run seed:map` | Opens a map of the pubs in the review file |
+| `npm run map:build` | Rebuilds the map tiles from the latest OpenStreetMap data (needs the pmtiles tool, see `seed/build-basemap.mjs`) |
 
 ## Deploying
 
@@ -76,7 +79,7 @@ What the API stores about visitors: a 32-character device hash per vote (an HMAC
 
 ## Credits
 
-Pub names and locations © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database Licence. Postcode lookups by [postcodes.io](https://postcodes.io) (only when you type a postcode; your device location never leaves your browser). Headings use Bricolage Grotesque under the SIL Open Font License (see `public/fonts/`).
+Pub names and locations © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database Licence. Map data from [Protomaps](https://protomaps.com), built from OpenStreetMap. Map labels use Noto Sans (SIL Open Font License). Postcode lookups by [postcodes.io](https://postcodes.io) (only when you type a postcode; your device location never leaves your browser). Headings use Bricolage Grotesque under the SIL Open Font License (see `public/fonts/`).
 
 ## Licence
 

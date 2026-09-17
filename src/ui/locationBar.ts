@@ -174,6 +174,14 @@ export function setupLocationBar(o: Options) {
   return {
     origin: () => origin,
 
+    /** Where distances are measured from, for drawing on the map. */
+    current(): { point: LatLng; kind: Source['kind']; accuracy?: number; settled: boolean } {
+      if (source.kind === 'device') {
+        return { point: origin, kind: 'device', accuracy: source.accuracy, settled: !source.refining };
+      }
+      return { point: origin, kind: source.kind, settled: true };
+    },
+
     /**
      * Called when the user searches. Measures from where they are right now, asking the
      * browser for permission the first time. Skipped if they chose a postcode or said no.

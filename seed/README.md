@@ -50,7 +50,15 @@ Rules (SPEC section 4):
 
 The scripts check the list for mistakes (duplicate ids, clashing aliases, ABVs that don't match the alcohol-free flag) and stop with a message if they find one.
 
-## 3. Load the database
+## 3. Build the map
+
+```bash
+npm run map:build
+```
+
+This cuts the area (the `map` box in `areas.json`) out of the latest Protomaps build of OpenStreetMap and saves it as small tile files in `public/map/tiles/`. Run it again every few months to pick up map changes. It needs the free pmtiles tool; the instructions are at the top of `build-basemap.mjs`.
+
+## 4. Load the database
 
 ```bash
 npm run db:seed:local    # your computer's copy

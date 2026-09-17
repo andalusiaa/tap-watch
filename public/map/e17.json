@@ -1,0 +1,15 @@
+{
+  "tiles": [
+    "/map/tiles/e17-20260917/{z}/{x}/{y}.pbf"
+  ],
+  "bounds": [
+    -0.075,
+    51.56,
+    0.03,
+    51.62
+  ],
+  "minzoom": 10,
+  "maxzoom": 15,
+  "build": "20260917",
+  "attribution": "<a href=\"https://protomaps.com\">Protomaps</a> © <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap contributors</a>"
+}

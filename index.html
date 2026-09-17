@@ -37,6 +37,11 @@
     </form>
 
     <div class="filters">
+      <fieldset class="segmented" id="view-toggle">
+        <legend class="visually-hidden">Show pubs as</legend>
+        <label><input type="radio" name="view" value="list" checked><span>List</span></label>
+        <label><input type="radio" name="view" value="map"><span>Map</span></label>
+      </fieldset>
       <fieldset class="segmented" id="dispense">
         <legend class="visually-hidden">Dispense</legend>
         <label><input type="radio" name="dispense" value="any" checked><span>Cask or keg</span></label>
@@ -73,6 +78,19 @@
       </div>
       <p class="summary" id="results-summary" aria-live="polite"></p>
       <p class="status" id="app-status" role="status"></p>
+      <div class="map-view" id="map-view" hidden>
+        <div class="map" id="map" role="region"
+          aria-label="Map of the pubs listed. Switch to the list for the same information as text."></div>
+        <p class="map-status" id="map-status" role="status"></p>
+        <ul class="map-legend" id="map-legend" hidden>
+          <li><span class="key key--fresh" aria-hidden="true"></span>Checked in the last 2 weeks</li>
+          <li><span class="key key--ageing" aria-hidden="true"></span>Checked 2 weeks to 2 months ago</li>
+          <li><span class="key key--stale" aria-hidden="true"></span>Checked over 2 months ago</li>
+          <li><span class="key key--likely" aria-hidden="true"></span>Likely, not yet checked</li>
+          <li><span class="key key--gone" aria-hidden="true"></span>Reported gone</li>
+        </ul>
+        <p class="map-hint" id="map-hint">Tap a pin to see the pub. Choose a beer to see how recently each pub was checked.</p>
+      </div>
       <ol class="results" id="results">
         <li class="empty"><p>Loading pubs…</p></li>
       </ol>

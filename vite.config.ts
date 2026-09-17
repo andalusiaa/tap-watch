@@ -3,6 +3,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   build: {
     target: 'es2022',
+    // The map library is large, but it only loads when someone opens the map.
+    chunkSizeWarningLimit: 1100,
     rolldownOptions: {
       input: {
         main: 'index.html',

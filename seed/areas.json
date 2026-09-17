@@ -5,8 +5,28 @@
     "postcode_district": "E17",
     "borough": "Waltham Forest",
     "centre_lat": 51.5855,
-    "centre_lng": -0.0210,
-    "search_bbox": [-0.065, 51.560, 0.025, 51.620],
-    "bbox": [-0.065, 51.560, 0.025, 51.620]
+    "centre_lng": -0.021,
+    "search_bbox": [
+      -0.065,
+      51.56,
+      0.025,
+      51.62
+    ],
+    "bbox": [
+      -0.065,
+      51.56,
+      0.025,
+      51.62
+    ],
+    "map": {
+      "bbox": [
+        -0.075,
+        51.56,
+        0.03,
+        51.62
+      ],
+      "minzoom": 10,
+      "maxzoom": 15
+    }
   }
 ]

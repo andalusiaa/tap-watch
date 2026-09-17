@@ -1,7 +1,9 @@
 import { loadSnapshot, sendVote } from './api';
 import { createCatalogue, type Catalogue, type DispenseFilter } from './catalogue';
 import { applyVote, type VoteDirection } from './rules';
+import { mapPoints } from './mapPoints';
 import { voteMemory } from './voteMemory';
+import type { PubMap } from './ui/map';
 import { setupAutocomplete } from './ui/autocomplete';
 import { byId, h } from './ui/dom';
 import { setupLocationBar } from './ui/locationBar';
@@ -14,6 +16,7 @@ interface State {
   beerId: string | null;
   noMatch: string | null;
   dispense: DispenseFilter;
+  view: 'list' | 'map';
   pubId: string | null;
 }
 
@@ -24,6 +27,7 @@ function stateFromUrl(): State {
     beerId: p.get('beer'),
     noMatch: null,
     dispense: dispense === 'cask' || dispense === 'keg' ? dispense : 'any',
+    view: p.get('view') === 'map' ? 'map' : 'list',
     pubId: p.get('pub'),
   };
 }
@@ -32,6 +36,7 @@ function urlFor(s: State): string {
   const p = new URLSearchParams();
   if (s.beerId) p.set('beer', s.beerId);
   if (s.dispense !== 'any') p.set('dispense', s.dispense);
+  if (s.view === 'map') p.set('view', 'map');
   if (s.pubId) p.set('pub', s.pubId);
   const query = p.toString();
   return query ? `?${query}` : location.pathname;
@@ -45,6 +50,12 @@ const els = {
   input: byId<HTMLInputElement>('beer-search'),
   listbox: byId<HTMLUListElement>('beer-options'),
   dispense: byId<HTMLFieldSetElement>('dispense'),
+  viewToggle: byId<HTMLFieldSetElement>('view-toggle'),
+  mapView: byId('map-view'),
+  map: byId('map'),
+  mapStatus: byId('map-status'),
+  mapLegend: byId('map-legend'),
+  mapHint: byId('map-hint'),
   heading: byId('results-heading'),
   clear: byId<HTMLButtonElement>('results-clear'),
   summary: byId('results-summary'),
@@ -105,8 +116,67 @@ function start(catalogue: Catalogue) {
     onChange: () => {
       renderList();
       sheet.refreshDistance();
+      updateMapYou();
     },
   });
+
+  // --- Map (loaded on first use) ---------------------------------------------------
+
+  let pubMap: PubMap | null = null;
+  let mapLoading = false;
+  let lastFitKey = '';
+
+  function updateMapYou() {
+    if (!pubMap) return;
+    const where = locationBar.current();
+    pubMap.showYou(where.kind === 'area' ? null : { point: where.point, accuracy: where.accuracy });
+    if (where.settled && where.kind !== 'area') lastFitKey = ''; // refit to include the new position
+    updateMapPubs();
+  }
+
+  function updateMapPubs() {
+    if (!pubMap) return;
+    const mode = currentMode();
+    const fitKey = `${mode.kind === 'beer' ? mode.beer.id : mode.kind}|${state.dispense}`;
+    const points = mapPoints(mode, catalogue, locationBar.origin(), state.dispense, Date.now());
+    pubMap.showPubs(points, { fit: fitKey !== lastFitKey });
+    lastFitKey = fitKey;
+    els.mapLegend.hidden = mode.kind !== 'beer';
+    els.mapHint.textContent =
+      mode.kind === 'beer'
+        ? points.length ? 'Tap a pin to see the pub.' : ''
+        : 'Tap a pin to see the pub. Choose a beer to see how recently each pub was checked.';
+  }
+
+  function showMap() {
+    if (pubMap) {
+      pubMap.resize();
+      updateMapPubs();
+      return;
+    }
+    if (mapLoading) return;
+    mapLoading = true;
+    els.mapStatus.textContent = 'Loading the map…';
+    import('./ui/map')
+      .then(({ createPubMap }) =>
+        createPubMap(els.map, {
+          areaId: catalogue.area.id,
+          onPubClick: (pubId) => setState({ pubId }, 'push'),
+        }),
+      )
+      .then((created) => {
+        pubMap = created;
+        els.mapStatus.textContent = '';
+        updateMapYou();
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        els.mapStatus.textContent = "The map couldn't load. Check your connection, or switch to the list.";
+      })
+      .finally(() => {
+        mapLoading = false;
+      });
+  }
 
   async function vote(listingId: number, direction: VoteDirection) {
     const listing = catalogue.listing(listingId);
@@ -160,6 +230,10 @@ function start(catalogue: Catalogue) {
     els.summary.textContent = view.summary;
     els.results.replaceChildren(...view.items);
     els.clear.hidden = mode.kind === 'browse';
+    const onMap = state.view === 'map';
+    els.results.hidden = onMap;
+    els.mapView.hidden = !onMap;
+    if (onMap) showMap();
   }
 
   function render() {
@@ -169,6 +243,9 @@ function start(catalogue: Catalogue) {
 
     for (const input of els.dispense.querySelectorAll<HTMLInputElement>('input')) {
       input.checked = input.value === state.dispense;
+    }
+    for (const input of els.viewToggle.querySelectorAll<HTMLInputElement>('input')) {
+      input.checked = input.value === state.view;
     }
     els.status.textContent = '';
     renderList();
@@ -185,6 +262,11 @@ function start(catalogue: Catalogue) {
   els.dispense.addEventListener('change', (e) => {
     const value = (e.target as HTMLInputElement).value;
     if (value === 'any' || value === 'cask' || value === 'keg') setState({ dispense: value }, 'replace');
+  });
+
+  els.viewToggle.addEventListener('change', (e) => {
+    const value = (e.target as HTMLInputElement).value;
+    if (value === 'list' || value === 'map') setState({ view: value }, 'replace');
   });
 
   els.clear.addEventListener('click', () => {

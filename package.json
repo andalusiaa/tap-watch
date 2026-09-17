@@ -15,11 +15,15 @@
     "db:seed:local": "node seed/build-seed-sql.mjs e17 --sample-listings && wrangler d1 execute tap-watch --local --file seed/out/seed-e17.sql",
     "db:seed:remote": "node seed/build-seed-sql.mjs e17 --sample-listings && wrangler d1 execute tap-watch --remote --file seed/out/seed-e17.sql",
     "seed:pubs": "node seed/fetch-pubs.mjs",
-    "seed:map": "node seed/open-map.mjs"
+    "seed:map": "node seed/open-map.mjs",
+    "map:build": "node seed/build-basemap.mjs"
   },
   "devDependencies": {
     "typescript": "7.0.2",
     "vite": "8.3.0",
     "wrangler": "4.133.0"
+  },
+  "dependencies": {
+    "maplibre-gl": "6.10.0"
   }
 }
