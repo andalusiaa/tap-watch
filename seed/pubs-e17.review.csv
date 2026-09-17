@@ -1,5 +1,5 @@
 include,id,name,osm_type,district,postcode,address,operator_id,osm_operator,osm_brewery,lat,lng,osm_id,notes
-yes,big-penny-social-e17,Big Penny Social,pub,E17,E17 6AL,1 Priestley Way,,,yes,51.590609,-0.041550,way/23376430,
+no,big-penny-social-e17,Big Penny Social,pub,E17,E17 6AL,1 Priestley Way,,,yes,51.590609,-0.041550,way/23376430,"Taproom: left out for now (Tristan, 2026-09-17)"
 yes,prince-of-wales-e17,Prince of Wales,pub,E17,E17 6BD,58 St Andrews Road,,,,51.593204,-0.036733,way/405915943,
 yes,queens-arms-e17,Queens Arms,pub,E17,E17 9NJ,42 Orford Road,,,,51.582452,-0.013581,way/198577468,
 yes,st-james-bar-e17,St James Bar,pub,E17,E17 7PF,30 St James's Street,,,,51.580495,-0.033067,way/200217289,
@@ -16,8 +16,8 @@ yes,the-raglan-e17,The Raglan,pub,E17,E17 9HX,199 Shernhall Street,,,various,51.
 yes,the-tavern-on-the-hill-e17,The Tavern On The Hill,pub,E17,E17 5RG,318 Higham Hill Road,,,,51.596754,-0.034908,way/139911657,
 yes,the-village-public-house-e17,The Village Public House,pub,E17,E17 9NL,31 Orford Road,,,,51.582669,-0.011778,way/198639606,
 yes,the-william-morris-e17,The William Morris,pub,E17,E17 4JD,807-809 Forest Road,,,,51.591204,-0.007768,node/249672865,
-yes,true-craft-e17,True Craft,pub,E17,E17 7PF,18-20 St James's Street,,,yes,51.581008,-0.033426,way/940451832,
-yes,untraditional-pub-e17,Untraditional Pub,pub,E17,E17 7FY,35 St James Street,,,yes,51.580594,-0.032275,node/11061470043,Website is a brewery's: check it isn't a taproom pouring only its own beer
+yes,true-craft-e17,True Craft,pub,E17,E17 7PF,18-20 St James's Street,,,yes,51.581008,-0.033426,way/940451832,Tristan to confirm: regular beers or only rotating ones?
+no,untraditional-pub-e17,Untraditional Pub,pub,E17,E17 7FY,35 St James Street,,,yes,51.580594,-0.032275,node/11061470043,"Taproom: left out for now (Tristan, 2026-09-17)"
 yes,ye-olde-rose-and-crown-e17,Ye Olde Rose and Crown,pub,E17,E17 4RP,53-55 Hoe Street,,,yes,51.587778,-0.020433,way/159296346,"Postcode is the nearest one found, not from the pub address"
 no,east-london-brewery-e17,East London Brewery,pub,E17,E17 5RB,2 Lockwood Way,,,,51.595416,-0.041700,way/412076101,May be a brewery taproom (excluded from v1)
 no,exale-taproom-e17,Exale Taproom,pub,E17,E17 5QJ,Blackhorse Lane,,,,51.593248,-0.041469,node/7056928285,May be a brewery taproom (excluded from v1)

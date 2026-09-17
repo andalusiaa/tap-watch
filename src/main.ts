@@ -1,5 +1,3 @@
-import './styles.css';
-
 import { createCatalogue, type Catalogue, type DispenseFilter } from './catalogue';
 import { SNAPSHOT_URL } from './config';
 import type { LatLng } from './geo';
@@ -7,7 +5,6 @@ import { applyVote, type VoteDirection } from './rules';
 import type { Snapshot } from './types';
 import { setupAutocomplete } from './ui/autocomplete';
 import { byId, h } from './ui/dom';
-import { setupFontToggle } from './ui/fontToggle';
 import { setupPubSheet } from './ui/pubSheet';
 import { renderResults, type ResultsMode } from './ui/results';
 
@@ -60,10 +57,7 @@ const els = {
   results: byId('results'),
   status: byId('app-status'),
   sheet: byId<HTMLDialogElement>('pub-sheet'),
-  fontToggle: byId('font-toggle'),
 };
-
-setupFontToggle(els.fontToggle);
 
 async function loadSnapshot(): Promise<Snapshot> {
   const res = await fetch(SNAPSHOT_URL, { headers: { Accept: 'application/json' } });

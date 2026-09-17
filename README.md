@@ -26,7 +26,7 @@ Phase 1 (static prototype). Search, the pub list and pub pages work from a sampl
 |---|---|
 | `index.html`, `404.html` | The pages |
 | `src/` | TypeScript and CSS for the site |
-| `src/ui/` | The search box, results list, pub sheet and font switch |
+| `src/ui/` | The search box, results list and pub sheet |
 | `public/` | Files served as they are: data, fonts, icon, security headers (`_headers`) |
 | `seed/` | Scripts and files for loading pubs and beers ([how to use them](seed/README.md)) |
 
@@ -49,7 +49,7 @@ Never commit secrets such as passwords, API tokens or salts. They belong in Clou
 
 ## Credits
 
-Pub names and locations © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database Licence. Postcode lookups by [postcodes.io](https://postcodes.io). Fraunces and Bricolage Grotesque are used under the SIL Open Font License (see `public/fonts/`).
+Pub names and locations © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database Licence. Postcode lookups by [postcodes.io](https://postcodes.io). Headings use Bricolage Grotesque under the SIL Open Font License (see `public/fonts/`).
 
 ## Licence
 

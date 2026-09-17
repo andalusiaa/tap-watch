@@ -22,9 +22,3 @@ export const GROUPS: { id: Category | 'alcohol_free'; label: string }[] = [
 ];
 
 export const MAX_SUGGESTIONS = 8;
-
-export const FONTS = [
-  { id: 'fraunces', label: 'Fraunces' },
-  { id: 'bricolage', label: 'Bricolage Grotesque' },
-] as const;
-export type FontId = (typeof FONTS)[number]['id'];

@@ -104,7 +104,6 @@ for (const pub of pubs) {
     ...(random() < 0.6 ? pickWeighted(pools.cask, between(1, 3)) : []),
     ...pickWeighted(pools.cider, between(1, 2)),
     ...pickWeighted(pools.alcoholFree, [0, 1, 1, 2][between(0, 3)]),
-    ...(random() < 0.05 ? ['dusty-ginger-beer'] : []),
   ];
   for (const beerId of beerIds) {
     listings.push({

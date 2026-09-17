@@ -79,7 +79,6 @@
   { "id": "somersby-apple", "name": "Somersby Apple", "brewery": "Carlsberg Britvic", "category": "cider", "abv": 4.5, "is_alcohol_free": false, "aliases": ["somersby"], "check": "UK draught ABV" },
   { "id": "blackthorn", "name": "Blackthorn", "brewery": "C&C Group", "category": "cider", "abv": 4.0, "is_alcohol_free": false, "aliases": ["blackthorn cider"], "check": "UK draught ABV" },
   { "id": "westons-stowford-press", "name": "Westons Stowford Press", "brewery": "Westons", "category": "cider", "abv": 4.5, "is_alcohol_free": false, "aliases": ["stowford press", "stowford", "westons"], "check": null },
-  { "id": "westons-old-rosie", "name": "Westons Old Rosie", "brewery": "Westons", "category": "cider", "abv": 7.3, "is_alcohol_free": false, "aliases": ["old rosie"], "check": "Usually served from a box or handpump: count that as cask?" },
 
   { "id": "guinness-0-0", "name": "Guinness 0.0", "brewery": "Diageo", "category": "stout", "abv": 0.0, "is_alcohol_free": true, "aliases": ["guinness zero", "guinness 00", "guinness alcohol free", "guinness non alcoholic", "guinness af"], "check": null },
   { "id": "heineken-0-0", "name": "Heineken 0.0", "brewery": "Heineken", "category": "lager", "abv": 0.0, "is_alcohol_free": true, "aliases": ["heineken zero", "heineken 00", "heineken alcohol free", "heineken af"], "check": null },
@@ -91,7 +90,5 @@
   { "id": "asahi-super-dry-0-0", "name": "Asahi Super Dry 0.0", "brewery": "Asahi", "category": "lager", "abv": 0.0, "is_alcohol_free": true, "aliases": ["asahi 0.0", "asahi zero", "asahi 00", "asahi alcohol free"], "check": "On draught in E17?" },
   { "id": "beavertown-lazer-crush", "name": "Beavertown Lazer Crush", "brewery": "Beavertown (Heineken)", "category": "pale_ipa", "abv": 0.3, "is_alcohol_free": true, "aliases": ["lazer crush", "laser crush"], "check": "On draught in E17?" },
   { "id": "brewdog-punk-af", "name": "BrewDog Punk AF", "brewery": "BrewDog", "category": "pale_ipa", "abv": 0.5, "is_alcohol_free": true, "aliases": ["punk af", "punk alcohol free"], "check": "On draught in E17?" },
-  { "id": "thatchers-zero", "name": "Thatchers Zero", "brewery": "Thatchers", "category": "cider", "abv": 0.0, "is_alcohol_free": true, "aliases": ["thatchers 0.0", "thatchers 00", "thatchers alcohol free"], "check": "ABV (0.0 or 0.5?); on draught in E17?" },
-
-  { "id": "dusty-ginger-beer", "name": "Dusty Alcoholic Ginger Beer", "brewery": null, "category": "other", "abv": null, "is_alcohol_free": false, "aliases": ["dusty", "dustys", "dusty ginger beer"], "check": "Confirm exact name, maker and ABV" }
+  { "id": "thatchers-zero", "name": "Thatchers Zero", "brewery": "Thatchers", "category": "cider", "abv": 0.0, "is_alcohol_free": true, "aliases": ["thatchers 0.0", "thatchers 00", "thatchers alcohol free"], "check": "ABV (0.0 or 0.5?); on draught in E17?" }
 ]
