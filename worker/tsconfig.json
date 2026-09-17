@@ -15,5 +15,5 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
-  "include": ["./**/*.ts", "../src/rules.ts", "../src/types.ts"]
+  "include": ["./**/*.ts", "../src/rules.ts", "../src/types.ts", "../src/search.ts"]
 }

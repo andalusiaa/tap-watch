@@ -11,7 +11,9 @@ Live at <https://tap-watch.gage-tristan.workers.dev>.
 
 ## Status
 
-Phase 3 (map). Pubs, beers and tap lists live in a Cloudflare D1 database, "Still on?" votes are saved, and pubs can be shown as a list or on a map. Distances come from your location or a postcode. **The tap lists are still made up** and the site says so.
+Phase 4 (moderation). Visitors can vote, send photos of the taps and suggest beers. A private admin page (`/admin/`) is for checking photos and suggestions and editing each pub's tap list. **The tap lists are still made up** and the site says so.
+
+Still to come in Phase 4: editing pubs, operators and core ranges, a usage page, and a switch to clear the sample tap lists.
 
 ## How it's built
 
@@ -19,6 +21,8 @@ Phase 3 (map). Pubs, beers and tap lists live in a Cloudflare D1 database, "Stil
 - **Site:** plain TypeScript and CSS, bundled by Vite. No UI framework.
 - **API:** a Cloudflare Worker (`worker/`) answers `/api/snapshot` and `/api/vote`.
 - **Database:** Cloudflare D1, structure in `migrations/`, data loaded from [`seed/`](seed/README.md).
+- **Photos:** waiting photos are kept in Cloudflare Workers KV (`tap-watch-photos`, free plan, no card needed) and deleted once checked, or after 30 days.
+- **Admin:** `/admin/`, signed in with a password stored as a Cloudflare secret. A sign-in lasts 30 days.
 - **Clean-up:** a daily scheduled job clears device hashes after 30 days and deletes old rate-limit counters.
 - **Map:** MapLibre (loaded only when someone opens the map) drawing an OpenStreetMap basemap from Protomaps. The map tiles are ordinary files in `public/map/`, so no map company sees visitors.
 - Coming in later phases: photo reports, suggestions and the admin page.
@@ -31,7 +35,8 @@ Phase 3 (map). Pubs, beers and tap lists live in a Cloudflare D1 database, "Stil
 | `src/` | TypeScript and CSS for the site |
 | `src/ui/` | The search box, results list, pub sheet, location bar and map |
 | `public/map/` | Map tiles (`tiles/`), label fonts (`fonts/`) and `e17.json`, made by `npm run map:build` |
-| `worker/` | The API: snapshot, votes, spam checks, rate limits, daily clean-up |
+| `admin/`, `src/admin/` | The admin page: sign-in, photos and suggestions to check, tap list editor |
+| `worker/` | The API: snapshot, votes, photo reports, suggestions, admin, spam checks, rate limits, daily clean-up |
 | `migrations/` | Database structure, applied in order |
 | `public/` | Files served as they are: fonts, icon, security headers (`_headers`) |
 | `scripts/` | `check-api.mjs`, which tests the vote rules against the local API |
@@ -43,8 +48,8 @@ You need Node.js (installed with `brew install node`). Run `npm install` once fi
 
 The first time, create a local secret and a local database:
 
-1. Make a file called `.dev.vars` containing `APP_SECRET=` followed by a long random string (`openssl rand -base64 32` makes one). Git ignores this file.
-2. `npm run db:migrate:local` then `npm run db:seed:local`.
+1. Make a file called `.dev.vars` (git ignores it) with two lines: `APP_SECRET=` followed by a long random string (`openssl rand -base64 32` makes one), and `ADMIN_PASSWORD=` followed by a password for the local admin page.
+2. `npm run db:reset:local` creates a fresh local database with the sample data.
 
 Then, in two terminal tabs:
 
@@ -58,7 +63,8 @@ Then, in two terminal tabs:
 | `npm run dev` | The site, with live reload |
 | `npm run dev:api` | The API and a local copy of the database |
 | `npm run check` | Checks the site and API code for mistakes |
-| `npm run check:api` | Tests the vote rules against the local API (changes local data) |
+| `npm run check:api` | Tests votes, photos, suggestions, admin and clean-up against the local API (needs a fresh local database) |
+| `npm run db:reset:local` | Deletes the local database and creates a fresh one (stop `dev:api` first) |
 | `npm run build` | Builds the site into `dist/` |
 | `npm run preview` | Runs everything the way Cloudflare will, at <http://localhost:8787> |
 | `npm run db:migrate:local` / `:remote` | Applies database changes locally / to the live database |
@@ -73,9 +79,9 @@ Pushing to `main` deploys the site and API. Database changes are **not** applied
 
 ## Security
 
-Never commit secrets such as passwords, API tokens or salts. They belong in Cloudflare secrets (or a local `.dev.vars` file, which git ignores). The live API uses one secret, `APP_SECRET`, set with `npx wrangler secret put APP_SECRET`.
+Never commit secrets such as passwords, API tokens or salts. They belong in Cloudflare secrets (or a local `.dev.vars` file, which git ignores). The live API uses two secrets: `APP_SECRET` (`npx wrangler secret put APP_SECRET`) and `ADMIN_PASSWORD`, the admin page password (`npx wrangler secret put ADMIN_PASSWORD`, at least 12 characters). Changing the password signs out every admin session.
 
-What the API stores about visitors: a 32-character device hash per vote (an HMAC of a rotating salt, the IP address and the browser name), cleared after 30 days. IP addresses and locations are never stored, and per-request logging is switched off.
+What the API stores about visitors: a 32-character device hash per vote, photo report and suggestion (an HMAC of a rotating salt, the IP address and the browser name), cleared after 30 days. Photos are shrunk and re-encoded in the browser, which removes location data; the server also strips any metadata. Photos are only visible to the admin and are deleted once checked, or after 30 days. IP addresses and locations are never stored, and per-request logging is switched off.
 
 ## Credits
 

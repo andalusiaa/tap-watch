@@ -3,8 +3,9 @@
 import { applyVote, type VoteDirection } from '../src/rules';
 import type { Listing } from '../src/types';
 import { LIMITS } from './config';
+import { guardPublicWrite, limitPerDevice } from './guard';
 import { ApiError, assertSameOrigin, badRequest, isoTime, json, readJsonBody } from './http';
-import { bumpCounter, checkFormToken, deviceHash, readCounter, writeBudgetKey } from './security';
+import { bumpCounter } from './security';
 import { invalidateSnapshot } from './snapshot';
 
 interface ListingRow extends Listing {
@@ -12,8 +13,6 @@ interface ListingRow extends Listing {
 }
 
 const LISTING_COLUMNS = 'l.id, l.pub_id, l.beer_id, l.dispense, l.status, l.last_confirmed_at, l.reported_gone_at';
-
-const busy = () => new ApiError(503, 'busy', 'Tap Watch is very busy today. Please try again later.');
 
 export async function handleVote(request: Request, env: Env, now: number): Promise<Response> {
   assertSameOrigin(request);
@@ -24,31 +23,13 @@ export async function handleVote(request: Request, env: Env, now: number): Promi
   if (!Number.isSafeInteger(listingId) || (listingId as number) <= 0) throw badRequest();
   if (direction !== 1 && direction !== -1) throw badRequest();
 
-  // Bot checks. Failures look like success, so bots learn nothing.
-  if (typeof body.hp !== 'string' || body.hp !== '') return json({ ok: true });
-  const token = await checkFormToken(env.APP_SECRET, body.token, now);
-  if (token === 'too_fast') return json({ ok: true });
-  if (token === 'expired') {
-    throw new ApiError(403, 'page_expired', 'This page has been open a long time. Refresh it and try again.');
-  }
-  if (token === 'invalid') throw badRequest();
-
-  // Rough per-address limit at the edge, before any database work.
-  const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
-  const { success } = await env.WRITE_LIMITER.limit({ key: `ip:${ip}` });
-  if (!success) throw new ApiError(429, 'too_many', "You're going a bit fast. Wait a minute and try again.");
-
+  const guard = await guardPublicWrite(request, env, now, { hp: body.hp, token: body.token });
+  if (!guard) return json({ ok: true });
+  const { device, budget } = guard;
   const db = env.DB;
-  const budget = writeBudgetKey(now);
-  if ((await readCounter(db, budget.key)) >= LIMITS.dailyWriteBudget) throw busy();
 
-  const device = await deviceHash(request, env, now);
-
-  const hour = isoTime(now).slice(0, 13);
-  const hourly = await bumpCounter(db, `vote-hour:${device}:${hour}`, 1, now + 3_600_000).first<{ count: number }>();
-  if ((hourly?.count ?? 0) > LIMITS.votesPerHour) {
-    throw new ApiError(429, 'too_many', "You've voted a lot in the last hour. Please try again later.");
-  }
+  await limitPerDevice(db, 'vote-hour', device, 'hour', LIMITS.votesPerHour, now,
+    "You've voted a lot in the last hour. Please try again later.");
 
   const since = isoTime(now - LIMITS.voteRepeatWindowMs);
   const [repeat, found] = await db.batch([

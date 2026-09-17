@@ -1,0 +1,242 @@
+/* Admin page extras. Everything else comes from src/styles.css. */
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-badge {
+  padding: 0.15rem 0.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: var(--step--1);
+}
+
+.admin-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-status:not(:empty) {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.admin-tabs {
+  margin: 0.5rem 0 1.25rem;
+}
+
+.admin-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-label {
+  font-weight: 600;
+}
+
+#password {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: 1rem;
+}
+
+#pub-picker {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: 1rem;
+}
+
+.card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+}
+
+.card h2 {
+  font-size: var(--step-1);
+}
+
+.card-meta {
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+}
+
+.card-note {
+  padding-left: 0.6rem;
+  border-left: 4px solid var(--rule);
+}
+
+.card-photo img {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  background: var(--wash);
+  border-radius: 4px;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.empty-queue {
+  color: var(--ink-muted);
+}
+
+/* --- Tap list editor ----------------------------------------------------------------- */
+
+.editor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.editor-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.edit-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.edit-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.edit-row .segmented {
+  display: flex;
+  width: 100%;
+}
+
+.edit-row .segmented label {
+  flex: 1;
+}
+
+.edit-row .segmented span {
+  justify-content: center;
+  width: 100%;
+}
+
+@media (min-width: 40rem) {
+  .edit-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .edit-row .segmented {
+    width: auto;
+  }
+}
+
+.edit-row--removed .edit-beer {
+  color: var(--ink-muted);
+}
+
+.edit-beer {
+  font-weight: 700;
+}
+
+.edit-status {
+  display: block;
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+}
+
+.edit-row .segmented span {
+  padding-inline: 0.6rem;
+}
+
+.edit-row input[value="on"]:checked + span {
+  background: var(--fresh);
+  color: var(--on-fresh);
+}
+
+.edit-row input[value="gone"]:checked + span {
+  background: var(--district-red);
+  color: #ffffff;
+}
+
+.add-beer {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.add-beer input,
+.add-beer select,
+.new-beer input,
+.new-beer select {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.4rem 0.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: 1rem;
+}
+
+.add-beer label,
+.new-beer label {
+  display: block;
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+@media (max-width: 30rem) {
+  .add-beer {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .add-beer > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.new-beer {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.new-beer .check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+.new-beer .check input {
+  width: 1.3rem;
+  min-height: 0;
+  accent-color: var(--ink);
+}
+
+.editor-summary {
+  font-weight: 600;
+}

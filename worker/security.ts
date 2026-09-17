@@ -23,7 +23,7 @@ async function sign(secret: string, message: string): Promise<Uint8Array> {
   return new Uint8Array(await crypto.subtle.sign('HMAC', await hmacKey(secret), encoder.encode(message)));
 }
 
-const toHex = (bytes: Uint8Array) => Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+export const toHex = (bytes: Uint8Array) => Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 
 function toBase64Url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -32,6 +32,18 @@ function toBase64Url(bytes: Uint8Array): string {
 function fromBase64Url(text: string): Uint8Array {
   const binary = atob(text.replace(/-/g, '+').replace(/_/g, '/'));
   return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+/** HMAC-SHA-256 of a message, as URL-safe base64. */
+export async function signToString(secret: string, message: string): Promise<string> {
+  return toBase64Url(await sign(secret, message));
+}
+
+/** Compares two strings in constant time (for equal lengths). */
+export function sameString(a: string, b: string): boolean {
+  const left = encoder.encode(a);
+  const right = encoder.encode(b);
+  return left.length === right.length && crypto.subtle.timingSafeEqual(left, right);
 }
 
 // --- Page tokens ---------------------------------------------------------------

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Tap Watch E17</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/src/styles.css">
+  <link rel="stylesheet" href="/src/admin/admin.css">
+  <script type="module" src="/src/admin/main.ts"></script>
+</head>
+<body class="admin">
+  <header class="site-header admin-header">
+    <a class="brand" href="/">
+      <span class="wordmark">Tap Watch</span>
+      <span class="plate"><span class="visually-hidden">, </span>E17</span>
+    </a>
+    <span class="admin-badge">Admin</span>
+  </header>
+
+  <main>
+    <p class="admin-status" id="admin-status" role="status">Loading…</p>
+
+    <section id="signin" hidden aria-labelledby="signin-title">
+      <h1 id="signin-title" class="page-title">Sign in</h1>
+      <form class="panel-form" id="signin-form">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button type="submit" class="button button--primary">Sign in</button>
+        <p class="form-status" id="signin-status" role="status"></p>
+      </form>
+    </section>
+
+    <section id="workspace" hidden aria-labelledby="workspace-title">
+      <div class="admin-top">
+        <h1 id="workspace-title" class="page-title">Admin</h1>
+        <button type="button" class="link-button" id="signout">Sign out</button>
+      </div>
+
+      <fieldset class="segmented admin-tabs" id="tabs">
+        <legend class="visually-hidden">Section</legend>
+        <label><input type="radio" name="tab" value="queue" checked><span id="queue-tab-label">To check</span></label>
+        <label><input type="radio" name="tab" value="taps"><span>Tap lists</span></label>
+      </fieldset>
+
+      <div id="queue-panel" class="admin-panel"></div>
+
+      <div id="taps-panel" class="admin-panel" hidden>
+        <label for="pub-picker" class="admin-label">Pub</label>
+        <select id="pub-picker"></select>
+        <div id="pub-editor"></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

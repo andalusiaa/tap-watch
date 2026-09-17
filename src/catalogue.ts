@@ -68,6 +68,8 @@ export function createCatalogue(snapshot: Snapshot) {
     listing: (id: number): Listing | undefined => listingById.get(id),
     listingsAt: (pubId: string): Listing[] => listingsByPub.get(pubId) ?? [],
     pubCount,
+    beers: (): Beer[] => snapshot.beers,
+    pubsByName: (): Pub[] => [...snapshot.pubs].sort((a, b) => a.name.localeCompare(b.name)),
 
     /** Applies a listing returned by the server (after a vote). */
     applyServerListing(update: ServerListing) {

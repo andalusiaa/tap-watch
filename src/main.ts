@@ -8,6 +8,7 @@ import { setupAutocomplete } from './ui/autocomplete';
 import { byId, h } from './ui/dom';
 import { setupLocationBar } from './ui/locationBar';
 import { setupPubSheet } from './ui/pubSheet';
+import { suggestForm } from './ui/forms';
 import { renderResults, type ResultsMode } from './ui/results';
 
 // --- State, kept in the URL so links and the back button work ------------------
@@ -102,6 +103,7 @@ function start(catalogue: Catalogue) {
     hasVoted: (id) => voteMemory.hasVoted(id),
     voteNote: (id) => voteNotes.get(id),
     onVote: (listingId, direction) => void vote(listingId, direction),
+    honeypot: () => els.honeypot.value,
     onClose: () => {
       if (!state.pubId) return;
       // Opening the sheet added a history entry; going back removes it.
@@ -222,9 +224,7 @@ function start(catalogue: Catalogue) {
       dispense: state.dispense,
       now: Date.now(),
       openPub: (pubId) => setState({ pubId }, 'push'),
-      onAddBeer: () => {
-        els.status.textContent = 'Adding beers is coming soon. For now, this is a prototype.';
-      },
+      suggestForm: (beerName) => suggestForm({ catalogue, beerName, honeypot: () => els.honeypot.value }),
     });
     els.heading.replaceChildren(h('span', null, view.heading));
     els.summary.textContent = view.summary;

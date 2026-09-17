@@ -115,7 +115,9 @@ a {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -291,6 +293,95 @@ input {
 
 .button:hover {
   background: var(--wash);
+}
+
+.button--primary {
+  background: var(--ink);
+  color: var(--plate);
+}
+
+.button--primary:hover {
+  background: var(--ink);
+  text-decoration: underline;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* --- Forms (photo reports, suggestions) ---------------------------------------------- */
+
+.panel-form {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+}
+
+.panel-form h3 {
+  font-size: var(--step-1);
+}
+
+.panel-form label,
+.form-label {
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.panel-form input[type="text"],
+.panel-form select,
+.panel-form textarea {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: 1rem;
+}
+
+.panel-form textarea {
+  resize: vertical;
+}
+
+.form-help,
+.form-hint {
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+}
+
+.form-status:not(:empty),
+.form-done {
+  font-weight: 600;
+}
+
+.form-done {
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--fresh);
+  background: var(--wash);
+}
+
+.file-button {
+  justify-self: start;
+}
+
+input[type="file"]:focus-visible + .file-button {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.photo-preview {
+  max-width: 100%;
+  max-height: 16rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.empty .panel-form {
+  margin-top: 0.75rem;
 }
 
 .link-button {
@@ -938,9 +1029,6 @@ input {
   margin-top: 1.5rem;
 }
 
-.sheet-notice:not(:empty) {
-  font-weight: 600;
-}
 
 /* --- Footer ------------------------------------------------------------------------ */
 

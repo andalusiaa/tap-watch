@@ -21,6 +21,19 @@ export const LIMITS = {
    */
   dailyWriteBudget: 50_000,
   voteWriteCost: 10,
+
+  /** Photo reports per device per day, and for everyone per day (the photo store allows 1,000 writes). */
+  reportsPerDay: 5,
+  reportsPerDayTotal: 200,
+  reportWriteCost: 8,
+  /** Largest photo accepted, after the browser has shrunk it. */
+  maxPhotoBytes: 2_000_000,
+  maxNoteLength: 280,
+
+  /** Beer suggestions per device per day. */
+  suggestionsPerDay: 10,
+  suggestionWriteCost: 8,
+  maxBeerNameLength: 80,
 } as const;
 
 export const SNAPSHOT = {
@@ -28,6 +41,21 @@ export const SNAPSHOT = {
   rebuildIntervalMs: MINUTE,
   /** Each Worker instance also keeps the snapshot in memory this long. */
   memoryTtlMs: 10_000,
+} as const;
+
+export const PHOTOS = {
+  /** Unchecked photos are deleted after this long (the store also expires them a day later). */
+  maxPendingMs: 30 * DAY,
+  storeTtlSeconds: 31 * 24 * 60 * 60,
+} as const;
+
+export const ADMIN = {
+  /** How long the admin stays signed in. */
+  sessionMs: 30 * DAY,
+  /** Wrong-password attempts allowed per device per hour, and in total per day. */
+  attemptsPerHour: 10,
+  failuresPerDay: 100,
+  minPasswordLength: 12,
 } as const;
 
 export const PRIVACY = {

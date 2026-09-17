@@ -1,6 +1,6 @@
 // Cloudflare configuration for Tap Watch.
 // Static pages are built by Vite into ./dist. Requests to /api/* go to the Worker in
-// worker/index.ts, which talks to the D1 database.
+// worker/index.ts, which talks to the D1 database and the photo store.
 {
   // Must match the Worker name in the Cloudflare dashboard.
   "name": "tap-watch",
@@ -25,6 +25,15 @@
       "binding": "DB",
       "database_name": "tap-watch",
       "database_id": "749d7d92-2b1a-4266-a3b7-29856f89d16f"
+    }
+  ],
+
+  // Photos of the taps waiting to be checked (Workers KV, free plan, no card needed).
+  // Each one is deleted after review, or automatically after 31 days.
+  "kv_namespaces": [
+    {
+      "binding": "PHOTOS",
+      "id": "89b80ab0ac7949d6bd2ae9a32bf23d3e"
     }
   ],
 

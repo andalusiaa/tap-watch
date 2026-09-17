@@ -5,6 +5,8 @@ import { ApiError, jsonText, json } from './http';
 import { housekeeping } from './housekeeping';
 import { issueFormToken } from './security';
 import { getSnapshotJson, isAreaId } from './snapshot';
+import { handleAdmin } from './admin';
+import { handleReport, handleSuggest } from './reports';
 import { handleVote } from './vote';
 
 const methodNotAllowed = (allow: string) =>
@@ -28,7 +30,16 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (request.method !== 'POST') throw methodNotAllowed('POST');
       return handleVote(request, env, now);
 
+    case '/api/report':
+      if (request.method !== 'POST') throw methodNotAllowed('POST');
+      return handleReport(request, env, now);
+
+    case '/api/suggest':
+      if (request.method !== 'POST') throw methodNotAllowed('POST');
+      return handleSuggest(request, env, now);
+
     default:
+      if (url.pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url, now);
       throw new ApiError(404, 'not_found', "There's nothing at this address.");
   }
 }
@@ -49,6 +60,6 @@ export default {
   },
 
   async scheduled(_controller, env, ctx) {
-    ctx.waitUntil(housekeeping(env.DB, Date.now()));
+    ctx.waitUntil(housekeeping(env, Date.now()));
   },
 } satisfies ExportedHandler<Env>;

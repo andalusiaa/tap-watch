@@ -24,7 +24,8 @@ interface Context {
   dispense: DispenseFilter;
   now: number;
   openPub: (pubId: string) => void;
-  onAddBeer: () => void;
+  /** A suggestion form, optionally with the beer name filled in. */
+  suggestForm: (beerName?: string) => HTMLElement;
 }
 
 const plural = (n: number, one: string, many: string) => (n === 0 ? `No ${many}` : `${n} ${n === 1 ? one : many}`);
@@ -52,8 +53,15 @@ function emptyState(...lines: Child[]): HTMLElement {
   return h('li', { class: 'empty' }, lines);
 }
 
-function addLink(ctx: Context, text: string): HTMLElement {
-  return h('button', { type: 'button', class: 'link-button', onclick: ctx.onAddBeer }, text);
+function addLink(ctx: Context, text: string, beerName?: string): HTMLElement {
+  const button = h('button', { type: 'button', class: 'link-button' }, text);
+  button.addEventListener('click', () => {
+    const form = ctx.suggestForm(beerName);
+    button.closest('.empty')?.append(form);
+    button.disabled = true;
+    form.querySelector<HTMLElement>('select, input')?.focus();
+  });
+  return button;
 }
 
 const dispenseWord = (d: DispenseFilter) => (d === 'any' ? '' : `${d} `);
@@ -79,7 +87,7 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
         items.push(
           emptyState(
             h('p', null, `No one's reported ${beer.name}${ctx.dispense === 'any' ? '' : ` on ${ctx.dispense}`} in ${areaCode} yet.`),
-            h('p', null, 'Seen it somewhere? ', addLink(ctx, 'Add it'), '.'),
+            h('p', null, 'Seen it somewhere? ', addLink(ctx, 'Add it', beer.name), '.'),
           ),
         );
       }
@@ -100,7 +108,7 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
         items: [
           emptyState(
             h('p', null, `We don't have a beer called “${mode.query}” in our list yet.`),
-            h('p', null, 'Check the spelling, or ', addLink(ctx, 'add it'), '.'),
+            h('p', null, 'Check the spelling, or ', addLink(ctx, 'add it', mode.query), '.'),
           ),
         ],
       };

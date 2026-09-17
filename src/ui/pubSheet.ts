@@ -7,6 +7,7 @@ import { distanceKm, formatDistance, type LatLng } from '../geo';
 import type { VoteDirection } from '../rules';
 import type { Beer, Listing, Pub } from '../types';
 import { h } from './dom';
+import { photoForm, suggestForm } from './forms';
 import { alcoholFreeLabel, dispenseLabel, freshnessBadge, separator } from './labels';
 
 interface Options {
@@ -18,6 +19,8 @@ interface Options {
   voteNote: (listingId: number) => string | undefined;
   onVote: (listingId: number, direction: VoteDirection) => void;
   onClose: () => void;
+  /** Value of the page's spam-trap field. */
+  honeypot: () => string;
 }
 
 /** Google Maps on every device. On phones this opens the Google Maps app if it's installed. */
@@ -29,7 +32,6 @@ function mapsUrl(pub: Pub): string {
 export function setupPubSheet(o: Options) {
   let currentPubId: string | null = null;
   const distanceText = (pub: Pub) => `${formatDistance(distanceKm(o.origin(), [pub.lat, pub.lng]))} away`;
-  const notice = () => o.dialog.querySelector<HTMLElement>('.sheet-notice');
 
   o.dialog.addEventListener('close', () => {
     currentPubId = null;
@@ -110,10 +112,24 @@ export function setupPubSheet(o: Options) {
       );
     });
 
-    const comingSoon = (what: string) => () => {
-      const el = notice();
-      if (el) el.textContent = `${what} is coming soon. For now, this is a prototype.`;
+    const actions = h('div', { class: 'sheet-actions' });
+    const openForm = (button: HTMLButtonElement, make: () => HTMLElement) => () => {
+      const form = make();
+      button.replaceWith(form);
+      form.querySelector<HTMLElement>('h3')?.setAttribute('tabindex', '-1');
+      form.querySelector<HTMLElement>('h3')?.focus();
     };
+    const photoButton = h('button', { type: 'button', class: 'button' }, 'Send a photo of the taps');
+    const suggestButton = h('button', { type: 'button', class: 'button' }, 'Suggest a beer');
+    photoButton.addEventListener(
+      'click',
+      openForm(photoButton, () => photoForm({ pubId: pub.id, pubName: pub.name, honeypot: o.honeypot })),
+    );
+    suggestButton.addEventListener(
+      'click',
+      openForm(suggestButton, () => suggestForm({ catalogue: o.catalogue, pubId: pub.id, honeypot: o.honeypot })),
+    );
+    actions.append(photoButton, suggestButton);
 
     o.dialog.replaceChildren(
       h(
@@ -137,13 +153,7 @@ export function setupPubSheet(o: Options) {
         listings.length === 0
           ? h('p', { class: 'empty' }, 'No beers listed here yet.')
           : [h('p', { class: 'sheet-hint' }, 'Here now? Tap 👍 if a beer is still on, or 👎 if it has gone.'), groups],
-        h(
-          'div',
-          { class: 'sheet-actions' },
-          h('button', { type: 'button', class: 'button', onclick: comingSoon('Sending photos') }, 'Send a photo of the taps'),
-          h('button', { type: 'button', class: 'button', onclick: comingSoon('Suggesting beers') }, 'Suggest a beer'),
-          h('p', { class: 'sheet-notice', role: 'status' }),
-        ),
+        actions,
       ),
     );
   }

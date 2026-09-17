@@ -1,10 +1,11 @@
 // Checks the vote rules against the LOCAL API (SPEC sections 6.3, 8, 9 and 14).
 //
-// Usage: npm run dev:api   (in one terminal)
-//        npm run check:api (in another)
+// Usage, on a fresh local database:
+//   npm run db:reset:local   (with dev:api stopped)
+//   npm run dev:api          (in one terminal)
+//   npm run check:api        (in another)
 //
-// It changes the local database, so run `npm run db:seed:local` afterwards for a fresh start.
-// Never point it at the live site.
+// It changes the local database, so reset it before running again. Never point it at the live site.
 
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -12,8 +13,10 @@ import { execFileSync } from 'node:child_process';
 const API = 'http://127.0.0.1:8787';
 if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(API)) throw new Error('Local API only');
 
-const secret = /^APP_SECRET=(.+)$/m.exec(readFileSync(new URL('../.dev.vars', import.meta.url), 'utf8'))?.[1];
-if (!secret) throw new Error('APP_SECRET missing from .dev.vars');
+const devVars = readFileSync(new URL('../.dev.vars', import.meta.url), 'utf8');
+const secret = /^APP_SECRET=(.+)$/m.exec(devVars)?.[1];
+const adminPassword = /^ADMIN_PASSWORD=(.+)$/m.exec(devVars)?.[1];
+if (!secret || !adminPassword) throw new Error('APP_SECRET or ADMIN_PASSWORD missing from .dev.vars');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failures = 0;
@@ -135,11 +138,170 @@ check('Clean-up clears device hashes older than 30 days', sql(`SELECT device_has
 check('Clean-up deletes expired counters', sql("SELECT 1 FROM rate_limits WHERE key = 'check-api:expired'").length === 0);
 check('Recent votes keep their hash', sql('SELECT COUNT(*) AS n FROM votes WHERE device_hash IS NOT NULL')[0].n > 0);
 
+// --- Photo reports ------------------------------------------------------------------
+// A tiny JPEG-shaped file with an EXIF block (where phones keep GPS location).
+const exif = Buffer.concat([Buffer.from([0xff, 0xe1, 0x00, 0x16]), Buffer.from('Exif\0\0GPS-51.5,-0.02')]);
+const fakeJpeg = Buffer.concat([
+  Buffer.from([0xff, 0xd8]),
+  Buffer.from([0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00]),
+  exif,
+  Buffer.from([0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00]),
+  Buffer.from('image-data'),
+  Buffer.from([0xff, 0xd9]),
+]);
+
+function reporter(name) {
+  const ip = `203.0.113.${++deviceCount}`;
+  return (fields, file = { bytes: fakeJpeg, type: 'image/jpeg' }) => {
+    const form = new FormData();
+    for (const [k, v] of Object.entries({ hp: '', token, ...fields })) form.set(k, v);
+    if (file) form.set('photo', new Blob([file.bytes], { type: file.type }), 'taps.jpg');
+    return fetch(`${API}/api/report`, {
+      method: 'POST',
+      headers: { Origin: API, 'User-Agent': `check-api ${name}`, 'CF-Connecting-IP': ip },
+      body: form,
+    }).then(async (res) => ({ status: res.status, body: await res.json() }));
+  };
+}
+const photographer = reporter('photographer');
+const pubId = sql("SELECT id FROM pubs WHERE is_active = 1 ORDER BY id LIMIT 1")[0].id;
+const reportsBefore = sql('SELECT COUNT(*) AS n FROM photo_reports')[0].n;
+
+r = await photographer({ pub_id: pubId, note: 'Taps by the window' });
+check('Photo report is accepted', r.status === 200 && r.body.ok, JSON.stringify(r));
+r = await photographer({ pub_id: pubId }, { bytes: Buffer.from('<svg></svg>'), type: 'image/svg+xml' });
+check('Non-JPEG files are refused', r.status === 400 && r.body.error === 'not_a_photo', JSON.stringify(r));
+r = await photographer({ pub_id: pubId }, { bytes: Buffer.from('not really a jpeg'), type: 'image/jpeg' });
+check('Files that only claim to be JPEG are refused', r.status === 400, JSON.stringify(r));
+r = await photographer({ pub_id: 'no-such-pub' });
+check('Photos for unknown pubs are refused', r.status === 404, JSON.stringify(r));
+r = await photographer({ pub_id: pubId, hp: 'bot' });
+check('Honeypot photo looks accepted but is not stored', r.status === 200 && sql('SELECT COUNT(*) AS n FROM photo_reports')[0].n === reportsBefore + 1, JSON.stringify(r));
+for (let i = 0; i < 4; i++) await photographer({ pub_id: pubId });
+r = await photographer({ pub_id: pubId });
+check('A sixth photo from one device in a day is refused', r.status === 429, JSON.stringify(r));
+const report = sql("SELECT id, pub_id, photo_key, device_hash, note FROM photo_reports ORDER BY id LIMIT 1")[0];
+check('Report stores a photo key, a device hash and the note', report.photo_key?.startsWith('reports/') && /^[0-9a-f]{32}$/.test(report.device_hash) && report.note === 'Taps by the window', JSON.stringify(report));
+
+// --- Suggestions ---------------------------------------------------------------------
+const suggester = device('suggester');
+const suggest = (body) =>
+  fetch(`${API}/api/suggest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: API, 'User-Agent': 'check-api suggester', 'CF-Connecting-IP': '203.0.113.200' },
+    body: JSON.stringify({ hp: '', token, ...body }),
+  }).then(async (res) => ({ status: res.status, body: await res.json() }));
+void suggester;
+r = await suggest({ pub_id: pubId, beer_id: 'lucky-saint', dispense: 'keg' });
+check('Suggestion of a listed beer is accepted', r.status === 200, JSON.stringify(r));
+r = await suggest({ pub_id: pubId, proposed_beer_name: '  Walthamstow   Wonder  ', dispense: 'cask' });
+check('Suggestion of a new beer is accepted', r.status === 200, JSON.stringify(r));
+r = await suggest({ pub_id: pubId, dispense: 'keg' });
+check('Suggestion without a beer is refused', r.status === 400, JSON.stringify(r));
+r = await suggest({ pub_id: pubId, beer_id: 'lucky-saint', dispense: 'bottle' });
+check('Bottles are refused (draught only)', r.status === 400, JSON.stringify(r));
+r = await suggest({ pub_id: pubId, proposed_beer_name: 'x'.repeat(81) });
+check('Over-long beer names are refused', r.status === 400, JSON.stringify(r));
+const proposed = sql("SELECT proposed_beer_name FROM suggestions WHERE beer_id IS NULL")[0]?.proposed_beer_name;
+check('Proposed names are tidied', proposed === 'Walthamstow Wonder', String(proposed));
+
+// --- Admin ---------------------------------------------------------------------------
+const adminHeaders = (cookie = '', ip = '203.0.113.250') => ({
+  'Content-Type': 'application/json',
+  Origin: API,
+  'User-Agent': 'check-api admin',
+  'CF-Connecting-IP': ip,
+  ...(cookie ? { Cookie: cookie } : {}),
+});
+const admin = (path, { body, cookie, origin = API } = {}) =>
+  fetch(`${API}/api/admin${path}`, {
+    method: body === undefined ? 'GET' : 'POST',
+    headers: { ...adminHeaders(cookie), Origin: origin },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  }).then(async (res) => ({ status: res.status, headers: res.headers, body: res.headers.get('content-type')?.includes('json') ? await res.json() : await res.arrayBuffer() }));
+
+r = await admin('/session');
+check('Admin session starts signed out', r.status === 200 && r.body.signedIn === false && r.body.setUp === true, JSON.stringify(r.body));
+r = await admin('/queue');
+check('Admin pages refuse visitors who are not signed in', r.status === 401, JSON.stringify(r.body));
+r = await admin('/login', { body: { password: 'wrong password!' } });
+check('Wrong password is refused', r.status === 401 && r.body.error === 'wrong_password', JSON.stringify(r.body));
+r = await admin('/login', { body: { password: adminPassword }, origin: 'https://evil.example' });
+check('Sign-in from another website is refused', r.status === 403, JSON.stringify(r.body));
+r = await admin('/login', { body: { password: adminPassword } });
+const setCookie = r.headers.get('set-cookie') ?? '';
+const cookie = setCookie.split(';')[0];
+check('Right password signs in with a secure session cookie', r.status === 200 && /HttpOnly/.test(setCookie) && /Secure/.test(setCookie) && /SameSite=Strict/.test(setCookie), setCookie);
+check('Session cookie is accepted', (await admin('/session', { cookie })).body.signedIn === true);
+const forged = cookie.replace(/.$/, (c) => (c === 'A' ? 'B' : 'A'));
+check('A tampered session cookie is refused', (await admin('/queue', { cookie: forged })).status === 401);
+
+r = await admin('/queue', { cookie });
+check('Queue lists the photo and both suggestions', r.status === 200 && r.body.reports.length >= 1 && r.body.suggestions.length === 2, JSON.stringify(r.body).slice(0, 300));
+
+r = await admin(`/photo/${report.id}`, { cookie });
+const photoBytes = Buffer.from(r.body);
+check('Admin can view the photo', r.status === 200 && r.headers.get('content-type') === 'image/jpeg');
+check('The stored photo has its EXIF location data removed', photoBytes[0] === 0xff && photoBytes[1] === 0xd8 && !photoBytes.includes(Buffer.from('Exif')) && photoBytes.includes(Buffer.from('image-data')), photoBytes.toString('latin1'));
+
+// Approve the photo, marking one beer on and one gone.
+const [gonePick] = sql(`SELECT beer_id, dispense FROM listings WHERE pub_id = '${report.pub_id}' AND status != 'removed' LIMIT 1`);
+r = await admin(`/report/${report.id}`, {
+  cookie,
+  body: { action: 'approve', changes: [{ beer_id: 'thatchers-zero', dispense: 'keg', set: 'on' }, { ...gonePick, set: 'gone' }] },
+});
+check('Approving a photo saves the ticks', r.status === 200, JSON.stringify(r.body));
+const onRow = sql(`SELECT status, source, last_confirmed_at FROM listings WHERE pub_id = '${report.pub_id}' AND beer_id = 'thatchers-zero'`)[0];
+const reportRow = sql(`SELECT status, photo_key, created_at FROM photo_reports WHERE id = ${report.id}`)[0];
+check('A ticked beer is confirmed as of when the photo was taken', onRow?.status === 'confirmed' && onRow.source === 'photo' && onRow.last_confirmed_at === reportRow.created_at, JSON.stringify({ onRow, reportRow }));
+check('An unticked beer is removed', sql(`SELECT status FROM listings WHERE pub_id = '${report.pub_id}' AND beer_id = '${gonePick.beer_id}' AND dispense = '${gonePick.dispense}'`)[0]?.status === 'removed');
+check('The report is marked approved and its photo key cleared', reportRow.status === 'approved' && reportRow.photo_key === null, JSON.stringify(reportRow));
+check('The photo itself is deleted', (await admin(`/photo/${report.id}`, { cookie })).status === 404);
+check('A report cannot be decided twice', (await admin(`/report/${report.id}`, { cookie, body: { action: 'reject' } })).status === 409);
+
+// Suggestions: approve the listed beer, add the new one as a new beer.
+const [known, fresh] = sql('SELECT id, beer_id FROM suggestions ORDER BY id');
+r = await admin(`/suggestion/${known.id}`, { cookie, body: { action: 'approve' } });
+check('Approving a suggestion adds the beer to the pub', r.status === 200 && sql(`SELECT status, source FROM listings WHERE pub_id = '${pubId}' AND beer_id = 'lucky-saint' AND dispense = 'keg'`)[0]?.status === 'confirmed', JSON.stringify(r.body));
+r = await admin(`/suggestion/${fresh.id}`, { cookie, body: { action: 'approve', beer: { name: 'Walthamstow Wonder', brewery: 'Test Brewery', category: 'pale_ipa', abv: 0.4, is_alcohol_free: false, aliases: [] } } });
+check('Inconsistent alcohol-free details are refused', r.status === 400 && r.body.error === 'invalid_beer', JSON.stringify(r.body));
+r = await admin(`/suggestion/${fresh.id}`, { cookie, body: { action: 'approve', beer: { name: 'Walthamstow Wonder', brewery: 'Test Brewery', category: 'pale_ipa', abv: 4.2, is_alcohol_free: false, aliases: ['guiness'] } } });
+check('Other spellings that belong to another beer are refused', r.status === 409 && r.body.error === 'alias_taken', JSON.stringify(r.body));
+r = await admin(`/suggestion/${fresh.id}`, { cookie, body: { action: 'approve', beer: { name: 'Walthamstow Wonder', brewery: 'Test Brewery', category: 'pale_ipa', abv: 4.2, is_alcohol_free: false, aliases: ['Walthamstow Wonder Pale', 'wonder'] } } });
+const newBeer = sql("SELECT id, name, category FROM beers WHERE id = 'walthamstow-wonder'")[0];
+check('Approving a new beer adds it to the list with its spellings', r.status === 200 && newBeer?.category === 'pale_ipa' && sql("SELECT COUNT(*) AS n FROM beer_aliases WHERE beer_id = 'walthamstow-wonder'")[0].n === 2, JSON.stringify({ body: r.body, newBeer }));
+check('…and to the pub, on cask', sql(`SELECT status FROM listings WHERE pub_id = '${pubId}' AND beer_id = 'walthamstow-wonder' AND dispense = 'cask'`)[0]?.status === 'confirmed');
+
+// Tap list editor.
+r = await admin(`/pub/${pubId}/listings`, { cookie, body: { changes: [{ beer_id: gonePick.beer_id, dispense: gonePick.dispense, set: 'on' }] } });
+check('Editor can restore a removed beer', r.status === 200 && r.body.listings.some((l) => l.beer_id === gonePick.beer_id && l.status === 'confirmed'), JSON.stringify(r.body).slice(0, 200));
+r = await admin(`/pub/${pubId}/listings`, { cookie, body: { changes: [{ beer_id: 'no-such-beer', dispense: 'keg', set: 'on' }] } });
+check('Editor refuses beers that are not in the list', r.status === 400, JSON.stringify(r.body));
+r = await admin(`/pub/${pubId}/listings`, { cookie, body: { changes: [{ beer_id: 'guinness', dispense: 'can', set: 'on' }] } });
+check('Editor refuses anything but cask or keg', r.status === 400, JSON.stringify(r.body));
+r = await admin(`/pub/${pubId}/listings`, { cookie, origin: 'https://evil.example', body: { changes: [] } });
+check('Admin changes from another website are refused', r.status === 403, JSON.stringify(r.body));
+
+r = await admin('/logout', { cookie, body: {} });
+check('Signing out clears the cookie', /Max-Age=0/.test(r.headers.get('set-cookie') ?? ''));
+
+// --- Unchecked photos expire ----------------------------------------------------------
+const staleKey = 'reports/check-api-stale';
+execFileSync('npx', ['wrangler', 'kv', 'key', 'put', staleKey, 'old-photo', '--binding', 'PHOTOS', '--local'], { stdio: 'ignore' });
+const staleDate = new Date(Date.now() - 31 * 86_400_000).toISOString();
+sql(`INSERT INTO photo_reports (pub_id, photo_key, status, device_hash, created_at) VALUES ('${pubId}', '${staleKey}', 'pending', 'feedfacefeedfacefeedfacefeedface', '${staleDate}')`);
+await fetch(`${API}/cdn-cgi/handler/scheduled?cron=${encodeURIComponent('17 3 * * *')}`);
+await sleep(800);
+const stale = sql(`SELECT status, photo_key, device_hash FROM photo_reports WHERE created_at = '${staleDate}'`)[0];
+const kvLeft = execFileSync('npx', ['wrangler', 'kv', 'key', 'list', '--binding', 'PHOTOS', '--local'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+check('Photos unchecked after 30 days are deleted and the report closed', stale?.status === 'rejected' && stale.photo_key === null && !kvLeft.includes(staleKey), JSON.stringify({ stale, kvLeft }));
+check('…and the report forgets its device', stale?.device_hash === null);
+
 // --- Privacy -------------------------------------------------------------------------
 const hashes = sql('SELECT DISTINCT device_hash FROM votes WHERE device_hash IS NOT NULL').map((v) => v.device_hash);
 check('Votes store a hash, never an IP address', hashes.length > 0 && hashes.every((h) => /^[0-9a-f]{32}$/.test(h)), hashes.join(','));
-const dump = JSON.stringify(sql('SELECT * FROM votes')) + JSON.stringify(sql('SELECT * FROM rate_limits'));
-check('No IP address appears in the votes or counters', !dump.includes('203.0.113.'), '');
+const dump = ['votes', 'rate_limits', 'photo_reports', 'suggestions'].map((t) => JSON.stringify(sql(`SELECT * FROM ${t}`))).join('');
+check('No IP address appears in votes, reports, suggestions or counters', !dump.includes('203.0.113.'), '');
 
 console.log(failures ? `\n${failures} check(s) failed.` : '\nAll checks passed.');
 process.exit(failures ? 1 : 0);

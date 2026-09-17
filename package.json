@@ -14,6 +14,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply tap-watch --remote",
     "db:seed:local": "node seed/build-seed-sql.mjs e17 --sample-listings && wrangler d1 execute tap-watch --local --file seed/out/seed-e17.sql",
     "db:seed:remote": "node seed/build-seed-sql.mjs e17 --sample-listings && wrangler d1 execute tap-watch --remote --file seed/out/seed-e17.sql",
+    "db:reset:local": "rm -rf .wrangler/state && npm run db:migrate:local && npm run db:seed:local",
     "seed:pubs": "node seed/fetch-pubs.mjs",
     "seed:map": "node seed/open-map.mjs",
     "map:build": "node seed/build-basemap.mjs"
