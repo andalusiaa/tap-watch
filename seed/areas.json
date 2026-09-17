@@ -1,0 +1,12 @@
+[
+  {
+    "id": "e17",
+    "name": "Walthamstow",
+    "postcode_district": "E17",
+    "borough": "Waltham Forest",
+    "centre_lat": 51.5855,
+    "centre_lng": -0.0210,
+    "search_bbox": [-0.065, 51.560, 0.025, 51.620],
+    "bbox": [-0.065, 51.560, 0.025, 51.620]
+  }
+]

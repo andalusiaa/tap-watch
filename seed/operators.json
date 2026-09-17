@@ -1,0 +1,4 @@
+[
+  { "id": "free-house", "name": "Free house", "type": "independent", "osm_names": [] },
+  { "id": "stonegate", "name": "Stonegate", "type": "pubco", "osm_names": ["stonegate", "stonegate pub company"] }
+]

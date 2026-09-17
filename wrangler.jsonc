@@ -1,12 +1,17 @@
 // Cloudflare configuration for Tap Watch.
-// Phase 0: a static site only. Everything in ./public is served as-is.
+// Phase 1: a static site. Vite builds it into ./dist, which Cloudflare serves.
 // The API (/api/*), database (D1) and photo storage (R2) are added in later phases.
 {
-  // Must match the Worker name you pick in the Cloudflare dashboard.
+  // Must match the Worker name in the Cloudflare dashboard.
   "name": "tap-watch",
   "compatibility_date": "2026-09-01",
+  // Wrangler runs this before every deploy (including Cloudflare's automatic
+  // deploys from GitHub) and before `wrangler dev`.
+  "build": {
+    "command": "npm run build"
+  },
   "assets": {
-    "directory": "./public",
+    "directory": "./dist",
     "not_found_handling": "404-page"
   }
 }

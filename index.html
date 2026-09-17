@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en-GB" data-font="fraunces">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tap Watch E17: find a beer on tap in Walthamstow</title>
+  <meta name="description" content="Find which Walthamstow pubs have your beer on tap, with how recently each one was checked.">
+  <meta name="color-scheme" content="light dark">
+  <!-- Prototype: keep search engines out until the tap lists are real. -->
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/fraunces-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/src/styles.css">
+  <script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+  <p class="sample-banner" id="sample-banner" hidden>Prototype: these tap lists are made up for testing. Don't rely on them yet.</p>
+
+  <header class="site-header">
+    <h1 class="site-title">
+      <a class="brand" href="/">
+        <span class="wordmark">Tap Watch</span>
+        <span class="plate"><span class="visually-hidden">, </span>E17</span>
+      </a>
+    </h1>
+  </header>
+
+  <main>
+    <form class="search" id="search-form" role="search">
+      <label class="search-label" for="beer-search">Which beer?</label>
+      <div class="combo">
+        <input id="beer-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false"
+          aria-controls="beer-options" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+          placeholder="Try Guinness or Neck Oil">
+        <ul id="beer-options" class="options" role="listbox" aria-label="Matching beers" hidden></ul>
+      </div>
+    </form>
+
+    <button type="button" class="button button--primary shortcut" id="af-near-me" aria-pressed="false">Alcohol-free near me</button>
+
+    <div class="filters">
+      <fieldset class="segmented" id="dispense">
+        <legend class="visually-hidden">Dispense</legend>
+        <label><input type="radio" name="dispense" value="any" checked><span>Cask or keg</span></label>
+        <label><input type="radio" name="dispense" value="cask"><span>Cask</span></label>
+        <label><input type="radio" name="dispense" value="keg"><span>Keg</span></label>
+      </fieldset>
+      <label class="checkbox"><input type="checkbox" id="af-only"><span>Alcohol-free only</span></label>
+    </div>
+
+    <p class="location-note" id="location-note">Distances are from central Walthamstow.</p>
+
+    <section class="results-section" aria-labelledby="results-heading">
+      <div class="results-top">
+        <h2 id="results-heading">Pubs in E17</h2>
+        <button type="button" class="link-button" id="results-clear" hidden>Show all pubs</button>
+      </div>
+      <p class="summary" id="results-summary" aria-live="polite"></p>
+      <p class="status" id="app-status" role="status"></p>
+      <ol class="results" id="results">
+        <li class="empty"><p>Loading pubs…</p></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Pub names and locations © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+    <div id="font-toggle"></div>
+  </footer>
+
+  <dialog class="sheet" id="pub-sheet" aria-labelledby="sheet-title"></dialog>
+</body>
+</html>

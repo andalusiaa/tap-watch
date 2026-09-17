@@ -18,10 +18,10 @@ node_modules/
 
 # Build output
 dist/
-.astro/
 
-# Seed script working files (raw OSM downloads, large map source files)
+# Seed script working files (raw OSM downloads, generated map files)
 seed/raw/
+seed/out/
 *.osm.pbf
 
 # Logs
@@ -35,6 +35,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
-# Personal Claude Code settings (launch.json points at a machine-specific temp folder)
+# Personal Claude Code settings
 .claude/settings.local.json
 .claude/launch.json

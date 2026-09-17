@@ -1,0 +1,97 @@
+include,id,name,osm_type,district,postcode,address,operator_id,osm_operator,osm_brewery,lat,lng,osm_id,notes
+yes,big-penny-social-e17,Big Penny Social,pub,E17,E17 6AL,1 Priestley Way,,,yes,51.590609,-0.041550,way/23376430,
+yes,prince-of-wales-e17,Prince of Wales,pub,E17,E17 6BD,58 St Andrews Road,,,,51.593204,-0.036733,way/405915943,
+yes,queens-arms-e17,Queens Arms,pub,E17,E17 9NJ,42 Orford Road,,,,51.582452,-0.013581,way/198577468,
+yes,st-james-bar-e17,St James Bar,pub,E17,E17 7PF,30 St James's Street,,,,51.580495,-0.033067,way/200217289,
+yes,the-bell-e17,The Bell,pub,E17,E17 4NE,617 Forest Road,stonegate,Stonegate,,51.590269,-0.016962,way/164570576,
+yes,the-castle-2-e17,The Castle,pub,E17,E17 9LB,15 Grosvenor Rise East,,,,51.580637,-0.011205,way/214590379,
+yes,the-chequers-e17,The Chequers,pub,E17,E17 7BX,145 High Street,,,,51.583493,-0.026670,way/196917803,
+yes,the-coppermill-e17,The Coppermill,pub,E17,E17 7HF,205 Coppermill Lane,,,,51.579786,-0.041195,way/682382151,
+yes,the-dukes-head-e17,The Duke's Head,pub,E17,E17 3HX,112 Wood Street,,,,51.588110,-0.004430,way/205876522,
+yes,the-flower-pot-e17,The Flower Pot,pub,E17,E17 3HX,126-128 Wood Street,,,,51.587590,-0.003923,way/205593042,
+yes,the-goose-e17,The Goose,pub,E17,E17 3AX,264 Hoe Street,stonegate,Stonegate,various,51.583377,-0.019140,node/249672846,
+yes,the-lord-palmerston-e17,The Lord Palmerston,pub,E17,E17 5JN,Forest Road,stonegate,Stonegate,,51.588786,-0.030265,way/376872583,
+yes,the-nags-head-e17,The Nag's Head,pub,E17,E17 9LP,9 Orford Road,,,,51.584068,-0.011071,way/655249175,
+yes,the-raglan-e17,The Raglan,pub,E17,E17 9HX,199 Shernhall Street,,,various,51.580961,-0.003522,way/219045183,
+yes,the-tavern-on-the-hill-e17,The Tavern On The Hill,pub,E17,E17 5RG,318 Higham Hill Road,,,,51.596754,-0.034908,way/139911657,
+yes,the-village-public-house-e17,The Village Public House,pub,E17,E17 9NL,31 Orford Road,,,,51.582669,-0.011778,way/198639606,
+yes,the-william-morris-e17,The William Morris,pub,E17,E17 4JD,807-809 Forest Road,,,,51.591204,-0.007768,node/249672865,
+yes,true-craft-e17,True Craft,pub,E17,E17 7PF,18-20 St James's Street,,,yes,51.581008,-0.033426,way/940451832,
+yes,untraditional-pub-e17,Untraditional Pub,pub,E17,E17 7FY,35 St James Street,,,yes,51.580594,-0.032275,node/11061470043,Website is a brewery's: check it isn't a taproom pouring only its own beer
+yes,ye-olde-rose-and-crown-e17,Ye Olde Rose and Crown,pub,E17,E17 4RP,53-55 Hoe Street,,,yes,51.587778,-0.020433,way/159296346,"Postcode is the nearest one found, not from the pub address"
+no,east-london-brewery-e17,East London Brewery,pub,E17,E17 5RB,2 Lockwood Way,,,,51.595416,-0.041700,way/412076101,May be a brewery taproom (excluded from v1)
+no,exale-taproom-e17,Exale Taproom,pub,E17,E17 5QJ,Blackhorse Lane,,,,51.593248,-0.041469,node/7056928285,May be a brewery taproom (excluded from v1)
+no,signature-brew-taproom-e17,Signature Brew Taproom,pub,E17,E17 5QJ,Blackhorse Lane,,Signature Brew Ltd,Signature Brew,51.591551,-0.042769,way/1208115927,May be a brewery taproom (excluded from v1)
+no,40ft-brewery-e17,40ft Brewery,bar,E17,E17 5RB,10 Lockwood Way,,Hackney Brewery,various,51.595827,-0.041572,way/23376385,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); May be a brewery taproom (excluded from v1)
+no,arubar-lounge-e17,Arubar Lounge,bar,E17,E17 4NA,524-528 Forest Road,,,,51.589879,-0.016444,node/2068080583,"Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,clapton-craft-e17,Clapton Craft,bar,E17,E17 3LX,,,,,51.587188,-0.003377,node/8601783081,"Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,drift-cocktail-bar-e17,Drift Cocktail Bar,bar,E17,E17 7JR,45 Selborne Walk,,,,51.582691,-0.024594,node/11340695339,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,forest-wines-e17,Forest Wines,bar,E17,E17 6HE,149 Forest Road,,,,51.587733,-0.036645,way/404333920,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,malt-haus-e17,Malt Haus,bar,E17,E17 9HQ,Shernhall Street,,Pillars Brewery,,51.583937,-0.008590,node/2252043107,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,mothers-ruin-gin-factory-e17,Mother's Ruin Gin Factory,bar,E17,E17 9HQ,Shernhall Street,,,,51.583828,-0.008169,node/2252043080,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,pillars-brewery-e17,Pillars Brewery,bar,E17,E17 9HQ,Shernhall Street,,,,51.583742,-0.008493,node/2252043085,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); May be a brewery taproom (excluded from v1)
+no,pretty-decent-e17,Pretty Decent,bar,E17,E17 5QJ,Blackhorse Lane,,,,51.591923,-0.041469,node/4090944751,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); May be a brewery taproom (excluded from v1)
+no,renegade-urban-winery-e17,Renegade Urban Winery,bar,E17,E17 5RB,,,Renegade Urban Winery,,51.595381,-0.043216,node/11470415255,"Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,trap-taproom-e17,Trap Taproom,bar,E17,E17 9HQ,Shernhall Street,,The Real Al Company,,51.583818,-0.008534,node/2252043099,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); May be a brewery taproom (excluded from v1)
+no,chop-shop-tavern-e17,Chop Shop Tavern,pub,E10,E10 6RE,141 Tilbury Road,,,,51.570583,-0.009928,node/13717302373,
+no,coach-and-horses-e17,Coach and Horses,pub,E10,E10 5NA,391 High Road Leyton,,,various,51.561560,-0.010502,way/696129533,
+no,gravity-well-taproom-e17,Gravity Well Taproom,pub,E10,E10 6JT,Arch 155 Midland Road,,,Gravity Well,51.569714,-0.007739,node/8355222754,May be a brewery taproom (excluded from v1)
+no,hare-and-hounds-e17,Hare and Hounds,pub,E10,E10 7LD,,,,,51.568797,-0.028763,node/472446463,"Postcode is the nearest one found, not from the pub address"
+no,king-william-iv-e17,King William IV,pub,E10,E10 6AE,816 High Road Leyton,,,Brodie's,51.574809,-0.011355,way/142241624,
+no,prince-of-wales-2-e17,Prince of Wales,pub,E10,E10 5AB,777 High Road Leyton,,,,51.573685,-0.009858,way/444200909,
+no,the-auctioneer-e17,The Auctioneer,pub,E10,E10 7DN,596 Lea Bridge Road,,,,51.574469,-0.013768,way/444593912,
+no,the-european-e17,The European,pub,E10,E10 7EQ,557-559 Lea Bridge Road,,,,51.574926,-0.013861,way/444642776,
+no,blondies-brewery-e17,Blondies Brewery,bar,E10,E10 7JQ,258 Church Road,,,yes,51.569639,-0.024341,way/1013543384,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); May be a brewery taproom (excluded from v1)
+no,la-transilvania-e17,La Transilvania,bar,E10,E10 7NE,299 Lea Bridge Road,,,,51.570022,-0.026402,node/6425259206,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); OSM address says E10 but nearest postcode is E17
+no,leyton-calling-e17,Leyton Calling,bar,E10,E10 6RE,145 Tilbury Road,,,,51.570363,-0.009424,node/12847089779,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,neckstamper-brewing-e17,Neckstamper Brewing,bar,E10,E10 7QZ,Staffa Road,,,,51.569309,-0.037921,node/7040675187,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); May be a brewery taproom (excluded from v1)
+no,patchworks-e17,Patchworks,bar,E10,E10 7JQ,258 Church Road,,,,51.569498,-0.024690,node/9351013737,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,point-cocktails-e17,Point Cocktails,bar,E10,E10 6RE,146 Tilbury Road,,,,51.570295,-0.009261,node/13717302375,"Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,snooker-lovers-club-and-bar-e17,Snooker Lovers Club & Bar,bar,E10,E10 6AE,788 High Road Leyton,,,,51.574337,-0.010339,way/454663250,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,swirl-e10-e17,Swirl E10,bar,E10,E10 6RE,148 Tilbury Road,,,,51.570233,-0.009110,node/12847089778,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,heathcote-and-star-e17,Heathcote & Star,pub,E11,E11 4EA,344 Grove Green Road,,,,51.565812,0.002139,way/1047662587,
+no,northcote-arms-e17,Northcote Arms,pub,E11,E11 4EL,110 Grove Green Road,,,,51.560346,-0.001707,way/935593053,
+no,oneills-e17,O'Neill's,pub,E11,E11 3AW,762 High Road Leytonstone,,,,51.570549,0.015241,way/228435778,
+no,the-bell-2-e17,The Bell,pub,E11,E11 3HN,468 High Road Leytonstone,stonegate,Stonegate,,51.560880,0.008807,way/507095501,
+no,the-cuckfield-e17,The Cuckfield,pub,E11,E11 2AA,31 High Street,,,,51.579363,0.025020,way/99878205,
+no,the-north-star-e17,The North Star,pub,E11,E11 3AR,24 Browning Road,,,,51.569861,0.015481,way/511586538,
+no,the-old-crown-e17,The Old Crown,pub,E11,E11 3AA,692 High Road Leytonstone,,,,51.569083,0.012308,way/310789678,
+no,the-red-lion-e17,The Red Lion,pub,E11,E11 3AA,640 High Road Leytonstone,,Antic London,,51.567912,0.011163,way/28836414,
+no,the-walnut-tree-e17,The Walnut Tree,pub,E11,E11 1HH,857-861 High Road Leytonstone,,,,51.569866,0.012650,way/511169062,
+no,toby-carvery-e17,Toby Carvery,pub,E11,E11 1PE,73 Hollybush Hill,,,,51.583254,0.020846,way/1069433877,OSM address says E11 but nearest postcode is E18
+no,node-9949676340-e17,,bar,E11,E11 4AP,,,,,51.565990,0.002861,node/9949676340,"No name in OpenStreetMap; Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,way-509678907-e17,,bar,E11,E11 1HG,7 Church Lane,,,,51.568216,0.010353,way/509678907,No name in OpenStreetMap; Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,calamity-tank-e17,Calamity Tank,bar,E11,E11 4RE,1 Station Approach,,,,51.563111,0.009283,node/13284007987,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,legends-snooker-academy-e17,Legends Snooker Academy,bar,E11,E11 3DA,628-632 High Road Leytonstone,,,,51.567401,0.011287,way/509649624,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,stone-mini-market-e17,Stone Mini Market,bar,E11,E11 4RD,719 High Road Leytonstone,,,,51.565226,0.009774,way/513305723,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,slug-and-lettuce-e17,Slug and Lettuce,pub,E18,E18 1AY,184 George Lane,,,,51.594452,0.024039,node/1975218592,
+no,the-george-e17,The George,pub,E18,E18 2QL,70-74 High Road,stonegate,Stonegate,,51.594725,0.022630,way/1060529595,
+no,lizard-lounge-e17,Lizard Lounge,bar,E18,E18 1AY,186-188 George Lane,,,,51.594525,0.023956,node/1975218563,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,the-county-arms-e17,The County Arms,pub,E4,E4 9PB,420 Hale End Road,,,,51.607365,0.000674,way/681581511,
+no,the-kings-ford-e17,The King's Ford,pub,E4,E4 8JL,250-252 Chingford Mount Road,,,,51.616364,-0.017035,way/685395571,
+no,the-larkshall-e17,The Larkshall,pub,E4,E4 6NT,205 Larkshall Road,,,,51.616874,-0.000749,way/310872642,
+no,the-mount-e17,The Mount,pub,E4,E4 8DD,30-32 Old Church Road,,,,51.618150,-0.017751,way/680896798,
+no,the-old-hall-tavern-e17,The Old Hall Tavern,pub,E4,E4 8EY,200 Hall Lane,,,,51.617467,-0.028114,way/1232304253,
+no,the-stag-and-lantern-e17,The Stag and Lantern,pub,E4,E4 9LQ,11-12 The Broadway,,,,51.607236,-0.001001,way/916682836,
+no,the-wishing-well-e17,The Wishing Well,pub,E4,E4 8HH,11 Hall Lane,stonegate,Stonegate,,51.616760,-0.018635,way/684584616,
+no,bojangles-e17,Bojangles,bar,E4,E4 8JZ,,,,,51.617161,-0.017349,way/919638432,"Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,rnr-lounge-e17,RnR Lounge,bar,E4,E4 8LP,,,,,51.615336,-0.017710,way/684595016,"Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,vino-tap-e17,Vino Tap,bar,E4,E4 9LN,2a Winchester Road,,,,51.607219,-0.001494,way/468834929,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,princess-of-wales-e17,Princess of Wales,pub,E5,E5 9RB,146 Lea Bridge Road,,Young's,,51.561881,-0.045747,way/115190097,
+no,the-anchor-and-hope-e17,The Anchor & Hope,pub,E5,E5 9HG,15 High Hill Ferry,,,,51.568159,-0.052840,way/921356497,
+no,the-crooked-billet-e17,The Crooked Billet,pub,E5,E5 9JP,84 Upper Clapton Road,,,,51.562202,-0.057260,way/142313535,
+no,the-royal-sovereign-e17,The Royal Sovereign,pub,E5,E5 8RL,64 Northwold Road,,,,51.562644,-0.063197,node/306966699,
+no,node-10801637673-e17,,bar,E5,E5 9BL,,,,,51.573488,-0.059104,node/10801637673,"No name in OpenStreetMap; Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,the-castle-e17,The Castle,pub,IG8,IG8 0XG,,,,,51.609105,0.020759,node/298702963,"Postcode is the nearest one found, not from the pub address"
+no,the-cricketers-e17,The Cricketers,pub,IG8,IG8 9HQ,299-301 High Road,,,,51.601923,0.019027,way/228113389,
+no,the-royal-oak-e17,The Royal Oak,pub,IG8,IG8 9LN,320 Hale End Road,,,,51.604195,0.002972,way/240823308,
+no,rose-and-crown-e17,Rose & Crown,bar,IG8,IG8 0UG,,,,,51.609913,0.021108,way/681825215,"Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub); Postcode is the nearest one found, not from the pub address"
+no,mannions-prince-arthur-e17,Mannions Prince Arthur,pub,N15,N15 4QJ,158 Broad Lane,,,,51.584759,-0.064238,node/460668847,
+no,beavertown-brewery-taproom-e17,Beavertown Brewery Taproom,pub,N17,N17 9QP,Mill Mead Road,,Beavertown,Beavertown,51.590616,-0.056796,node/9739982235,May be a brewery taproom (excluded from v1)
+no,pressure-drop-e17,Pressure Drop,pub,N17,N17 9FZ,,,,,51.590527,-0.058041,node/6939589391,"May be a brewery taproom (excluded from v1); Postcode is the nearest one found, not from the pub address"
+no,the-bill-nicholson-e17,The Bill Nicholson,pub,N17,N17 0TS,102 Northumberland Park,,,,51.605607,-0.061690,way/1233009537,"Postcode is the nearest one found, not from the pub address"
+no,the-ferry-boat-inn-e17,The Ferry Boat Inn,pub,N17,N17 9NG,1 Ferry Lane,,Heritage Pubs,,51.586952,-0.052508,way/134777475,
+no,the-olive-branch-e17,The Olive Branch,pub,N17,N17 0HJ,169 Park Lane,,,,51.602594,-0.059953,node/496843507,
+no,the-volunteer-e17,The Volunteer,pub,N17,N17 9EU,131 Chesnut Road,,,,51.590311,-0.064579,way/151161058,
+no,mother-kellys-e17,Mother Kelly's,bar,N17,N17 9ST,16 Ashley Road,,,,51.590054,-0.061562,node/11687714203,Tagged as a bar in OpenStreetMap (bars come later; say yes if it is really a pub)
+no,golden-fleece-e17,Golden Fleece,pub,N18,N18 2ER,,,,,51.617640,-0.063635,node/459805640,"Postcode is the nearest one found, not from the pub address"
