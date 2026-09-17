@@ -4,13 +4,13 @@ import type { Catalogue } from '../catalogue';
 import { MAX_SUGGESTIONS } from '../config';
 import type { Beer } from '../types';
 import { h } from './dom';
+import { alcoholFreeLabel } from './labels';
 
 interface Options {
   input: HTMLInputElement;
   listbox: HTMLUListElement;
   form: HTMLFormElement;
   catalogue: Catalogue;
-  alcoholFreeOnly: () => boolean;
   onSelect: (beer: Beer) => void;
   /** Called when the user submits text that matches no beer. */
   onNoMatch: (query: string) => void;
@@ -52,7 +52,7 @@ export function setupAutocomplete(o: Options) {
 
   function update() {
     const query = o.input.value;
-    matches = o.catalogue.searchBeers(query, o.alcoholFreeOnly(), MAX_SUGGESTIONS);
+    matches = o.catalogue.searchBeers(query, MAX_SUGGESTIONS);
     if (!query.trim()) {
       close();
       return;
@@ -61,7 +61,6 @@ export function setupAutocomplete(o: Options) {
       ...matches.map((beer, i) => {
         const count = o.catalogue.pubCount(beer);
         const meta = [
-          beer.af ? 'Alcohol-free' : null,
           beer.brewery,
           count === 0 ? 'Not listed yet' : `${count} ${count === 1 ? 'pub' : 'pubs'}`,
         ].filter(Boolean);
@@ -78,7 +77,7 @@ export function setupAutocomplete(o: Options) {
               choose(beer);
             },
           },
-          h('span', { class: 'option-name' }, beer.name),
+          h('span', { class: 'option-name' }, beer.name, beer.af ? [' ', alcoholFreeLabel(beer)] : null),
           h('span', { class: 'option-meta' }, meta.join(' · ')),
         );
       }),
@@ -130,7 +129,7 @@ export function setupAutocomplete(o: Options) {
   function submit() {
     const query = o.input.value.trim();
     if (!query) return;
-    const beer = matches[active] ?? matches[0] ?? o.catalogue.searchBeers(query, o.alcoholFreeOnly(), 1)[0];
+    const beer = matches[active] ?? matches[0] ?? o.catalogue.searchBeers(query, 1)[0];
     if (beer) choose(beer);
     else {
       close();

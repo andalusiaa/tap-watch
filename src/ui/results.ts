@@ -9,7 +9,6 @@ import { alcoholFreeLabel, dispenseLabel, freshnessBadge, separator } from './la
 
 export type ResultsMode =
   | { kind: 'browse' }
-  | { kind: 'alcohol-free' }
   | { kind: 'beer'; beer: Beer }
   | { kind: 'no-match'; query: string };
 
@@ -90,37 +89,6 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
           available.length === 0
             ? `No pubs listed for ${beer.name}`
             : `${plural(available.length, 'pub has', 'pubs have')} ${beer.name}${ctx.dispense === 'any' ? '' : ` on ${ctx.dispense}`}${nearestFirst(available.length)}`,
-        items,
-      };
-    }
-
-    case 'alcohol-free': {
-      const results = ctx.catalogue.pubsWithAlcoholFree(ctx.origin, ctx.dispense, ctx.now);
-      const items = results.map((r) =>
-        row(
-          ctx,
-          r,
-          [...r.listings]
-            .sort((a, b) => freshnessRank(a, ctx.now) - freshnessRank(b, ctx.now))
-            .map((l) =>
-              h(
-                'span',
-                { class: 'result-line' },
-                h('span', { class: 'result-beer' }, ctx.catalogue.beer(l.beer_id)?.name ?? ''),
-                separator(),
-                dispenseLabel(l.dispense),
-                separator(),
-                freshnessBadge(l, ctx.now),
-              ),
-            ),
-        ),
-      );
-      if (items.length === 0) {
-        items.push(emptyState(h('p', null, `No one's reported an alcohol-free ${dispenseWord(ctx.dispense)}beer on tap in ${areaCode} yet.`)));
-      }
-      return {
-        heading: ['Alcohol-free near you'],
-        summary: `${plural(results.length, 'pub has', 'pubs have')} alcohol-free ${dispenseWord(ctx.dispense)}beer on tap${nearestFirst(results.length)}`,
         items,
       };
     }

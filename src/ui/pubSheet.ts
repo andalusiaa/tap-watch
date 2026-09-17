@@ -31,6 +31,7 @@ function mapsUrl(pub: Pub): string {
 
 export function setupPubSheet(o: Options) {
   let currentPubId: string | null = null;
+  const distanceText = (pub: Pub) => `${formatDistance(distanceKm(o.origin(), [pub.lat, pub.lng]))} away`;
   const notice = () => o.dialog.querySelector<HTMLElement>('.sheet-notice');
 
   o.dialog.addEventListener('close', () => {
@@ -129,7 +130,7 @@ export function setupPubSheet(o: Options) {
           'p',
           { class: 'sheet-meta' },
           operator ? [h('span', null, operator.name), separator()] : null,
-          h('span', null, `${formatDistance(distanceKm(o.origin(), [pub.lat, pub.lng]))} away`),
+          h('span', { class: 'sheet-distance' }, distanceText(pub)),
           separator(),
           h('a', { href: mapsUrl(pub), target: '_blank', rel: 'noopener noreferrer' }, 'Open in maps'),
         ),
@@ -163,6 +164,13 @@ export function setupPubSheet(o: Options) {
 
     close() {
       if (o.dialog.open) o.dialog.close();
+    },
+
+    /** Updates the distance after the user's location changes. */
+    refreshDistance() {
+      const pub = currentPubId ? o.catalogue.pub(currentPubId) : undefined;
+      const el = o.dialog.querySelector('.sheet-distance');
+      if (pub && el) el.textContent = distanceText(pub);
     },
 
     /** Re-draws one beer after a vote and moves focus to its "Thanks". */

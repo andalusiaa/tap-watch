@@ -1,10 +1,10 @@
 import { createCatalogue, type Catalogue, type DispenseFilter } from './catalogue';
 import { SNAPSHOT_URL } from './config';
-import type { LatLng } from './geo';
 import { applyVote, type VoteDirection } from './rules';
 import type { Snapshot } from './types';
 import { setupAutocomplete } from './ui/autocomplete';
 import { byId, h } from './ui/dom';
+import { setupLocationBar } from './ui/locationBar';
 import { setupPubSheet } from './ui/pubSheet';
 import { renderResults, type ResultsMode } from './ui/results';
 
@@ -13,7 +13,6 @@ import { renderResults, type ResultsMode } from './ui/results';
 interface State {
   beerId: string | null;
   noMatch: string | null;
-  alcoholFree: boolean;
   dispense: DispenseFilter;
   pubId: string | null;
 }
@@ -24,7 +23,6 @@ function stateFromUrl(): State {
   return {
     beerId: p.get('beer'),
     noMatch: null,
-    alcoholFree: p.get('af') === '1',
     dispense: dispense === 'cask' || dispense === 'keg' ? dispense : 'any',
     pubId: p.get('pub'),
   };
@@ -33,7 +31,6 @@ function stateFromUrl(): State {
 function urlFor(s: State): string {
   const p = new URLSearchParams();
   if (s.beerId) p.set('beer', s.beerId);
-  if (s.alcoholFree) p.set('af', '1');
   if (s.dispense !== 'any') p.set('dispense', s.dispense);
   if (s.pubId) p.set('pub', s.pubId);
   const query = p.toString();
@@ -47,10 +44,7 @@ const els = {
   form: byId<HTMLFormElement>('search-form'),
   input: byId<HTMLInputElement>('beer-search'),
   listbox: byId<HTMLUListElement>('beer-options'),
-  afButton: byId<HTMLButtonElement>('af-near-me'),
-  afOnly: byId<HTMLInputElement>('af-only'),
   dispense: byId<HTMLFieldSetElement>('dispense'),
-  locationNote: byId('location-note'),
   heading: byId('results-heading'),
   clear: byId<HTMLButtonElement>('results-clear'),
   summary: byId('results-summary'),
@@ -67,11 +61,9 @@ async function loadSnapshot(): Promise<Snapshot> {
 
 function start(catalogue: Catalogue) {
   let state = stateFromUrl();
-  const origin: LatLng = catalogue.area.centre;
   const votedThisVisit = new Set<number>();
 
   els.banner.hidden = !catalogue.sample;
-  els.locationNote.textContent = `Distances are from central ${catalogue.area.name}.`;
 
   function setState(patch: Partial<State>, how: 'push' | 'replace') {
     state = { ...state, ...patch };
@@ -86,8 +78,10 @@ function start(catalogue: Catalogue) {
     listbox: els.listbox,
     form: els.form,
     catalogue,
-    alcoholFreeOnly: () => state.alcoholFree,
-    onSelect: (beer) => setState({ beerId: beer.id, noMatch: null, pubId: null }, 'push'),
+    onSelect: (beer) => {
+      locationBar.onSearch();
+      setState({ beerId: beer.id, noMatch: null, pubId: null }, 'push');
+    },
     onNoMatch: (query) => setState({ beerId: null, noMatch: query, pubId: null }, 'replace'),
     onClear: () => {
       if (state.beerId || state.noMatch) setState({ beerId: null, noMatch: null }, 'replace');
@@ -97,7 +91,7 @@ function start(catalogue: Catalogue) {
   const sheet = setupPubSheet({
     dialog: els.sheet,
     catalogue,
-    origin: () => origin,
+    origin: () => locationBar.origin(),
     hasVoted: (id) => votedThisVisit.has(id),
     onVote: (listingId, direction) => vote(listingId, direction),
     onClose: () => {
@@ -105,6 +99,15 @@ function start(catalogue: Catalogue) {
       // Opening the sheet added a history entry; going back removes it.
       if (history.state?.sheet) history.back();
       else setState({ pubId: null }, 'replace');
+    },
+  });
+
+  const locationBar = setupLocationBar({
+    areaName: catalogue.area.name,
+    areaCentre: catalogue.area.centre,
+    onChange: () => {
+      renderList();
+      sheet.refreshDistance();
     },
   });
 
@@ -123,7 +126,6 @@ function start(catalogue: Catalogue) {
     const beer = state.beerId ? catalogue.beer(state.beerId) : undefined;
     if (beer) return { kind: 'beer', beer };
     if (state.noMatch) return { kind: 'no-match', query: state.noMatch };
-    if (state.alcoholFree) return { kind: 'alcohol-free' };
     return { kind: 'browse' };
   }
 
@@ -131,7 +133,7 @@ function start(catalogue: Catalogue) {
     const mode = currentMode();
     const view = renderResults(mode, {
       catalogue,
-      origin,
+      origin: locationBar.origin(),
       dispense: state.dispense,
       now: Date.now(),
       openPub: (pubId) => setState({ pubId }, 'push'),
@@ -150,8 +152,6 @@ function start(catalogue: Catalogue) {
     if (beer && document.activeElement !== els.input) autocomplete.setValue(beer.name);
     if (!beer && !state.noMatch && document.activeElement !== els.input) autocomplete.setValue('');
 
-    els.afOnly.checked = state.alcoholFree;
-    els.afButton.setAttribute('aria-pressed', String(state.alcoholFree));
     for (const input of els.dispense.querySelectorAll<HTMLInputElement>('input')) {
       input.checked = input.value === state.dispense;
     }
@@ -167,30 +167,13 @@ function start(catalogue: Catalogue) {
 
   // --- Controls ------------------------------------------------------------------
 
-  function setAlcoholFree(on: boolean) {
-    const beer = state.beerId ? catalogue.beer(state.beerId) : undefined;
-    const keepBeer = beer && (!on || beer.af);
-    setState({ alcoholFree: on, beerId: keepBeer ? state.beerId : null, noMatch: null }, 'replace');
-  }
-
-  els.afButton.addEventListener('click', () => {
-    if (!state.alcoholFree || state.beerId) {
-      setState({ alcoholFree: true, beerId: null, noMatch: null, pubId: null }, 'push');
-    } else {
-      setAlcoholFree(false);
-    }
-    els.heading.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-  });
-
-  els.afOnly.addEventListener('change', () => setAlcoholFree(els.afOnly.checked));
-
   els.dispense.addEventListener('change', (e) => {
     const value = (e.target as HTMLInputElement).value;
     if (value === 'any' || value === 'cask' || value === 'keg') setState({ dispense: value }, 'replace');
   });
 
   els.clear.addEventListener('click', () => {
-    setState({ beerId: null, noMatch: null, alcoholFree: false, pubId: null }, 'push');
+    setState({ beerId: null, noMatch: null, pubId: null }, 'push');
     els.input.focus();
   });
 

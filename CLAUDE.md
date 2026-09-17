@@ -6,10 +6,18 @@ The product spec lives outside the repo at `../SPEC.md`. Read it before starting
 
 - Tristan is self-taught and new to GitHub and Cloudflare. Explain setup steps in plain language and wait for confirmation before creating accounts, repos, databases, buckets, or anything that could cost money.
 - Budget is zero. Everything must fit Cloudflare and GitHub free tiers. Flag anything that would cost money or needs a payment method.
-- Ask before adding any npm package. Approved so far (dev only): `vite`, `typescript`, `wrangler`.
+- Ask before adding any npm package. Approved so far: `vite`, `typescript`, `wrangler` (dev only). Approved for the Phase 3 map: `maplibre-gl` and `pmtiles` (loaded only when the map opens), plus a one-off download of the go-pmtiles CLI to cut the E17 basemap extract.
 - Never commit secrets. Use Cloudflare secrets and `.dev.vars` (gitignored).
 - Build in the spec's phases (section 13). Finish and demo each phase before starting the next. Pushing to `main` deploys to the live site, so ask before pushing.
 - Check current Cloudflare docs rather than assuming; flag anything in the spec that is wrong.
+
+## Changes Tristan has made to the spec
+
+These override `../SPEC.md`:
+
+- **Typeface:** Bricolage Grotesque (open question 1 closed). Fraunces removed.
+- **No "Alcohol-free near me" shortcut and no "Alcohol-free only" filter** (removed 2026-09-17: too prominent). Alcohol-free beers are just part of the beer search, labelled, and typing "alcohol free", "0.0", "zero" etc. lists them. The pub sheet still groups them separately.
+- **Location is asked for when the user searches** (not only via a "Use my location" button), and distances are measured from where they are at that moment. A fix under 60 seconds old is reused. Postcode entry is the fallback. If permission was already granted, location is used on page load.
 
 ## Stack
 

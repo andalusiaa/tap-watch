@@ -291,26 +291,6 @@ input {
   background: var(--wash);
 }
 
-.button--primary {
-  background: var(--ink);
-  color: var(--plate);
-}
-
-.button--primary:hover {
-  background: var(--ink);
-  text-decoration: underline;
-}
-
-.button--primary[aria-pressed="true"] {
-  background: var(--plate);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 2px var(--ink);
-}
-
-.shortcut {
-  margin-top: 1rem;
-}
-
 .link-button {
   min-height: var(--tap);
   padding: 0;
@@ -376,26 +356,61 @@ input {
   box-shadow: inset 0 0 0 4px var(--plate);
 }
 
-.checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: var(--tap);
+/* --- Location ----------------------------------------------------------------------- */
+
+.location {
+  margin-top: 1rem;
   font-size: var(--step--1);
+}
+
+.location-status {
   font-weight: 600;
-  cursor: pointer;
 }
 
-.checkbox input {
-  width: 1.35rem;
-  height: 1.35rem;
-  margin: 0;
-  accent-color: var(--ink);
+.location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.25rem;
 }
 
-.location-note {
-  margin-top: 0.75rem;
+.postcode-form {
+  margin: 0.25rem 0 0.5rem;
+}
+
+.postcode-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.postcode-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#postcode {
+  width: 8.5rem;
+  min-height: var(--tap);
+  padding: 0.4rem 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: var(--step-0);
+  text-transform: uppercase;
+}
+
+.postcode-row .button {
   font-size: var(--step--1);
+}
+
+.field-error {
+  margin-top: 0.4rem;
+  padding-left: 0.6rem;
+  border-left: 4px solid var(--district-red);
+  font-weight: 600;
+}
+
+.location-privacy {
   color: var(--ink-muted);
 }
 

@@ -27,8 +27,11 @@ interface Entry {
 }
 
 export interface BeerIndex {
-  search(query: string, options?: { alcoholFreeOnly?: boolean; limit?: number; popularity?: (beer: Beer) => number }): Beer[];
+  search(query: string, options?: { limit?: number; popularity?: (beer: Beer) => number }): Beer[];
 }
+
+/** Extra words that find every alcohol-free beer, e.g. typing "alcohol free" or "0.0". */
+const ALCOHOL_FREE_WORDS = ['alcohol free', 'non alcoholic', 'no alcohol', 'low alcohol', 'zero', '0.0', 'af'];
 
 function term(text: string, weight: number): Term {
   const normal = normalise(text);
@@ -50,17 +53,17 @@ export function buildBeerIndex(beers: Beer[]): BeerIndex {
       term(beer.name, 1),
       ...beer.aliases.map((a) => term(a, 0.95)),
       ...(beer.brewery ? [term(beer.brewery, 0.5)] : []),
+      ...(beer.af ? ALCOHOL_FREE_WORDS.map((w) => term(w, 0.6)) : []),
     ],
   }));
 
   return {
-    search(rawQuery, { alcoholFreeOnly = false, limit = Infinity, popularity = () => 0 } = {}) {
+    search(rawQuery, { limit = Infinity, popularity = () => 0 } = {}) {
       const query = normalise(rawQuery);
       if (!query) return [];
       const queryWords = query.split(' ');
 
       return entries
-        .filter((e) => !alcoholFreeOnly || e.beer.af)
         .map((e) => ({ beer: e.beer, score: Math.max(...e.terms.map((t) => scoreTerm(query, queryWords, t))) }))
         .filter((r) => r.score > 0)
         .sort(

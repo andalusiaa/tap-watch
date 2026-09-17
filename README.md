@@ -11,7 +11,7 @@ Live at <https://tap-watch.gage-tristan.workers.dev>.
 
 ## Status
 
-Phase 1 (static prototype). Search, the pub list and pub pages work from a sample data file. **The tap lists are made up** and the site says so.
+Phase 1 (static prototype), plus location. Search, the pub list and pub pages work from a sample data file, with distances from your location or a postcode. **The tap lists are made up** and the site says so.
 
 ## How it's built
 
@@ -50,7 +50,7 @@ Never commit secrets such as passwords, API tokens or salts. They belong in Clou
 
 ## Credits
 
-Pub names and locations © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database Licence. Postcode lookups by [postcodes.io](https://postcodes.io). Headings use Bricolage Grotesque under the SIL Open Font License (see `public/fonts/`).
+Pub names and locations © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database Licence. Postcode lookups by [postcodes.io](https://postcodes.io) (only when you type a postcode; your device location never leaves your browser). Headings use Bricolage Grotesque under the SIL Open Font License (see `public/fonts/`).
 
 ## Licence
 

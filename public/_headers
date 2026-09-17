@@ -1,7 +1,7 @@
 # Security headers for every static page (see SPEC section 9).
 # Note: these only apply to static files. The API adds its own headers in code.
 /*
-  Content-Security-Policy: default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; connect-src 'self' https://api.postcodes.io; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: same-origin
   Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=(), usb=()

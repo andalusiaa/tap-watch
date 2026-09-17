@@ -21,4 +21,4 @@ export const GROUPS: { id: Category | 'alcohol_free'; label: string }[] = [
   { id: 'other', label: 'Other' },
 ];
 
-export const MAX_SUGGESTIONS = 8;
+export const MAX_SUGGESTIONS = 12;

@@ -69,8 +69,8 @@ export function createCatalogue(snapshot: Snapshot) {
     listingsAt: (pubId: string): Listing[] => listingsByPub.get(pubId) ?? [],
     pubCount,
 
-    searchBeers(query: string, alcoholFreeOnly: boolean, limit: number): Beer[] {
-      return beerIndex.search(query, { alcoholFreeOnly, limit, popularity: pubCount });
+    searchBeers(query: string, limit: number): Beer[] {
+      return beerIndex.search(query, { limit, popularity: pubCount });
     },
 
     /** Pubs listing a beer, split into those that have it and those where it was reported gone. */
@@ -84,14 +84,6 @@ export function createCatalogue(snapshot: Snapshot) {
         now,
       );
       return { available, gone };
-    },
-
-    /** Pubs with at least one alcohol-free beer on tap, listing just those beers. */
-    pubsWithAlcoholFree(origin: LatLng, dispense: DispenseFilter, now: number): PubResult[] {
-      const listings = snapshot.listings.filter(
-        (l) => isAvailable(l) && matchesDispense(l, dispense) && beerById.get(l.beer_id)?.af,
-      );
-      return toResults(listings, origin, now);
     },
 
     /** Every pub, with the listings that match the dispense filter. */

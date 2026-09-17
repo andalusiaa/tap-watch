@@ -36,8 +36,6 @@
       </div>
     </form>
 
-    <button type="button" class="button button--primary shortcut" id="af-near-me" aria-pressed="false">Alcohol-free near me</button>
-
     <div class="filters">
       <fieldset class="segmented" id="dispense">
         <legend class="visually-hidden">Dispense</legend>
@@ -45,10 +43,25 @@
         <label><input type="radio" name="dispense" value="cask"><span>Cask</span></label>
         <label><input type="radio" name="dispense" value="keg"><span>Keg</span></label>
       </fieldset>
-      <label class="checkbox"><input type="checkbox" id="af-only"><span>Alcohol-free only</span></label>
     </div>
 
-    <p class="location-note" id="location-note">Distances are from central Walthamstow.</p>
+    <div class="location">
+      <p class="location-status" id="location-status" role="status">Distances are from central Walthamstow.</p>
+      <div class="location-actions">
+        <button type="button" class="link-button" id="use-location">Use my location</button>
+        <button type="button" class="link-button" id="show-postcode" aria-expanded="false" aria-controls="postcode-form">Enter a postcode</button>
+      </div>
+      <form class="postcode-form" id="postcode-form" hidden>
+        <label for="postcode">Postcode</label>
+        <div class="postcode-row">
+          <input id="postcode" name="postcode" type="text" autocomplete="postal-code" autocapitalize="characters"
+            spellcheck="false" maxlength="8" enterkeyhint="go" aria-describedby="postcode-error">
+          <button type="submit" class="button">Use postcode</button>
+        </div>
+        <p class="field-error" id="postcode-error" hidden></p>
+      </form>
+      <p class="location-privacy">Your location stays on your device. We never see or store it.</p>
+    </div>
 
     <section class="results-section" aria-labelledby="results-heading">
       <div class="results-top">
