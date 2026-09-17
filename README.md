@@ -9,7 +9,7 @@ Draught only. No accounts, no tracking cookies, and your location never leaves y
 
 ## Status
 
-Phase 0 (setup). The site is a placeholder page.
+Phase 0 (setup). The site is a placeholder page, live at <https://tap-watch.gage-tristan.workers.dev>.
 
 ## How it's built
 
