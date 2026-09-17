@@ -57,22 +57,22 @@ export function setupLocationBar(o: Options) {
     let tip: string | undefined;
     switch (source.kind) {
       case 'device':
-        text = `Distances are in a straight line from your location, accurate to about ${formatAccuracy(source.accuracy)}.`;
-        if (source.refining) text += ' Getting a closer fix…';
+        text = `Distances from where you are to each pub, as the crow flies. Your location is accurate to about ${formatAccuracy(source.accuracy)}.`;
+        if (source.refining) text += ' Pinpointing…';
         else if (source.accuracy > ROUGH_M) {
           tip =
             'Your device only knows roughly where you are. For closer distances, turn on precise location for this browser, or enter a postcode.';
         }
         break;
       case 'postcode':
-        text = `Distances are in a straight line from the middle of ${source.postcode}.`;
+        text = `Distances from ${source.postcode} to each pub, as the crow flies.`;
         break;
       default:
-        text = `Distances are in a straight line from central ${o.areaName}.`;
+        text = `Distances from central ${o.areaName} to each pub, as the crow flies.`;
     }
     const away = distanceKm(origin, o.areaCentre);
     if (source.kind !== 'area' && away > FAR_KM) {
-      text += ` That's about ${formatDistance(away)} from ${o.areaName}.`;
+      text += ` You're about ${formatDistance(away)} from ${o.areaName}.`;
     }
     return { text, tip };
   }
