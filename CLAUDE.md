@@ -20,6 +20,8 @@ These override `../SPEC.md`:
 - **Freshness colours** (2026-09-18): green = checked within 30 days, amber = within 120 days, grey after that (`src/config.ts`). The map key text is generated from those values.
 - **Photo reports carry up to 4 photos**, and after sending a photo or suggestion the form offers to send another.
 - **Admin can delete a listing for good** (and its votes), as well as mark it Gone (hidden, restorable). Deleting asks for confirmation.
+- **Phase 4 closed on 2026-09-18.** Moved to Phase 5: pubs/operators editing on the admin page, the switch to clear sample tap lists (`areas.is_sample` to 0, delete sample listings; needed before walkaround data), and operator core ranges.
+- **Gluten-free filter:** wanted in a future phase (after Phase 5 unless Tristan says otherwise). Not designed yet; it will need a gluten-free flag per beer and a spreadsheet column.
 - **Location is asked for when the user searches** (not only via a "Use my location" button), and distances are measured from where they are at that moment. A fix under 60 seconds old is reused. Postcode entry is the fallback. If permission was already granted, location is used on page load.
 
 ## Stack
