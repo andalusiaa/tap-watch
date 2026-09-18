@@ -35,6 +35,14 @@ export function freshnessOf(listing: Listing, now: number): { state: Freshness; 
   return { state: 'stale', label: `Last checked ${ago}` };
 }
 
+/** "2 weeks", "1 month", "4 months" or "45 days", for describing a threshold. */
+export function periodName(days: number): string {
+  const unit = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  if (days % 30 === 0) return unit(days / 30, 'month');
+  if (days % 7 === 0) return unit(days / 7, 'week');
+  return unit(days, 'day');
+}
+
 /** Sort key: lower is fresher. Likely comes after any confirmed; gone comes last. */
 export function freshnessRank(listing: Listing, now: number): number {
   if (listing.status === 'reported_gone') return Number.MAX_SAFE_INTEGER;

@@ -1,5 +1,5 @@
 // Phone-friendly editor for one pub's tap list. Each beer can be marked On (checked now),
-// Gone (hidden from the site, restorable) or left unchanged.
+// Gone (hidden from the site, restorable), deleted for good, or left unchanged.
 
 import { freshnessOf } from '../freshness';
 import { normalise } from '../search';
@@ -7,7 +7,7 @@ import type { Beer, Dispense, Listing } from '../types';
 import { h } from '../ui/dom';
 import type { AdminListing, ListingChange } from './adminApi';
 
-type Choice = 'on' | 'gone' | 'keep';
+type Choice = 'on' | 'gone' | 'delete' | 'keep';
 
 interface Row {
   beerId: string;
@@ -33,6 +33,15 @@ export function findBeer(beers: Beer[], typed: string): Beer | undefined {
   return beers.find((b) => normalise(b.name) === wanted || b.aliases.some((a) => normalise(a) === wanted));
 }
 
+/** Deleting is permanent, so check first. */
+export function confirmDeletes(changes: { set: string }[]): boolean {
+  const deletes = changes.filter((c) => c.set === 'delete').length;
+  if (!deletes) return true;
+  return confirm(
+    `Delete ${deletes} beer ${deletes === 1 ? 'record' : 'records'} for good? This can't be undone. (To hide a beer for now, use Gone instead.)`,
+  );
+}
+
 export function beerDatalist(id: string, beers: Beer[]): HTMLDataListElement {
   return h('datalist', { id }, [...beers].sort((a, b) => a.name.localeCompare(b.name)).map((b) => h('option', { value: b.name })));
 }
@@ -54,12 +63,36 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
 
   function updateSummary() {
     const count = rows.filter((r) => r.choice !== 'keep').length;
-    summary.textContent = count === 0 ? 'No changes yet.' : `${count} ${count === 1 ? 'change' : 'changes'} to save.`;
+    const deletes = rows.filter((r) => r.choice === 'delete').length;
+    summary.textContent =
+      count === 0
+        ? 'No changes yet.'
+        : `${count} ${count === 1 ? 'change' : 'changes'} to save${deletes ? `, including ${deletes} to delete` : ''}.`;
+  }
+
+  function choose(row: Row, choice: Choice) {
+    row.choice = choice;
+    render();
   }
 
   function rowElement(row: Row, index: number): HTMLElement {
     const name = `${id}-row-${index}`;
     const removed = row.listing?.status === 'removed';
+    const label = h(
+      'div',
+      null,
+      h('span', { class: 'edit-beer' }, row.beerName),
+      ' ',
+      h('span', { class: 'dispense' }, row.dispense === 'cask' ? 'Cask' : 'Keg'),
+    );
+
+    if (row.choice === 'delete') {
+      const undo = h('button', { type: 'button', class: 'link-button' }, 'Undo');
+      undo.addEventListener('click', () => choose(row, 'keep'));
+      label.append(h('span', { class: 'edit-status' }, 'Will be deleted for good when you save.'));
+      return h('li', { class: 'edit-row edit-row--delete' }, label, undo);
+    }
+
     const options: [Choice, string][] = [
       ['on', removed ? 'Restore' : 'On'],
       ['gone', 'Gone'],
@@ -84,19 +117,17 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
       row.choice = (e.target as HTMLInputElement).value as Choice;
       updateSummary();
     });
-    return h(
-      'li',
-      { class: removed ? 'edit-row edit-row--removed' : 'edit-row' },
-      h(
-        'div',
-        null,
-        h('span', { class: 'edit-beer' }, row.beerName),
-        ' ',
-        h('span', { class: 'dispense' }, row.dispense === 'cask' ? 'Cask' : 'Keg'),
-        h('span', { class: 'edit-status' }, statusText(row, now)),
-      ),
-      group,
-    );
+    label.append(h('span', { class: 'edit-status' }, statusText(row, now)));
+    let remove: HTMLButtonElement | null = null;
+    if (row.listing) {
+      remove = h(
+        'button',
+        { type: 'button', class: 'link-button edit-delete', 'aria-label': `Delete the record for ${row.beerName}, ${row.dispense}` },
+        'Delete record',
+      );
+      remove.addEventListener('click', () => choose(row, 'delete'));
+    }
+    return h('li', { class: removed ? 'edit-row edit-row--removed' : 'edit-row' }, label, group, remove);
   }
 
   function render() {
@@ -136,7 +167,7 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
 
   const allOn = h('button', { type: 'button', class: 'button' }, 'Mark everything listed as on');
   allOn.addEventListener('click', () => {
-    for (const row of rows) if (row.listing?.status !== 'removed') row.choice = 'on';
+    for (const row of rows) if (row.listing?.status !== 'removed' && row.choice !== 'delete') row.choice = 'on';
     render();
   });
 
@@ -165,7 +196,7 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
     changes(): ListingChange[] {
       return rows
         .filter((r) => r.choice !== 'keep')
-        .map((r) => ({ beer_id: r.beerId, dispense: r.dispense, set: r.choice as 'on' | 'gone' }));
+        .map((r) => ({ beer_id: r.beerId, dispense: r.dispense, set: r.choice as ListingChange['set'] }));
     },
   };
 }

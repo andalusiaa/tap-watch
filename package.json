@@ -15,8 +15,12 @@
     "db:seed:local": "node seed/build-seed-sql.mjs e17 --sample-listings && wrangler d1 execute tap-watch --local --file seed/out/seed-e17.sql",
     "db:seed:remote": "node seed/build-seed-sql.mjs e17 --sample-listings && wrangler d1 execute tap-watch --remote --file seed/out/seed-e17.sql",
     "db:reset:local": "rm -rf .wrangler/state && npm run db:migrate:local && npm run db:seed:local",
+    "db:beers:local": "node seed/build-seed-sql.mjs e17 --beers-only && wrangler d1 execute tap-watch --local --file seed/out/seed-beers.sql",
+    "db:beers:remote": "node seed/build-seed-sql.mjs e17 --beers-only && wrangler d1 execute tap-watch --remote --file seed/out/seed-beers.sql",
     "seed:pubs": "node seed/fetch-pubs.mjs",
     "seed:map": "node seed/open-map.mjs",
+    "beers:export": "node seed/beers-csv.mjs export",
+    "beers:import": "node seed/beers-csv.mjs import",
     "map:build": "node seed/build-basemap.mjs"
   },
   "devDependencies": {

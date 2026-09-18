@@ -1,4 +1,4 @@
-// "Send a photo of the taps" and "Suggest a beer" (SPEC sections 6.4 and 6.5).
+// "Send a photo of the taps" (up to 4 photos) and "Suggest a beer" (SPEC sections 6.4 and 6.5).
 
 import { sendPhotoReport, sendSuggestion } from '../api';
 import type { Catalogue } from '../catalogue';
@@ -21,43 +21,86 @@ function busy(button: HTMLButtonElement, text: string | null) {
     button.textContent = text;
   } else if (button.dataset.label) {
     button.textContent = button.dataset.label;
+    delete button.dataset.label;
   }
 }
 
-function thanks(form: HTMLElement, message: string) {
-  const done = h('p', { class: 'form-done', tabindex: '-1' }, message);
+/** Replaces a sent form with a thank-you, plus a button to open a fresh copy of the form. */
+function thanks(form: HTMLElement, message: string, again: { label: string; make: () => HTMLElement }) {
+  const button = h('button', { type: 'button', class: 'button' }, again.label);
+  const done = h('div', { class: 'form-sent' }, h('p', { class: 'form-done', tabindex: '-1' }, message), button);
+  button.addEventListener('click', () => {
+    const fresh = again.make();
+    done.replaceWith(fresh);
+    const title = fresh.querySelector<HTMLElement>('h3');
+    title?.setAttribute('tabindex', '-1');
+    title?.focus();
+  });
   form.replaceWith(done);
-  done.focus();
+  done.querySelector<HTMLElement>('.form-done')?.focus();
 }
+
+const MAX_PHOTOS = 4;
 
 export function photoForm(o: { pubId: string; pubName: string; honeypot: () => string }): HTMLElement {
   const id = `photo-form-${++formCount}`;
-  let photo: Blob | null = null;
-  let previewUrl: string | null = null;
+  const photos: { blob: Blob; url: string }[] = [];
 
   const status = statusLine();
-  const preview = h('img', { class: 'photo-preview', alt: `Your photo of the taps at ${o.pubName}`, hidden: true });
-  const fileInput = h('input', { type: 'file', accept: 'image/*', id: `${id}-file`, class: 'visually-hidden' });
+  const previews = h('ul', { class: 'photo-previews', 'aria-label': 'Photos to send' });
+  const fileInput = h('input', { type: 'file', accept: 'image/*', multiple: true, id: `${id}-file`, class: 'visually-hidden' });
+  const chooseLabel = h('label', { for: `${id}-file`, class: 'button file-button' }, 'Take or choose photos');
   const note = h('textarea', { id: `${id}-note`, rows: 2, maxlength: NOTE_MAX });
   const count = h('p', { class: 'form-hint', 'aria-live': 'polite' }, `0 of ${NOTE_MAX} characters`);
-  const submit = h('button', { type: 'submit', class: 'button button--primary' }, 'Send photo');
+  const submit = h('button', { type: 'submit', class: 'button button--primary' }, 'Send photos');
+
+  function renderPreviews() {
+    previews.replaceChildren(
+      ...photos.map((photo, i) => {
+        const remove = h('button', { type: 'button', class: 'link-button', 'aria-label': `Remove photo ${i + 1}` }, 'Remove');
+        remove.addEventListener('click', () => {
+          URL.revokeObjectURL(photo.url);
+          photos.splice(i, 1);
+          status.textContent = '';
+          renderPreviews();
+          chooseLabel.focus();
+        });
+        return h('li', null, h('img', { src: photo.url, alt: `Photo ${i + 1} of the taps at ${o.pubName}` }), remove);
+      }),
+    );
+    const full = photos.length >= MAX_PHOTOS;
+    fileInput.disabled = full;
+    chooseLabel.hidden = full;
+    chooseLabel.textContent = photos.length ? 'Add more photos' : 'Take or choose photos';
+    submit.textContent = photos.length === 1 ? 'Send photo' : 'Send photos';
+  }
 
   fileInput.addEventListener('change', async () => {
-    const file = fileInput.files?.[0];
-    if (!file) return;
-    status.textContent = 'Getting the photo ready…';
-    try {
-      photo = await preparePhoto(file);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      previewUrl = URL.createObjectURL(photo);
-      preview.src = previewUrl;
-      preview.hidden = false;
-      status.textContent = '';
-    } catch {
-      photo = null;
-      preview.hidden = true;
-      status.textContent = "That file couldn't be used as a photo. Please try another.";
+    const files = [...(fileInput.files ?? [])];
+    fileInput.value = '';
+    if (!files.length) return;
+    const room = MAX_PHOTOS - photos.length;
+    status.textContent = files.length > 1 ? 'Getting the photos ready…' : 'Getting the photo ready…';
+    // Don't let the form be sent until every photo is ready.
+    busy(submit, 'Getting photos ready…');
+    let failed = 0;
+    for (const file of files.slice(0, room)) {
+      try {
+        const blob = await preparePhoto(file);
+        photos.push({ blob, url: URL.createObjectURL(blob) });
+      } catch {
+        failed++;
+      }
     }
+    busy(submit, null);
+    renderPreviews();
+    const notes = [
+      files.length > room
+        ? `You can send up to ${MAX_PHOTOS} photos at a time, so only ${room === 1 ? '1 more was' : `${room} more were`} added.`
+        : '',
+      failed ? `${failed === 1 ? 'One file' : `${failed} files`} couldn't be used as a photo.` : '',
+    ].filter(Boolean);
+    status.textContent = notes.join(' ');
   });
 
   note.addEventListener('input', () => {
@@ -67,16 +110,16 @@ export function photoForm(o: { pubId: string; pubName: string; honeypot: () => s
   const form = h(
     'form',
     { class: 'panel-form', 'aria-labelledby': `${id}-title`, novalidate: true },
-    h('h3', { id: `${id}-title` }, 'Send a photo of the taps'),
+    h('h3', { id: `${id}-title` }, 'Send photos of the taps'),
     h(
       'p',
       { class: 'form-help' },
-      'Photograph the taps, not people. A person checks each photo to update the list, then deletes it. ' +
-        'Location details are removed from the photo before it is sent.',
+      `Photograph the taps, not people. You can send up to ${MAX_PHOTOS} photos at once. A person checks them to update ` +
+        'the list, then deletes them. Location details are removed from photos before they are sent.',
     ),
+    previews,
     fileInput,
-    h('label', { for: `${id}-file`, class: 'button file-button' }, 'Take or choose a photo'),
-    preview,
+    chooseLabel,
     h('label', { for: `${id}-note` }, 'Note (optional)'),
     note,
     count,
@@ -86,16 +129,21 @@ export function photoForm(o: { pubId: string; pubName: string; honeypot: () => s
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!photo) {
+    if (submit.disabled) return; // still getting photos ready, or already sending
+    if (!photos.length) {
       status.textContent = 'Choose or take a photo first.';
       return;
     }
     busy(submit, 'Sending…');
     status.textContent = '';
-    const result = await sendPhotoReport(o.pubId, photo, note.value.trim(), o.honeypot());
+    const result = await sendPhotoReport(o.pubId, photos.map((p) => p.blob), note.value.trim(), o.honeypot());
     if (result.ok) {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      thanks(form, "Thanks! We'll check it and update the list.");
+      const sent = photos.length;
+      for (const photo of photos) URL.revokeObjectURL(photo.url);
+      thanks(form, `Thanks! We'll check ${sent === 1 ? 'your photo' : 'your photos'} and update the list.`, {
+        label: 'Send more photos',
+        make: () => photoForm(o),
+      });
     } else {
       busy(submit, null);
       status.textContent = result.message;
@@ -185,7 +233,10 @@ export function suggestForm(o: {
       o.honeypot(),
     );
     if (result.ok) {
-      thanks(form, `Thanks! We'll check ${beer?.name ?? typed} and add it to the list.`);
+      thanks(form, `Thanks! We'll check ${beer?.name ?? typed} and add it to the list.`, {
+        label: 'Suggest another beer',
+        make: () => suggestForm(o),
+      });
     } else {
       busy(submit, null);
       status.textContent = result.message;

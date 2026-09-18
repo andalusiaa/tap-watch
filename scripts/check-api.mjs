@@ -152,10 +152,10 @@ const fakeJpeg = Buffer.concat([
 
 function reporter(name) {
   const ip = `203.0.113.${++deviceCount}`;
-  return (fields, file = { bytes: fakeJpeg, type: 'image/jpeg' }) => {
+  return (fields, file = { bytes: fakeJpeg, type: 'image/jpeg' }, copies = 1) => {
     const form = new FormData();
     for (const [k, v] of Object.entries({ hp: '', token, ...fields })) form.set(k, v);
-    if (file) form.set('photo', new Blob([file.bytes], { type: file.type }), 'taps.jpg');
+    for (let i = 0; i < copies && file; i++) form.append('photo', new Blob([file.bytes], { type: file.type }), `taps-${i + 1}.jpg`);
     return fetch(`${API}/api/report`, {
       method: 'POST',
       headers: { Origin: API, 'User-Agent': `check-api ${name}`, 'CF-Connecting-IP': ip },
@@ -167,21 +167,24 @@ const photographer = reporter('photographer');
 const pubId = sql("SELECT id FROM pubs WHERE is_active = 1 ORDER BY id LIMIT 1")[0].id;
 const reportsBefore = sql('SELECT COUNT(*) AS n FROM photo_reports')[0].n;
 
-r = await photographer({ pub_id: pubId, note: 'Taps by the window' });
-check('Photo report is accepted', r.status === 200 && r.body.ok, JSON.stringify(r));
+r = await photographer({ pub_id: pubId, note: 'Taps by the window' }, undefined, 2);
+check('A report with two photos is accepted', r.status === 200 && r.body.ok, JSON.stringify(r));
 r = await photographer({ pub_id: pubId }, { bytes: Buffer.from('<svg></svg>'), type: 'image/svg+xml' });
 check('Non-JPEG files are refused', r.status === 400 && r.body.error === 'not_a_photo', JSON.stringify(r));
 r = await photographer({ pub_id: pubId }, { bytes: Buffer.from('not really a jpeg'), type: 'image/jpeg' });
 check('Files that only claim to be JPEG are refused', r.status === 400, JSON.stringify(r));
 r = await photographer({ pub_id: 'no-such-pub' });
 check('Photos for unknown pubs are refused', r.status === 404, JSON.stringify(r));
+r = await photographer({ pub_id: pubId }, undefined, 5);
+check('More than four photos at once are refused', r.status === 400 && r.body.error === 'too_many_photos', JSON.stringify(r));
 r = await photographer({ pub_id: pubId, hp: 'bot' });
 check('Honeypot photo looks accepted but is not stored', r.status === 200 && sql('SELECT COUNT(*) AS n FROM photo_reports')[0].n === reportsBefore + 1, JSON.stringify(r));
 for (let i = 0; i < 4; i++) await photographer({ pub_id: pubId });
 r = await photographer({ pub_id: pubId });
 check('A sixth photo from one device in a day is refused', r.status === 429, JSON.stringify(r));
-const report = sql("SELECT id, pub_id, photo_key, device_hash, note FROM photo_reports ORDER BY id LIMIT 1")[0];
-check('Report stores a photo key, a device hash and the note', report.photo_key?.startsWith('reports/') && /^[0-9a-f]{32}$/.test(report.device_hash) && report.note === 'Taps by the window', JSON.stringify(report));
+const report = sql("SELECT id, pub_id, device_hash, note FROM photo_reports ORDER BY id LIMIT 1")[0];
+const reportImages = sql(`SELECT position, photo_key FROM photo_report_images WHERE report_id = ${report.id} ORDER BY position`);
+check('Report stores both photos, a device hash and the note', reportImages.length === 2 && reportImages.every((i) => i.photo_key?.startsWith('reports/')) && /^[0-9a-f]{32}$/.test(report.device_hash) && report.note === 'Taps by the window', JSON.stringify({ report, reportImages }));
 
 // --- Suggestions ---------------------------------------------------------------------
 const suggester = device('suggester');
@@ -237,9 +240,9 @@ const forged = cookie.replace(/.$/, (c) => (c === 'A' ? 'B' : 'A'));
 check('A tampered session cookie is refused', (await admin('/queue', { cookie: forged })).status === 401);
 
 r = await admin('/queue', { cookie });
-check('Queue lists the photo and both suggestions', r.status === 200 && r.body.reports.length >= 1 && r.body.suggestions.length === 2, JSON.stringify(r.body).slice(0, 300));
+check('Queue lists the photos and both suggestions', r.status === 200 && r.body.reports[0]?.photo_count === 2 && r.body.suggestions.length === 2, JSON.stringify(r.body).slice(0, 300));
 
-r = await admin(`/photo/${report.id}`, { cookie });
+r = await admin(`/photo/${report.id}/1`, { cookie });
 const photoBytes = Buffer.from(r.body);
 check('Admin can view the photo', r.status === 200 && r.headers.get('content-type') === 'image/jpeg');
 check('The stored photo has its EXIF location data removed', photoBytes[0] === 0xff && photoBytes[1] === 0xd8 && !photoBytes.includes(Buffer.from('Exif')) && photoBytes.includes(Buffer.from('image-data')), photoBytes.toString('latin1'));
@@ -252,11 +255,12 @@ r = await admin(`/report/${report.id}`, {
 });
 check('Approving a photo saves the ticks', r.status === 200, JSON.stringify(r.body));
 const onRow = sql(`SELECT status, source, last_confirmed_at FROM listings WHERE pub_id = '${report.pub_id}' AND beer_id = 'thatchers-zero'`)[0];
-const reportRow = sql(`SELECT status, photo_key, created_at FROM photo_reports WHERE id = ${report.id}`)[0];
+const reportRow = sql(`SELECT status, created_at FROM photo_reports WHERE id = ${report.id}`)[0];
 check('A ticked beer is confirmed as of when the photo was taken', onRow?.status === 'confirmed' && onRow.source === 'photo' && onRow.last_confirmed_at === reportRow.created_at, JSON.stringify({ onRow, reportRow }));
 check('An unticked beer is removed', sql(`SELECT status FROM listings WHERE pub_id = '${report.pub_id}' AND beer_id = '${gonePick.beer_id}' AND dispense = '${gonePick.dispense}'`)[0]?.status === 'removed');
-check('The report is marked approved and its photo key cleared', reportRow.status === 'approved' && reportRow.photo_key === null, JSON.stringify(reportRow));
-check('The photo itself is deleted', (await admin(`/photo/${report.id}`, { cookie })).status === 404);
+const keysLeft = sql(`SELECT COUNT(*) AS n FROM photo_report_images WHERE report_id = ${report.id} AND photo_key IS NOT NULL`)[0].n;
+check('The report is marked approved and its photo keys cleared', reportRow.status === 'approved' && keysLeft === 0, JSON.stringify({ reportRow, keysLeft }));
+check('Both photos themselves are deleted', (await admin(`/photo/${report.id}/1`, { cookie })).status === 404 && (await admin(`/photo/${report.id}/2`, { cookie })).status === 404);
 check('A report cannot be decided twice', (await admin(`/report/${report.id}`, { cookie, body: { action: 'reject' } })).status === 409);
 
 // Suggestions: approve the listed beer, add the new one as a new beer.
@@ -275,6 +279,11 @@ check('…and to the pub, on cask', sql(`SELECT status FROM listings WHERE pub_i
 // Tap list editor.
 r = await admin(`/pub/${pubId}/listings`, { cookie, body: { changes: [{ beer_id: gonePick.beer_id, dispense: gonePick.dispense, set: 'on' }] } });
 check('Editor can restore a removed beer', r.status === 200 && r.body.listings.some((l) => l.beer_id === gonePick.beer_id && l.status === 'confirmed'), JSON.stringify(r.body).slice(0, 200));
+const [doomed] = sql(`SELECT id, beer_id, dispense FROM listings WHERE pub_id = '${pubId}' AND status != 'removed' ORDER BY id LIMIT 1`);
+sql(`INSERT INTO votes (listing_id, direction, device_hash, created_at) VALUES (${doomed.id}, 1, NULL, '${new Date().toISOString()}')`);
+r = await admin(`/pub/${pubId}/listings`, { cookie, body: { changes: [{ beer_id: doomed.beer_id, dispense: doomed.dispense, set: 'delete' }] } });
+check('Editor can delete a beer record for good', r.status === 200 && !r.body.listings.some((l) => l.id === doomed.id) && sql(`SELECT COUNT(*) AS n FROM listings WHERE id = ${doomed.id}`)[0].n === 0, JSON.stringify(r.body).slice(0, 200));
+check('…along with its votes', sql(`SELECT COUNT(*) AS n FROM votes WHERE listing_id = ${doomed.id}`)[0].n === 0);
 r = await admin(`/pub/${pubId}/listings`, { cookie, body: { changes: [{ beer_id: 'no-such-beer', dispense: 'keg', set: 'on' }] } });
 check('Editor refuses beers that are not in the list', r.status === 400, JSON.stringify(r.body));
 r = await admin(`/pub/${pubId}/listings`, { cookie, body: { changes: [{ beer_id: 'guinness', dispense: 'can', set: 'on' }] } });
@@ -289,10 +298,11 @@ check('Signing out clears the cookie', /Max-Age=0/.test(r.headers.get('set-cooki
 const staleKey = 'reports/check-api-stale';
 execFileSync('npx', ['wrangler', 'kv', 'key', 'put', staleKey, 'old-photo', '--binding', 'PHOTOS', '--local'], { stdio: 'ignore' });
 const staleDate = new Date(Date.now() - 31 * 86_400_000).toISOString();
-sql(`INSERT INTO photo_reports (pub_id, photo_key, status, device_hash, created_at) VALUES ('${pubId}', '${staleKey}', 'pending', 'feedfacefeedfacefeedfacefeedface', '${staleDate}')`);
+sql(`INSERT INTO photo_reports (pub_id, status, device_hash, created_at) VALUES ('${pubId}', 'pending', 'feedfacefeedfacefeedfacefeedface', '${staleDate}')`);
+sql(`INSERT INTO photo_report_images (report_id, position, photo_key) SELECT id, 1, '${staleKey}' FROM photo_reports WHERE created_at = '${staleDate}'`);
 await fetch(`${API}/cdn-cgi/handler/scheduled?cron=${encodeURIComponent('17 3 * * *')}`);
 await sleep(800);
-const stale = sql(`SELECT status, photo_key, device_hash FROM photo_reports WHERE created_at = '${staleDate}'`)[0];
+const stale = sql(`SELECT r.status, i.photo_key, r.device_hash FROM photo_reports r JOIN photo_report_images i ON i.report_id = r.id WHERE r.created_at = '${staleDate}'`)[0];
 const kvLeft = execFileSync('npx', ['wrangler', 'kv', 'key', 'list', '--binding', 'PHOTOS', '--local'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 check('Photos unchecked after 30 days are deleted and the report closed', stale?.status === 'rejected' && stale.photo_key === null && !kvLeft.includes(staleKey), JSON.stringify({ stale, kvLeft }));
 check('…and the report forgets its device', stale?.device_hash === null);

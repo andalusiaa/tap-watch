@@ -3,7 +3,7 @@
 import type { Beer, Dispense } from '../types';
 import { h } from '../ui/dom';
 import { adminApi, AdminError, SignedOut, type NewBeer, type QueueReport, type QueueSuggestion } from './adminApi';
-import { beerDatalist, createTapEditor, findBeer } from './tapEditor';
+import { beerDatalist, confirmDeletes, createTapEditor, findBeer } from './tapEditor';
 
 const CATEGORIES: [string, string][] = [
   ['lager', 'Lager'],
@@ -64,16 +64,26 @@ function reportCard(ctx: Context, report: QueueReport): HTMLElement {
   const card = h(
     'article',
     { class: 'card' },
-    h('h2', null, `Photo from ${report.pub_name}`),
+    h('h2', null, `${report.photo_count === 1 ? 'Photo' : 'Photos'} from ${report.pub_name}`),
     h('p', { class: 'card-meta' }, `Sent ${sentAgo(report.created_at)}`),
     report.note ? h('p', { class: 'card-note' }, `“${report.note}”`) : null,
-    report.has_photo
+    report.photo_count
       ? h(
-          'a',
-          { class: 'card-photo', href: adminApi.photoUrl(report.id), target: '_blank', rel: 'noopener' },
-          h('img', { src: adminApi.photoUrl(report.id), alt: `Photo of the taps at ${report.pub_name}`, loading: 'lazy' }),
+          'div',
+          { class: 'card-photos' },
+          Array.from({ length: report.photo_count }, (_, i) =>
+            h(
+              'a',
+              { class: 'card-photo', href: adminApi.photoUrl(report.id, i + 1), target: '_blank', rel: 'noopener' },
+              h('img', {
+                src: adminApi.photoUrl(report.id, i + 1),
+                alt: `Photo ${i + 1} of ${report.photo_count} of the taps at ${report.pub_name}`,
+                loading: 'lazy',
+              }),
+            ),
+          ),
         )
-      : h('p', { class: 'form-help' }, 'The photo has expired.'),
+      : h('p', { class: 'form-help' }, 'The photos have expired.'),
     editorSlot,
     h('div', { class: 'card-actions' }, approve, reject),
     status,
@@ -94,17 +104,18 @@ function reportCard(ctx: Context, report: QueueReport): HTMLElement {
       editorSlot.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load this pub's tap list."));
     });
 
-  approve.addEventListener('click', () =>
-    run(ctx, card, status, [approve, reject], async () => {
-      const changes = editor?.changes() ?? [];
+  approve.addEventListener('click', () => {
+    const changes = editor?.changes() ?? [];
+    if (!confirmDeletes(changes)) return;
+    void run(ctx, card, status, [approve, reject], async () => {
       await adminApi.reviewReport(report.id, 'approve', changes);
-      return `Approved the photo from ${report.pub_name}${changes.length ? ` and saved ${changes.length} changes` : ''}. The photo has been deleted.`;
-    }),
-  );
+      return `Approved the photos from ${report.pub_name}${changes.length ? ` and saved ${changes.length} changes` : ''}. The photos have been deleted.`;
+    });
+  });
   reject.addEventListener('click', () =>
     run(ctx, card, status, [approve, reject], async () => {
       await adminApi.reviewReport(report.id, 'reject');
-      return `Rejected the photo from ${report.pub_name}. The photo has been deleted.`;
+      return `Rejected the photos from ${report.pub_name}. The photos have been deleted.`;
     }),
   );
   return card;

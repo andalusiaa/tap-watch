@@ -3,6 +3,8 @@ import { createCatalogue, type Catalogue, type DispenseFilter } from './catalogu
 import { applyVote, type VoteDirection } from './rules';
 import { mapPoints } from './mapPoints';
 import { voteMemory } from './voteMemory';
+import { AGEING_MAX_DAYS, FRESH_MAX_DAYS } from './config';
+import { periodName } from './freshness';
 import type { PubMap } from './ui/map';
 import { setupAutocomplete } from './ui/autocomplete';
 import { byId, h } from './ui/dom';
@@ -66,7 +68,23 @@ const els = {
   honeypot: byId<HTMLInputElement>('website'),
 };
 
+/** Map key wording, from the thresholds in config.ts. */
+function fillLegend() {
+  const text: Record<string, string> = {
+    fresh: `Checked in the last ${periodName(FRESH_MAX_DAYS).replace(/^1 /, '')}`,
+    ageing:
+      FRESH_MAX_DAYS % 30 === 0 && AGEING_MAX_DAYS % 30 === 0
+        ? `Checked ${FRESH_MAX_DAYS / 30} to ${periodName(AGEING_MAX_DAYS)} ago`
+        : `Checked ${periodName(FRESH_MAX_DAYS)} to ${periodName(AGEING_MAX_DAYS)} ago`,
+    stale: `Checked over ${periodName(AGEING_MAX_DAYS)} ago`,
+  };
+  for (const el of document.querySelectorAll<HTMLElement>('[data-legend]')) {
+    el.textContent = text[el.dataset.legend ?? ''] ?? el.textContent;
+  }
+}
+
 function start(catalogue: Catalogue) {
+  fillLegend();
   let state = stateFromUrl();
   /** Messages shown next to a beer's vote buttons, by listing id. */
   const voteNotes = new Map<number, string>();

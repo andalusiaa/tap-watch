@@ -22,10 +22,14 @@ export const LIMITS = {
   dailyWriteBudget: 50_000,
   voteWriteCost: 10,
 
-  /** Photo reports per device per day, and for everyone per day (the photo store allows 1,000 writes). */
+  /** Photo reports per device per day. */
   reportsPerDay: 5,
-  reportsPerDayTotal: 200,
+  /** Photos in one report. */
+  photosPerReport: 4,
+  /** Photos from everyone per day (the photo store allows 1,000 writes a day). */
+  photosPerDayTotal: 200,
   reportWriteCost: 8,
+  photoWriteCost: 3,
   /** Largest photo accepted, after the browser has shrunk it. */
   maxPhotoBytes: 2_000_000,
   maxNoteLength: 280,

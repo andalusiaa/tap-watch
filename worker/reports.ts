@@ -1,5 +1,5 @@
 // Public submissions that wait for the admin:
-//   POST /api/report   multipart: pub_id, photo (JPEG), note?, hp, token   (SPEC section 6.4)
+//   POST /api/report   multipart: pub_id, photo (1-4 JPEGs), note?, hp, token   (SPEC section 6.4)
 //   POST /api/suggest  { pub_id?, beer_id? | proposed_beer_name?, dispense?, hp, token }   (6.5)
 
 import { LIMITS, PHOTOS } from './config';
@@ -20,8 +20,8 @@ export async function handleReport(request: Request, env: Env, now: number): Pro
   assertSameOrigin(request);
   if (!request.headers.get('Content-Type')?.startsWith('multipart/form-data')) throw badRequest();
   const declared = Number(request.headers.get('Content-Length') ?? NaN);
-  if (!Number.isFinite(declared)) throw new ApiError(411, 'length_required', 'Please try sending the photo again.');
-  if (declared > LIMITS.maxPhotoBytes + 50_000) throw tooBig();
+  if (!Number.isFinite(declared)) throw new ApiError(411, 'length_required', 'Please try sending the photos again.');
+  if (declared > LIMITS.maxPhotoBytes * LIMITS.photosPerReport + 100_000) throw tooBig();
 
   let form: FormData;
   try {
@@ -35,50 +35,74 @@ export async function handleReport(request: Request, env: Env, now: number): Pro
 
   const pubId = form.get('pub_id');
   const note = (form.get('note') ?? '').toString().trim();
-  const photo = form.get('photo');
+  const files = form.getAll('photo');
   if (!isId(pubId)) throw badRequest();
   if (note.length > LIMITS.maxNoteLength) throw new ApiError(400, 'note_too_long', 'Please keep the note under 280 characters.');
-  if (!(photo instanceof File) || photo.type !== 'image/jpeg') {
-    throw new ApiError(400, 'not_a_photo', "That doesn't look like a photo. Please choose a picture of the taps.");
+  if (files.length === 0) throw notAPhoto();
+  if (files.length > LIMITS.photosPerReport) {
+    throw new ApiError(400, 'too_many_photos', `Please send up to ${LIMITS.photosPerReport} photos at a time.`);
   }
-  if (photo.size > LIMITS.maxPhotoBytes) throw tooBig();
 
-  const raw = new Uint8Array(await photo.arrayBuffer());
-  if (!looksLikeJpeg(raw)) throw new ApiError(400, 'not_a_photo', "That doesn't look like a photo. Please choose a picture of the taps.");
-  const clean = stripJpegMetadata(raw);
-  if (!clean) throw new ApiError(400, 'not_a_photo', "That photo couldn't be read. Please try taking it again.");
+  const photos: Uint8Array[] = [];
+  for (const file of files) {
+    if (!(file instanceof File) || file.type !== 'image/jpeg') throw notAPhoto();
+    if (file.size > LIMITS.maxPhotoBytes) throw tooBig();
+    const raw = new Uint8Array(await file.arrayBuffer());
+    if (!looksLikeJpeg(raw)) throw notAPhoto();
+    const clean = stripJpegMetadata(raw);
+    if (!clean) throw new ApiError(400, 'not_a_photo', "A photo couldn't be read. Please try taking it again.");
+    photos.push(clean);
+  }
 
   const db = env.DB;
   const day = isoTime(now).slice(0, 10);
-  if ((await readCounter(db, `photos:${day}`)) >= LIMITS.reportsPerDayTotal) throw busy();
+  if ((await readCounter(db, `photos:${day}`)) + photos.length > LIMITS.photosPerDayTotal) throw busy();
   await limitPerDevice(db, 'report-day', guard.device, 'day', LIMITS.reportsPerDay, now,
     "You've sent several photos today. Thanks! Please try again tomorrow.");
   if (!(await activePubExists(db, pubId))) throw pubNotFound();
 
-  const key = `reports/${crypto.randomUUID()}`;
-  await env.PHOTOS.put(key, clean, {
-    expirationTtl: PHOTOS.storeTtlSeconds,
-    metadata: { pub_id: pubId, content_type: 'image/jpeg' },
-  });
-
+  const keys = photos.map(() => `reports/${crypto.randomUUID()}`);
+  let reportId: number | null = null;
   try {
+    await Promise.all(
+      photos.map((photo, i) =>
+        env.PHOTOS.put(keys[i] ?? '', photo, {
+          expirationTtl: PHOTOS.storeTtlSeconds,
+          metadata: { pub_id: pubId, content_type: 'image/jpeg' },
+        }),
+      ),
+    );
+    const report = await db
+      .prepare(
+        `INSERT INTO photo_reports (pub_id, note, status, device_hash, created_at)
+         VALUES (?, ?, 'pending', ?, ?) RETURNING id`,
+      )
+      .bind(pubId, note || null, guard.device, isoTime(now))
+      .first<{ id: number }>();
+    reportId = report?.id ?? null;
+    if (reportId === null) throw new Error('Report was not saved');
     await db.batch([
-      db.prepare(
-        `INSERT INTO photo_reports (pub_id, photo_key, photo_bytes, note, status, device_hash, created_at)
-         VALUES (?, ?, ?, ?, 'pending', ?, ?)`,
-      ).bind(pubId, key, clean.length, note || null, guard.device, isoTime(now)),
-      bumpCounter(db, `photos:${day}`, 1, now + 2 * 86_400_000),
-      bumpCounter(db, guard.budget.key, LIMITS.reportWriteCost, guard.budget.expiresAt),
+      ...photos.map((photo, i) =>
+        db
+          .prepare('INSERT INTO photo_report_images (report_id, position, photo_key, photo_bytes) VALUES (?, ?, ?, ?)')
+          .bind(reportId, i + 1, keys[i], photo.length),
+      ),
+      bumpCounter(db, `photos:${day}`, photos.length, now + 2 * 86_400_000),
+      bumpCounter(db, guard.budget.key, LIMITS.reportWriteCost + LIMITS.photoWriteCost * photos.length, guard.budget.expiresAt),
     ]);
   } catch (error) {
-    await env.PHOTOS.delete(key);
+    // Don't leave half a report behind.
+    await Promise.all(keys.map((key) => env.PHOTOS.delete(key)));
+    if (reportId !== null) await db.prepare('DELETE FROM photo_reports WHERE id = ?').bind(reportId).run();
     throw error;
   }
 
   return json({ ok: true });
 }
 
-const tooBig = () => new ApiError(413, 'too_big', 'That photo is too large. Please try a smaller one.');
+const notAPhoto = () =>
+  new ApiError(400, 'not_a_photo', "That doesn't look like a photo. Please choose pictures of the taps.");
+const tooBig = () => new ApiError(413, 'too_big', 'That photo is too large. Please try a smaller one, or fewer photos.');
 
 export async function handleSuggest(request: Request, env: Env, now: number): Promise<Response> {
   assertSameOrigin(request);

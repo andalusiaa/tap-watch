@@ -119,7 +119,7 @@ export function setupPubSheet(o: Options) {
       form.querySelector<HTMLElement>('h3')?.setAttribute('tabindex', '-1');
       form.querySelector<HTMLElement>('h3')?.focus();
     };
-    const photoButton = h('button', { type: 'button', class: 'button' }, 'Send a photo of the taps');
+    const photoButton = h('button', { type: 'button', class: 'button' }, 'Send photos of the taps');
     const suggestButton = h('button', { type: 'button', class: 'button' }, 'Suggest a beer');
     photoButton.addEventListener(
       'click',

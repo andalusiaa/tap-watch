@@ -9,7 +9,7 @@ export class AdminError extends Error {}
 export interface ListingChange {
   beer_id: string;
   dispense: Dispense;
-  set: 'on' | 'gone';
+  set: 'on' | 'gone' | 'delete';
 }
 
 export interface AdminListing {
@@ -34,7 +34,7 @@ export interface QueueReport {
   pub_name: string;
   note: string | null;
   created_at: string;
-  has_photo: number;
+  photo_count: number;
 }
 
 export interface QueueSuggestion {
@@ -85,5 +85,5 @@ export const adminApi = {
       | { action: 'reject' }
       | { action: 'approve'; beer_id?: string; beer?: NewBeer; dispense?: Dispense | null },
   ) => call<{ ok: true; beer_id?: string }>(`/suggestion/${id}`, decision),
-  photoUrl: (reportId: number) => `/api/admin/photo/${reportId}`,
+  photoUrl: (reportId: number, position: number) => `/api/admin/photo/${reportId}/${position}`,
 };

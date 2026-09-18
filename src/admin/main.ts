@@ -5,7 +5,7 @@ import type { Beer, Snapshot } from '../types';
 import { byId, h } from '../ui/dom';
 import { adminApi, AdminError, SignedOut } from './adminApi';
 import { renderQueue } from './queue';
-import { createTapEditor } from './tapEditor';
+import { confirmDeletes, createTapEditor } from './tapEditor';
 
 const els = {
   status: byId('admin-status'),
@@ -24,6 +24,7 @@ const els = {
 };
 
 let snapshot: Snapshot | null = null;
+
 let beers: Beer[] = [];
 
 function showSignIn(message = '') {
@@ -84,6 +85,7 @@ async function openPub(pubId: string) {
         status.textContent = `That's ${changes.length} changes. Please save up to 40 at a time.`;
         return;
       }
+      if (!confirmDeletes(changes)) return;
       save.disabled = true;
       status.textContent = 'Saving…';
       try {

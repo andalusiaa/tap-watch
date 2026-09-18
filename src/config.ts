@@ -5,9 +5,12 @@ import type { Category } from './types';
 export const SITE_NAME = 'Tap Watch';
 export const AREA_ID = 'e17';
 
-/** Freshness thresholds in days (SPEC section 8). */
-export const FRESH_MAX_DAYS = 14;
-export const AGEING_MAX_DAYS = 60;
+/**
+ * Freshness thresholds in days (SPEC section 8, lengthened by Tristan on 2026-09-18):
+ * green up to 1 month, amber up to 4 months, grey after that.
+ */
+export const FRESH_MAX_DAYS = 30;
+export const AGEING_MAX_DAYS = 120;
 
 /** Pub page groups, in display order. Alcohol-free beers always go in their own group. */
 export const GROUPS: { id: Category | 'alcohol_free'; label: string }[] = [

@@ -4,9 +4,9 @@
 //   POST /api/admin/logout
 //   GET  /api/admin/session                                → { signedIn }
 //   GET  /api/admin/queue                                  → photo reports and suggestions to check
-//   GET  /api/admin/photo/:id                              → the photo (JPEG)
+//   GET  /api/admin/photo/:id/:n                           → photo n of a report (JPEG)
 //   GET  /api/admin/pub/:id                                → the pub and every listing, removed ones too
-//   POST /api/admin/pub/:id/listings   { changes }         → mark beers on or gone
+//   POST /api/admin/pub/:id/listings   { changes }         → mark beers on or gone, or delete them
 //   POST /api/admin/report/:id         { action, changes? } → approve (applying changes) or reject
 //   POST /api/admin/suggestion/:id     { action, … }       → approve (adding the listing or beer) or reject
 
@@ -26,7 +26,8 @@ type Dispense = 'cask' | 'keg';
 interface ListingChange {
   beer_id: string;
   dispense: Dispense;
-  set: 'on' | 'gone';
+  /** on: confirmed now; gone: hidden but restorable; delete: removed for good (with its votes). */
+  set: 'on' | 'gone' | 'delete';
 }
 
 const notSignedIn = () => new ApiError(401, 'signed_out', 'Please sign in again.');
@@ -112,14 +113,14 @@ function parseChanges(value: unknown): ListingChange[] {
   return value.map((c: unknown) => {
     const change = c as Partial<ListingChange>;
     if (!isId(change?.beer_id) || (change.dispense !== 'cask' && change.dispense !== 'keg')) throw badRequest();
-    if (change.set !== 'on' && change.set !== 'gone') throw badRequest();
+    if (change.set !== 'on' && change.set !== 'gone' && change.set !== 'delete') throw badRequest();
     return { beer_id: change.beer_id, dispense: change.dispense, set: change.set };
   });
 }
 
 /**
- * Statements that mark beers on (confirmed as of confirmedAt) or gone (removed, restorable).
- * A confirmation never moves a listing's "last checked" date backwards.
+ * Statements that mark beers on (confirmed as of confirmedAt), gone (removed, restorable) or
+ * delete them outright. A confirmation never moves a listing's "last checked" date backwards.
  */
 async function listingStatements(
   db: D1Database,
@@ -140,8 +141,14 @@ async function listingStatements(
     if (missing) throw new ApiError(400, 'unknown_beer', `"${missing}" isn't in the beer list.`);
   }
 
-  return changes.map((c) =>
-    c.set === 'on'
+  return changes.map((c) => {
+    if (c.set === 'delete') {
+      // Its votes go too (ON DELETE CASCADE).
+      return db
+        .prepare('DELETE FROM listings WHERE pub_id = ? AND beer_id = ? AND dispense = ?')
+        .bind(pubId, c.beer_id, c.dispense);
+    }
+    return c.set === 'on'
       ? db
           .prepare(
             `INSERT INTO listings (pub_id, beer_id, dispense, status, source, last_confirmed_at, updated_at)
@@ -157,8 +164,8 @@ async function listingStatements(
           .bind(pubId, c.beer_id, c.dispense, source, confirmedAt, now)
       : db
           .prepare(`UPDATE listings SET status = 'removed', updated_at = ? WHERE pub_id = ? AND beer_id = ? AND dispense = ?`)
-          .bind(now, pubId, c.beer_id, c.dispense),
-  );
+          .bind(now, pubId, c.beer_id, c.dispense);
+  });
 }
 
 async function pubArea(db: D1Database, pubId: string): Promise<string> {
@@ -203,7 +210,8 @@ async function getQueue(env: Env): Promise<Response> {
   const db = env.DB;
   const [reports, suggestions] = await db.batch([
     db.prepare(
-      `SELECT r.id, r.pub_id, p.name AS pub_name, r.note, r.created_at, r.photo_key IS NOT NULL AS has_photo
+      `SELECT r.id, r.pub_id, p.name AS pub_name, r.note, r.created_at,
+              (SELECT COUNT(*) FROM photo_report_images i WHERE i.report_id = r.id AND i.photo_key IS NOT NULL) AS photo_count
        FROM photo_reports r JOIN pubs p ON p.id = r.pub_id
        WHERE r.status = 'pending'
        ORDER BY r.created_at
@@ -223,9 +231,9 @@ async function getQueue(env: Env): Promise<Response> {
   return json({ reports: reports?.results ?? [], suggestions: suggestions?.results ?? [] });
 }
 
-async function getPhoto(env: Env, reportId: number): Promise<Response> {
-  const row = await env.DB.prepare('SELECT photo_key FROM photo_reports WHERE id = ?')
-    .bind(reportId)
+async function getPhoto(env: Env, reportId: number, position: number): Promise<Response> {
+  const row = await env.DB.prepare('SELECT photo_key FROM photo_report_images WHERE report_id = ? AND position = ?')
+    .bind(reportId, position)
     .first<{ photo_key: string | null }>();
   const photo = row?.photo_key ? await env.PHOTOS.get(row.photo_key, 'arrayBuffer') : null;
   if (!photo) throw notFound('photo');
@@ -243,17 +251,20 @@ async function reviewReport(request: Request, env: Env, reportId: number, now: n
   const body = await readJsonBody(request, 20_000);
   if (body.action !== 'approve' && body.action !== 'reject') throw badRequest();
   const db = env.DB;
-  const report = await db
-    .prepare('SELECT id, pub_id, photo_key, status, created_at FROM photo_reports WHERE id = ?')
-    .bind(reportId)
-    .first<{ id: number; pub_id: string; photo_key: string | null; status: string; created_at: string }>();
+  const [reports, images] = await db.batch<{ id?: number; pub_id?: string; status?: string; created_at?: string; photo_key?: string | null }>([
+    db.prepare('SELECT id, pub_id, status, created_at FROM photo_reports WHERE id = ?').bind(reportId),
+    db.prepare('SELECT photo_key FROM photo_report_images WHERE report_id = ? AND photo_key IS NOT NULL').bind(reportId),
+  ]);
+  const report = reports?.results[0] as { id: number; pub_id: string; status: string; created_at: string } | undefined;
   if (!report) throw notFound('photo report');
   if (report.status !== 'pending') throw alreadyChecked();
+  const photoKeys = (images?.results ?? []).map((i) => i.photo_key).filter((k): k is string => !!k);
 
   const stamp = isoTime(now);
   const statements: D1PreparedStatement[] = [
-    db.prepare(`UPDATE photo_reports SET status = ?, reviewed_at = ?, photo_key = NULL WHERE id = ? AND status = 'pending'`)
+    db.prepare(`UPDATE photo_reports SET status = ?, reviewed_at = ? WHERE id = ? AND status = 'pending'`)
       .bind(body.action === 'approve' ? 'approved' : 'rejected', stamp, reportId),
+    db.prepare('UPDATE photo_report_images SET photo_key = NULL WHERE report_id = ?').bind(reportId),
   ];
   if (body.action === 'approve') {
     // Ticks count as confirmations from when the photo was taken, not from now.
@@ -262,8 +273,8 @@ async function reviewReport(request: Request, env: Env, reportId: number, now: n
     statements.push(invalidateSnapshot(db, await pubArea(db, report.pub_id)));
   }
   await db.batch(statements);
-  // The photo goes as soon as it has been checked. (The store would also expire it.)
-  if (report.photo_key) await env.PHOTOS.delete(report.photo_key);
+  // The photos go as soon as they have been checked. (The store would also expire them.)
+  await Promise.all(photoKeys.map((key) => env.PHOTOS.delete(key)));
   return json({ ok: true });
 }
 
@@ -405,7 +416,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
 
   let m: RegExpMatchArray | null;
   if (path === '/queue' && method === 'GET') return getQueue(env);
-  if ((m = path.match(/^\/photo\/(\d{1,12})$/)) && method === 'GET') return getPhoto(env, Number(m[1]));
+  if ((m = path.match(/^\/photo\/(\d{1,12})\/([1-4])$/)) && method === 'GET') return getPhoto(env, Number(m[1]), Number(m[2]));
   if ((m = path.match(/^\/pub\/([a-z0-9-]{1,80})$/)) && method === 'GET') return getPub(env, m[1] ?? '');
   if ((m = path.match(/^\/pub\/([a-z0-9-]{1,80})\/listings$/)) && method === 'POST') {
     return saveListings(request, env, m[1] ?? '', now);

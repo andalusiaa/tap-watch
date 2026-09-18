@@ -36,6 +36,16 @@ npm run seed:map
 
 A map opens in your web browser. Green pins are pubs set to `yes`; grey pins are the other places in the postcode district. Click a pin to see its name. Run it again after editing the CSV to see your changes.
 
+## Updating the beer list (as a spreadsheet)
+
+1. `npm run beers:export` saves the current live list as `seed/out/beer-list.csv`. It includes any beers added on the admin page.
+2. Open it in Numbers, Excel or Google Sheets. Add a row for a new beer (leave its ID blank), change any details, or delete a row to take a beer off the list. Style must be one of: Lager, Stout or porter, Pale ale or IPA, Bitter or cask ale, Cider, Other. Separate other spellings with semicolons.
+3. Save it as CSV (in Numbers: File → Export To → CSV).
+4. `npm run beers:import -- path/to/the-file.csv` checks it and says what was added, changed or taken off.
+5. `npm run db:beers:remote` updates the live site. Pubs and tap lists are not touched.
+
+Beers taken off the list are hidden from the site, not deleted, so bringing one back later keeps its history.
+
 ## 2. Check the beer list
 
 `beers.json` is a first draft. Beers with a `check` note need a look: usually the UK draught ABV, or whether the beer is really on tap regularly in the area. Clear the note (`"check": null`) once it's right.

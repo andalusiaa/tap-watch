@@ -11,7 +11,7 @@ Live at <https://tap-watch.gage-tristan.workers.dev>.
 
 ## Status
 
-Phase 4 (moderation). Visitors can vote, send photos of the taps and suggest beers. A private admin page (`/admin/`) is for checking photos and suggestions and editing each pub's tap list. **The tap lists are still made up** and the site says so.
+Phase 4 (moderation). Visitors can vote, send up to 4 photos of the taps at a time and suggest beers. A private admin page (`/admin/`) is for checking photos and suggestions and editing each pub's tap list. **The tap lists are still made up** and the site says so.
 
 Still to come in Phase 4: editing pubs, operators and core ranges, a usage page, and a switch to clear the sample tap lists.
 
@@ -71,6 +71,9 @@ Then, in two terminal tabs:
 | `npm run db:seed:local` / `:remote` | Loads pubs, beers and sample tap lists locally / into the live database |
 | `npm run seed:pubs` | Fetches pubs from OpenStreetMap for review |
 | `npm run seed:map` | Opens a map of the pubs in the review file |
+| `npm run beers:export` | Saves the live beer list as a spreadsheet: `seed/out/beer-list.csv` |
+| `npm run beers:import -- <file>` | Checks an edited beer spreadsheet and saves it as `seed/beers.json` |
+| `npm run db:beers:remote` | Loads the beer list into the live database (pubs and tap lists are left alone) |
 | `npm run map:build` | Rebuilds the map tiles from the latest OpenStreetMap data (needs the pmtiles tool, see `seed/build-basemap.mjs`) |
 
 ## Deploying

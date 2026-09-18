@@ -55,7 +55,7 @@ export function sampleListings(pubs, beers, now) {
     if (r < 0.2) {
       return { status: 'reported_gone', source: 'admin', last_confirmed_at: daysAgo(between(20, 90)), reported_gone_at: daysAgo(between(0, 6)) };
     }
-    const age = r < 0.6 ? between(0, 14) : r < 0.85 ? between(15, 60) : between(61, 150);
+    const age = r < 0.6 ? between(0, 30) : r < 0.85 ? between(31, 120) : between(121, 240);
     return { status: 'confirmed', source: 'admin', last_confirmed_at: daysAgo(age), reported_gone_at: null };
   }
 

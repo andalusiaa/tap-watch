@@ -65,7 +65,7 @@ export function sendVote(listingId: number, direction: VoteDirection, honeypot: 
   );
 }
 
-export function sendPhotoReport(pubId: string, photo: Blob, note: string, honeypot: string) {
+export function sendPhotoReport(pubId: string, photos: Blob[], note: string, honeypot: string) {
   return sendWrite(
     '/api/report',
     (t) => {
@@ -74,7 +74,7 @@ export function sendPhotoReport(pubId: string, photo: Blob, note: string, honeyp
       form.set('note', note);
       form.set('hp', honeypot);
       form.set('token', t);
-      form.set('photo', photo, 'taps.jpg');
+      photos.forEach((photo, i) => form.append('photo', photo, `taps-${i + 1}.jpg`));
       return form;
     },
     false,
