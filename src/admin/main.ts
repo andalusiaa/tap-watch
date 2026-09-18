@@ -6,6 +6,7 @@ import { byId, h } from '../ui/dom';
 import { adminApi, AdminError, SignedOut } from './adminApi';
 import { renderQueue } from './queue';
 import { confirmDeletes, createTapEditor } from './tapEditor';
+import { renderUsage } from './usage';
 
 const els = {
   status: byId('admin-status'),
@@ -19,6 +20,7 @@ const els = {
   queueTabLabel: byId('queue-tab-label'),
   queuePanel: byId('queue-panel'),
   tapsPanel: byId('taps-panel'),
+  usagePanel: byId('usage-panel'),
   pubPicker: byId<HTMLSelectElement>('pub-picker'),
   pubEditor: byId('pub-editor'),
 };
@@ -47,6 +49,15 @@ async function refreshQueue() {
   } catch (error) {
     if (error instanceof SignedOut) return showSignIn('Please sign in.');
     els.queuePanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load the list. Check your connection and refresh."));
+  }
+}
+
+async function refreshUsage() {
+  try {
+    await renderUsage(els.usagePanel);
+  } catch (error) {
+    if (error instanceof SignedOut) return showSignIn('Your session ended. Please sign in again.');
+    els.usagePanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load usage. Check your connection and try again."));
   }
 }
 
@@ -153,7 +164,9 @@ els.tabs.addEventListener('change', (e) => {
   const tab = (e.target as HTMLInputElement).value;
   els.queuePanel.hidden = tab !== 'queue';
   els.tapsPanel.hidden = tab !== 'taps';
+  els.usagePanel.hidden = tab !== 'usage';
   if (tab === 'queue') void refreshQueue();
+  if (tab === 'usage') void refreshUsage();
 });
 
 els.pubPicker.addEventListener('change', () => void openPub(els.pubPicker.value));

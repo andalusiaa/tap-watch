@@ -242,6 +242,10 @@ check('A tampered session cookie is refused', (await admin('/queue', { cookie: f
 r = await admin('/queue', { cookie });
 check('Queue lists the photos and both suggestions', r.status === 200 && r.body.reports[0]?.photo_count === 2 && r.body.suggestions.length === 2, JSON.stringify(r.body).slice(0, 300));
 
+r = await admin('/usage', { cookie });
+check('Usage counts today\'s photos, report and stored bytes', r.status === 200 && r.body.today.photos >= 2 && r.body.today.reports >= 1 && r.body.stored_photos.count >= 2 && r.body.stored_photos.bytes > 0 && r.body.days.length === 7 && r.body.today.writes > 0, JSON.stringify(r.body).slice(0, 300));
+check('Usage needs sign-in', (await admin('/usage')).status === 401);
+
 r = await admin(`/photo/${report.id}/1`, { cookie });
 const photoBytes = Buffer.from(r.body);
 check('Admin can view the photo', r.status === 200 && r.headers.get('content-type') === 'image/jpeg');

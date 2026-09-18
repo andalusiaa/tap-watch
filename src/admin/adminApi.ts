@@ -57,6 +57,22 @@ export interface NewBeer {
   aliases: string[];
 }
 
+export interface Usage {
+  now: string;
+  today: { votes: number; reports: number; suggestions: number; photos: number; writes: number };
+  days: { day: string; votes: number; reports: number; suggestions: number }[];
+  stored_photos: { count: number; bytes: number };
+  database_bytes: number | null;
+  caps: {
+    daily_write_budget: number;
+    photos_per_day: number;
+    reports_per_device_per_day: number;
+    photos_per_report: number;
+    suggestions_per_device_per_day: number;
+    votes_per_device_per_hour: number;
+  };
+}
+
 async function call<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api/admin${path}`, {
     method: body === undefined ? 'GET' : 'POST',
@@ -73,6 +89,7 @@ export const adminApi = {
   session: () => call<{ signedIn: boolean; setUp: boolean }>('/session'),
   signIn: (password: string) => call<{ ok: true }>('/login', { password }),
   signOut: () => call<{ ok: true }>('/logout', {}),
+  usage: () => call<Usage>('/usage'),
   queue: () => call<{ reports: QueueReport[]; suggestions: QueueSuggestion[] }>('/queue'),
   pub: (pubId: string) => call<AdminPub>(`/pub/${encodeURIComponent(pubId)}`),
   saveListings: (pubId: string, changes: ListingChange[]) =>

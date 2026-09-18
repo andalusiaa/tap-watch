@@ -3,6 +3,7 @@
 //   POST /api/admin/login              { password }        → sets a 30-day session cookie
 //   POST /api/admin/logout
 //   GET  /api/admin/session                                → { signedIn }
+//   GET  /api/admin/usage                                  → today's activity and limits
 //   GET  /api/admin/queue                                  → photo reports and suggestions to check
 //   GET  /api/admin/photo/:id/:n                           → photo n of a report (JPEG)
 //   GET  /api/admin/pub/:id                                → the pub and every listing, removed ones too
@@ -16,6 +17,7 @@ import { ApiError, assertSameOrigin, badRequest, isoTime, json, readJsonBody } f
 import { bumpCounter, deviceHash, readCounter, sameString, signToString } from './security';
 import { invalidateSnapshot } from './snapshot';
 import { normalise, slugify } from './text';
+import { getUsage } from './usage';
 
 const COOKIE = 'tw_admin';
 const CATEGORIES = new Set(['lager', 'stout', 'pale_ipa', 'bitter_cask', 'cider', 'other']);
@@ -416,6 +418,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
 
   let m: RegExpMatchArray | null;
   if (path === '/queue' && method === 'GET') return getQueue(env);
+  if (path === '/usage' && method === 'GET') return getUsage(env, now);
   if ((m = path.match(/^\/photo\/(\d{1,12})\/([1-4])$/)) && method === 'GET') return getPhoto(env, Number(m[1]), Number(m[2]));
   if ((m = path.match(/^\/pub\/([a-z0-9-]{1,80})$/)) && method === 'GET') return getPub(env, m[1] ?? '');
   if ((m = path.match(/^\/pub\/([a-z0-9-]{1,80})\/listings$/)) && method === 'POST') {
