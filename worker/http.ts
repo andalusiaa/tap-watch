@@ -40,7 +40,7 @@ export const badRequest = () =>
 export function assertSameOrigin(request: Request) {
   const origin = request.headers.get('Origin');
   if (origin !== new URL(request.url).origin) {
-    throw new ApiError(403, 'forbidden', 'Votes can only be sent from the Tap Watch website.');
+    throw new ApiError(403, 'forbidden', 'This can only be sent from the Tap Watch website.');
   }
 }
 
