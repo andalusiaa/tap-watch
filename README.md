@@ -13,7 +13,7 @@ Live at <https://tap-watch.gage-tristan.workers.dev>.
 
 Phase 4 (moderation). Visitors can vote, send up to 4 photos of the taps at a time and suggest beers. A private admin page (`/admin/`) is for checking photos and suggestions and editing each pub's tap list. **The tap lists are still made up** and the site says so.
 
-Still to come in Phase 4: editing pubs, operators and core ranges, a usage page, and a switch to clear the sample tap lists.
+Still to come in Phase 4: editing pubs and operators, a usage page, and a switch to clear the sample tap lists. Operator core ranges are planned for Phase 5.
 
 ## How it's built
 
