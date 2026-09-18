@@ -35,6 +35,7 @@
   {"id":"inchs","name":"Inch's","brewery":"Heineken","category":"cider","abv":4.5,"is_alcohol_free":false,"aliases":["inchs cider","inches"],"check":"UK draught ABV"},
   {"id":"kopparberg-strawberry-and-lime","name":"Kopparberg Strawberry & Lime","brewery":"Kopparberg","category":"cider","abv":4,"is_alcohol_free":false,"aliases":["kopparberg","kopparberg strawberry","strawberry and lime"],"check":"Regular on draught?"},
   {"id":"magners-original","name":"Magners Original","brewery":"C&C Group","category":"cider","abv":4.5,"is_alcohol_free":false,"aliases":["magners","magners cider"],"check":null},
+  {"id":"old-mout-alcohol-free-berries-and-cherries","name":"Old Mout Alcohol Free Berries & Cherries","brewery":"Heineken","category":"cider","abv":0,"is_alcohol_free":true,"aliases":["old mout alcohol free","old mout 0.0","old mout zero","old mout af"],"check":"Confirm flavour and that it's on draught in E17"},
   {"id":"old-mout-berries-and-cherries","name":"Old Mout Berries & Cherries","brewery":"Heineken","category":"cider","abv":4,"is_alcohol_free":false,"aliases":["old mout","berries and cherries"],"check":"Regular on draught?"},
   {"id":"rekorderlig-strawberry-lime","name":"Rekorderlig Strawberry-Lime","brewery":"Rekorderlig","category":"cider","abv":4,"is_alcohol_free":false,"aliases":["rekorderlig"],"check":"Regular on draught?"},
   {"id":"somersby-apple","name":"Somersby Apple","brewery":"Carlsberg Britvic","category":"cider","abv":4.5,"is_alcohol_free":false,"aliases":["somersby"],"check":"UK draught ABV"},
@@ -61,6 +62,7 @@
   {"id":"cobra","name":"Cobra","brewery":"Molson Coors","category":"lager","abv":4.5,"is_alcohol_free":false,"aliases":["cobra beer"],"check":"UK draught ABV"},
   {"id":"coors","name":"Coors","brewery":"Molson Coors","category":"lager","abv":4,"is_alcohol_free":false,"aliases":["coors light"],"check":null},
   {"id":"cruzcampo","name":"Cruzcampo","brewery":"Heineken","category":"lager","abv":4.4,"is_alcohol_free":false,"aliases":["cruz campo"],"check":null},
+  {"id":"days-lager","name":"Days Lager","brewery":"Days Brewing","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["days","days 0.0","days alcohol free"],"check":"Confirm ABV (0.0?); on draught in E17?"},
   {"id":"estrella-damm","name":"Estrella Damm","brewery":"Damm","category":"lager","abv":4.6,"is_alcohol_free":false,"aliases":["estrella"],"check":null},
   {"id":"estrella-galicia","name":"Estrella Galicia","brewery":"Hijos de Rivera","category":"lager","abv":5.5,"is_alcohol_free":false,"aliases":["galicia"],"check":"UK draught ABV; regular in E17?"},
   {"id":"five-points-pils","name":"Five Points Pils","brewery":"Five Points Brewing Co","category":"lager","abv":4.6,"is_alcohol_free":false,"aliases":["five points pilsner"],"check":null},
@@ -154,6 +156,5 @@
   {"id":"murphys-irish-stout","name":"Murphy's Irish Stout","brewery":"Heineken","category":"stout","abv":4,"is_alcohol_free":false,"aliases":["murphys stout","murphies"],"check":null},
   {"id":"redemption-fellowship-porter","name":"Redemption Fellowship Porter","brewery":"Redemption Brewing","category":"stout","abv":5.1,"is_alcohol_free":false,"aliases":["fellowship","fellowship porter"],"check":"Regular in E17?"},
   {"id":"siren-broken-dream","name":"Siren Broken Dream","brewery":"Siren Craft Brew","category":"stout","abv":5.6,"is_alcohol_free":false,"aliases":["broken dream"],"check":"Regular in E17?"},
-  {"id":"days-lager","name":"Days Lager","brewery":"Days Brewing","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["days","days 0.0","days alcohol free"],"check":"Confirm ABV (0.0?); on draught in E17?"},
-  {"id":"old-mout-alcohol-free-berries-and-cherries","name":"Old Mout Alcohol Free Berries & Cherries","brewery":"Heineken","category":"cider","abv":0,"is_alcohol_free":true,"aliases":["old mout alcohol free","old mout 0.0","old mout zero","old mout af"],"check":"Confirm flavour and that it's on draught in E17"}
+  {"id":"estrella-galicia-0-0","name":"Estrella Galicia 0,0","brewery":"Hijos de Rivera","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["estrella galicia 0.0","estrella galicia 00","estrella galicia zero","estrella galicia alcohol free","galicia 0.0","galicia zero"],"check":"On draught in E17?"}
 ]
