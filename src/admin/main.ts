@@ -6,6 +6,7 @@ import { byId, h } from '../ui/dom';
 import { adminApi, AdminError, SignedOut } from './adminApi';
 import { renderQueue } from './queue';
 import { confirmDeletes, createTapEditor } from './tapEditor';
+import { renderPubs } from './pubs';
 import { renderUsage } from './usage';
 
 const els = {
@@ -21,6 +22,7 @@ const els = {
   queuePanel: byId('queue-panel'),
   tapsPanel: byId('taps-panel'),
   usagePanel: byId('usage-panel'),
+  pubsPanel: byId('pubs-panel'),
   pubPicker: byId<HTMLSelectElement>('pub-picker'),
   pubEditor: byId('pub-editor'),
 };
@@ -59,6 +61,29 @@ async function refreshUsage() {
     if (error instanceof SignedOut) return showSignIn('Your session ended. Please sign in again.');
     els.usagePanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load usage. Check your connection and try again."));
   }
+}
+
+async function refreshPubs() {
+  try {
+    await renderPubs({
+      panel: els.pubsPanel,
+      onPubsChanged: () => void fillPubPicker(),
+      onSignedOut: () => showSignIn('Your session ended. Please sign in again.'),
+    });
+  } catch (error) {
+    if (error instanceof SignedOut) return showSignIn('Your session ended. Please sign in again.');
+    els.pubsPanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load the pubs. Check your connection and try again."));
+  }
+}
+
+/** The tap list picker lists every pub from the admin API, so new and renamed pubs show straight away. */
+async function fillPubPicker() {
+  const current = els.pubPicker.value;
+  const { pubs } = await adminApi.pubs();
+  els.pubPicker.replaceChildren(
+    h('option', { value: '' }, 'Choose a pub'),
+    ...pubs.map((p) => h('option', { value: p.id, selected: p.id === current }, p.is_active ? p.name : `${p.name} (closed)`)),
+  );
 }
 
 async function refreshCount() {
@@ -132,10 +157,7 @@ async function showWorkspace() {
   els.status.textContent = 'Loading…';
   snapshot ??= await loadSnapshot();
   beers = [...snapshot.beers];
-  els.pubPicker.replaceChildren(
-    h('option', { value: '' }, 'Choose a pub'),
-    ...[...snapshot.pubs].sort((a, b) => a.name.localeCompare(b.name)).map((p) => h('option', { value: p.id }, p.name)),
-  );
+  await fillPubPicker();
   els.status.textContent = snapshot.sample ? 'The public site is still showing the made-up sample tap lists.' : '';
   els.workspace.hidden = false;
   await refreshQueue();
@@ -165,6 +187,8 @@ els.tabs.addEventListener('change', (e) => {
   els.queuePanel.hidden = tab !== 'queue';
   els.tapsPanel.hidden = tab !== 'taps';
   els.usagePanel.hidden = tab !== 'usage';
+  els.pubsPanel.hidden = tab !== 'pubs';
+  if (tab === 'pubs') void refreshPubs();
   if (tab === 'queue') void refreshQueue();
   if (tab === 'usage') void refreshUsage();
 });

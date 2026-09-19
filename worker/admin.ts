@@ -3,6 +3,7 @@
 //   POST /api/admin/login              { password }        → sets a 30-day session cookie
 //   POST /api/admin/logout
 //   GET  /api/admin/session                                → { signedIn }
+//   GET/POST /api/admin/pubs, POST /api/admin/pubs/:id, POST /api/admin/area/:id/sample → see pubs.ts
 //   GET  /api/admin/usage                                  → today's activity and limits
 //   GET  /api/admin/queue                                  → photo reports and suggestions to check
 //   GET  /api/admin/photo/:id/:n                           → photo n of a report (JPEG)
@@ -15,8 +16,9 @@ import { ADMIN, LIMITS } from './config';
 import { limitPerDevice } from './guard';
 import { ApiError, assertSameOrigin, badRequest, isoTime, json, readJsonBody } from './http';
 import { bumpCounter, deviceHash, readCounter, sameString, signToString } from './security';
-import { invalidateSnapshot } from './snapshot';
+import { invalidateSnapshot, isAreaId } from './snapshot';
 import { normalise, slugify } from './text';
+import { addPub, listPubs, setSample, updatePub } from './pubs';
 import { getUsage } from './usage';
 
 const COOKIE = 'tw_admin';
@@ -419,6 +421,17 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
   let m: RegExpMatchArray | null;
   if (path === '/queue' && method === 'GET') return getQueue(env);
   if (path === '/usage' && method === 'GET') return getUsage(env, now);
+  if (path === '/pubs') {
+    const area = url.searchParams.get('area') ?? 'e17';
+    if (!isAreaId(area)) throw badRequest();
+    if (method === 'GET') return listPubs(env, area);
+    if (method === 'POST') return addPub(request, env, area, now);
+  }
+  if ((m = path.match(/^\/pubs\/([a-z0-9-]{1,80})$/)) && method === 'POST') return updatePub(request, env, m[1] ?? '', now);
+  if ((m = path.match(/^\/area\/([a-z0-9-]{1,20})\/sample$/)) && method === 'POST') {
+    if (!isAreaId(m[1] ?? '')) throw badRequest();
+    return setSample(request, env, m[1] ?? '');
+  }
   if ((m = path.match(/^\/photo\/(\d{1,12})\/([1-4])$/)) && method === 'GET') return getPhoto(env, Number(m[1]), Number(m[2]));
   if ((m = path.match(/^\/pub\/([a-z0-9-]{1,80})$/)) && method === 'GET') return getPub(env, m[1] ?? '');
   if ((m = path.match(/^\/pub\/([a-z0-9-]{1,80})\/listings$/)) && method === 'POST') {

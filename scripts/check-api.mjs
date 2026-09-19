@@ -317,5 +317,35 @@ check('Votes store a hash, never an IP address', hashes.length > 0 && hashes.eve
 const dump = ['votes', 'rate_limits', 'photo_reports', 'suggestions'].map((t) => JSON.stringify(sql(`SELECT * FROM ${t}`))).join('');
 check('No IP address appears in votes, reports, suggestions or counters', !dump.includes('203.0.113.'), '');
 
+// --- Pubs and the test banner (admin) ---
+r = await admin('/pubs?area=e17');
+check('Pub list needs sign-in', r.status === 401);
+r = await admin('/pubs?area=e17', { cookie });
+check('Pub list includes pubs, operators and the banner state', r.status === 200 && r.body.pubs.length > 5 && r.body.operators.length >= 2 && r.body.sample === true);
+const editPub = r.body.pubs.find((p) => p.is_active);
+const pubBody = (overrides = {}) => ({
+  pub: { name: editPub.name, address: editPub.address, postcode: editPub.postcode, lat: editPub.lat, lng: editPub.lng, venue_type: 'pub', is_active: true, operator_id: editPub.operator_id, new_operator: null, ...overrides },
+});
+r = await admin(`/pubs/${editPub.id}`, { cookie, body: pubBody({ name: 'Renamed Arms', new_operator: { name: 'Test Taverns', type: 'pubco' } }) });
+check('A pub can be renamed and given a new operator', r.status === 200, JSON.stringify(r.body));
+r = await admin('/pubs?area=e17', { cookie });
+const renamed = r.body.pubs.find((p) => p.id === editPub.id);
+check('The rename and new operator are saved', renamed?.name === 'Renamed Arms' && r.body.operators.some((o) => o.name === 'Test Taverns' && o.id === renamed.operator_id));
+r = await admin(`/pubs/${editPub.id}`, { cookie, body: pubBody({ lat: 52.5, lng: -1.9 }) });
+check('A map position outside the area is refused', r.status === 400);
+r = await admin(`/pubs/${editPub.id}`, { cookie, body: pubBody({ postcode: 'NOT A PC' }) });
+check('A bad postcode is refused', r.status === 400);
+r = await admin(`/pubs/${editPub.id}`, { cookie, body: pubBody({ is_active: false }) });
+r = await admin('/pubs?area=e17', { cookie });
+check('A pub can be marked closed', r.body.pubs.find((p) => p.id === editPub.id)?.is_active === 0);
+r = await admin('/pubs?area=e17', { cookie, body: { pub: { name: 'The Test Tap', address: '1 Hoe Street', postcode: 'E17 4SA', lat: 51.583, lng: -0.02, venue_type: 'bar', is_active: true, operator_id: null, new_operator: null } } });
+check('A new pub can be added', r.status === 200 && r.body.id === 'the-test-tap-e17', JSON.stringify(r.body));
+r = await admin('/pubs?area=e17', { cookie, body: { pub: { name: 'The Test Tap', address: '', postcode: '', lat: 51.583, lng: -0.02, venue_type: 'pub', is_active: true, operator_id: null, new_operator: null } } });
+check('A second pub with the same name gets its own ID', r.status === 200 && r.body.id === 'the-test-tap-2-e17', JSON.stringify(r.body));
+r = await admin('/area/e17/sample', { cookie, body: { sample: false } });
+check('The test banner can be turned off', r.status === 200);
+r = await admin('/area/e17/sample', { cookie, body: { sample: false }, origin: 'https://evil.example' });
+check('Pub and banner changes need the same origin', r.status === 403);
+
 console.log(failures ? `\n${failures} check(s) failed.` : '\nAll checks passed.');
 process.exit(failures ? 1 : 0);

@@ -309,3 +309,38 @@
 .usage-table th {
   white-space: nowrap;
 }
+
+/* --- Pubs tab --- */
+
+.position-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.position-row input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.4rem 0.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: 1rem;
+}
+
+.panel-sub {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--rule);
+}
+
+#pub-edit-picker {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: 1rem;
+}

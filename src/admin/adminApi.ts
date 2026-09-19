@@ -57,6 +57,37 @@ export interface NewBeer {
   aliases: string[];
 }
 
+export interface AdminOperator {
+  id: string;
+  name: string;
+  type: 'pubco' | 'brewery' | 'independent';
+}
+
+export interface EditablePub {
+  id: string;
+  name: string;
+  address: string;
+  postcode: string;
+  lat: number;
+  lng: number;
+  venue_type: 'pub' | 'bar';
+  operator_id: string | null;
+  is_active: number;
+  beers: number;
+}
+
+export interface PubChanges {
+  name: string;
+  address: string;
+  postcode: string;
+  lat: number;
+  lng: number;
+  venue_type: 'pub' | 'bar';
+  is_active: boolean;
+  operator_id: string | null;
+  new_operator: { name: string; type: AdminOperator['type'] } | null;
+}
+
 export interface Usage {
   now: string;
   today: { votes: number; reports: number; suggestions: number; photos: number; writes: number };
@@ -90,6 +121,10 @@ export const adminApi = {
   signIn: (password: string) => call<{ ok: true }>('/login', { password }),
   signOut: () => call<{ ok: true }>('/logout', {}),
   usage: () => call<Usage>('/usage'),
+  pubs: () => call<{ sample: boolean; pubs: EditablePub[]; operators: AdminOperator[] }>('/pubs?area=e17'),
+  addPub: (pub: PubChanges) => call<{ ok: true; id: string }>('/pubs?area=e17', { pub }),
+  updatePub: (id: string, pub: PubChanges) => call<{ ok: true; id: string }>(`/pubs/${encodeURIComponent(id)}`, { pub }),
+  setSample: (sample: boolean) => call<{ ok: true; sample: boolean }>('/area/e17/sample', { sample }),
   queue: () => call<{ reports: QueueReport[]; suggestions: QueueSuggestion[] }>('/queue'),
   pub: (pubId: string) => call<AdminPub>(`/pub/${encodeURIComponent(pubId)}`),
   saveListings: (pubId: string, changes: ListingChange[]) =>
