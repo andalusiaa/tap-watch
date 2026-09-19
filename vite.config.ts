@@ -10,6 +10,8 @@ export default defineConfig({
         main: 'index.html',
         notFound: '404.html',
         admin: 'admin/index.html',
+        about: 'about/index.html',
+        privacy: 'privacy/index.html',
       },
     },
   },

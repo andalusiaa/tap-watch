@@ -1137,3 +1137,46 @@ input[type="file"]:focus-visible + .file-button {
     scroll-behavior: auto !important;
   }
 }
+
+/* --- Text pages (How it works, Privacy) ------------------------------------------------ */
+
+.prose h2 {
+  margin-top: 1.75rem;
+  margin-bottom: 0.4rem;
+  font-size: var(--step-1);
+}
+
+.prose p,
+.prose li {
+  line-height: 1.55;
+}
+
+.prose p + p {
+  margin-top: 0.6rem;
+}
+
+.prose ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.prose li + li {
+  margin-top: 0.35rem;
+}
+
+.prose .key-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.prose .key-list .badge {
+  margin-right: 0.4rem;
+}
+
+.footer-links {
+  margin-bottom: 0.6rem;
+}
+
+.prose ul + p {
+  margin-top: 0.6rem;
+}
