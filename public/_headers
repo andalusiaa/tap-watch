@@ -8,6 +8,14 @@
   X-Frame-Options: DENY
   Cross-Origin-Opener-Policy: same-origin
 
+# Built scripts and styles have a content hash in their names, so they never change.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The site font. Give a replacement a new file name.
+/fonts/*
+  Cache-Control: public, max-age=2592000
+
 # Map tiles and label fonts. Labelled as protobuf so Cloudflare compresses them.
 # Tile folders are named after the map build date, so they never change.
 /map/tiles/*
