@@ -21,7 +21,10 @@ These override `../SPEC.md`:
 - **Photo reports carry up to 4 photos**, and after sending a photo or suggestion the form offers to send another.
 - **Admin can delete a listing for good** (and its votes), as well as mark it Gone (hidden, restorable). Deleting asks for confirmation.
 - **Phase 4 closed on 2026-09-18.** Moved to Phase 5: pubs/operators editing on the admin page, the switch to clear sample tap lists (`areas.is_sample` to 0, delete sample listings; needed before walkaround data), and operator core ranges.
-- **Gluten-free filter:** wanted in a future phase (after Phase 5 unless Tristan says otherwise). Not designed yet; it will need a gluten-free flag per beer and a spreadsheet column.
+- **Gluten-free filter, contributor recognition, a beer index (most searched/poured) and "tap wars" comparison maps** are post-launch ideas, listed in README "Ideas for after launch". Not designed yet; privacy rules still apply (no accounts, nothing that identifies a person, search counts only as daily totals).
+- **"Submit a beer"** (2026-09-19) replaces "Suggest a beer" in all visible text. Code and API names still say suggestion/suggest.
+- **Dark mode follows sunset** (2026-09-19), not the phone's setting: `public/theme.js` (a small blocking script, since the CSP forbids inline scripts) sets `data-theme` on `<html>` from Walthamstow sunrise/sunset, or from the visitor's Auto/Light/Dark choice in localStorage `tw-theme`. CSS uses `:root[data-theme="dark"]`; the map listens for the `tw-themechange` event. Every page must load `/theme.js` in `<head>`.
+- `/about/` repeats the freshness thresholds in words (1 month / 4 months). Update it if `src/config.ts` changes.
 - **Location is asked for when the user searches** (not only via a "Use my location" button), and distances are measured from where they are at that moment. A fix under 60 seconds old is reused. Postcode entry is the fallback. If permission was already granted, location is used on page load.
 
 ## Stack

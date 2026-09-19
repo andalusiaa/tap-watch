@@ -13,7 +13,31 @@ Live at <https://tap-watch.gage-tristan.workers.dev>.
 
 Phase 4 (moderation). Visitors can vote, send up to 4 photos of the taps at a time and suggest beers. A private admin page (`/admin/`) is for checking photos and suggestions and editing each pub's tap list. **The tap lists are still made up** and the site says so.
 
-The admin page has a Usage tab showing today's activity, storage, and every free-plan limit. **Phase 4 is complete.** Moved to Phase 5: editing pubs and operators, a switch to clear the sample tap lists (before the real walkaround data goes in), and operator core ranges. Planned for a later phase: a gluten-free filter.
+**Phase 4 is complete. Phase 5 (polish and launch) is mostly built:**
+
+- Admin Pubs tab: add or change pubs and operators, mark pubs closed, and turn the test banner off.
+- Admin "Add a beer" works like the public "Submit a beer" form.
+- Dark mode from sunset to sunrise in Walthamstow, with an Auto / Light / Dark choice in the footer.
+- How it works (`/about/`) and Privacy (`/privacy/`) pages.
+- Long-term caching for built files, and a security review (below).
+
+Still to do before launch:
+
+1. Tristan's walkaround data.
+2. A Lighthouse check on the live site (target 95+ for speed and accessibility on a phone).
+3. Turn the test banner off.
+4. Remove the `noindex` tag from `index.html` so search engines can list the site.
+
+Operator core ranges are in Phase 5 but lowest priority, because most E17 pubs are independents.
+
+### Ideas for after launch
+
+Noted, not designed yet:
+
+- **Gluten-free filter.** A gluten-free yes/no per beer, filled in as a spreadsheet column.
+- **Recognising contributors** without accounts or tracking. For example, an optional nickname kept on the device and sent with votes and submissions, feeding a leaderboard or badges. It must stay opt-in and store nothing that identifies a person.
+- **A beer index.** Which drinks are most searched for and most poured across E17, which pubs could use to understand drinkers. Search counts would be totals per beer per day, never linked to a person or device.
+- **Tap wars.** Fun comparison maps, such as Guinness vs Murphy's vs Beamish, or Camden Hells vs Neck Oil, with pins coloured by which one each pub pours.
 
 ## How it's built
 
@@ -83,6 +107,23 @@ Pushing to `main` deploys the site and API. Database changes are **not** applied
 ## Security
 
 Never commit secrets such as passwords, API tokens or salts. They belong in Cloudflare secrets (or a local `.dev.vars` file, which git ignores). The live API uses two secrets: `APP_SECRET` (`npx wrangler secret put APP_SECRET`) and `ADMIN_PASSWORD`, the admin page password (`npx wrangler secret put ADMIN_PASSWORD`, at least 12 characters). Changing the password signs out every admin session.
+
+Security review (2026-09-19, Phase 5):
+
+- **Admin access:**
+  - Everything under `/api/admin/` needs the signed session cookie (HttpOnly, Secure, SameSite=Strict).
+  - Every admin change also needs a same-origin request.
+  - Sign-in is rate-limited and locks for the day after 100 wrong passwords.
+- **Public writes:** votes, photos and beer submissions all go through the honeypot, page-token timing, edge rate limiter, daily write budget and per-device limits.
+- **Photo uploads:**
+  - Size is checked before the body is read.
+  - Each file must be a real JPEG, with its metadata stripped on the server.
+- **Headers:**
+  - Static pages send a strict Content Security Policy (no inline scripts or styles) and can't be framed.
+  - Pages can't use the camera or microphone.
+  - HTTPS is enforced, because the whole `.dev` domain is HSTS-preloaded.
+- **Dependencies and secrets:** `npm audit` reports 0 vulnerabilities. Git history contains no secrets or `.dev.vars` files, which matters because the repo is public.
+- **Biggest remaining risk: the accounts.** Keep two-factor authentication on for Cloudflare and GitHub, and use a unique admin password.
 
 What the API stores about visitors: a 32-character device hash per vote, photo report and suggestion (an HMAC of a rotating salt, the IP address and the browser name), cleared after 30 days. Photos are shrunk and re-encoded in the browser, which removes location data; the server also strips any metadata. Photos are only visible to the admin and are deleted once checked, or after 30 days. IP addresses and locations are never stored, and per-request logging is switched off.
 
