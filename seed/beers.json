@@ -156,5 +156,7 @@
   {"id":"murphys-irish-stout","name":"Murphy's Irish Stout","brewery":"Heineken","category":"stout","abv":4,"is_alcohol_free":false,"aliases":["murphys stout","murphies"],"check":null},
   {"id":"redemption-fellowship-porter","name":"Redemption Fellowship Porter","brewery":"Redemption Brewing","category":"stout","abv":5.1,"is_alcohol_free":false,"aliases":["fellowship","fellowship porter"],"check":"Regular in E17?"},
   {"id":"siren-broken-dream","name":"Siren Broken Dream","brewery":"Siren Craft Brew","category":"stout","abv":5.6,"is_alcohol_free":false,"aliases":["broken dream"],"check":"Regular in E17?"},
-  {"id":"estrella-galicia-0-0","name":"Estrella Galicia 0,0","brewery":"Hijos de Rivera","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["estrella galicia 0.0","estrella galicia 00","estrella galicia zero","estrella galicia alcohol free","galicia 0.0","galicia zero"],"check":"On draught in E17?"}
+  {"id":"estrella-galicia-0-0","name":"Estrella Galicia 0,0","brewery":"Hijos de Rivera","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["estrella galicia 0.0","estrella galicia 00","estrella galicia zero","estrella galicia alcohol free","galicia 0.0","galicia zero"],"check":"On draught in E17?"},
+  {"id":"corona-extra","name":"Corona Extra","brewery":"AB InBev","category":"lager","abv":4.5,"is_alcohol_free":false,"aliases":["corona","corona beer","corona lager"],"check":"UK draught ABV; occasional on draught"},
+  {"id":"angelo-poretti-4-luppoli","name":"Angelo Poretti 4 Luppoli","brewery":"Carlsberg Britvic","category":"lager","abv":4.8,"is_alcohol_free":false,"aliases":["poretti","angelo poretti","birra poretti","4 luppoli","poretti 4"],"check":"Confirm ABV"}
 ]
