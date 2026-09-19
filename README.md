@@ -25,7 +25,7 @@ Still to do before launch:
 
 1. Tristan's walkaround data.
 2. A Lighthouse check on the live site (target 95+ for speed and accessibility on a phone).
-3. Turn the test banner off.
+3. Turn the test banner off on the admin Pubs tab, and add `hidden` to the banner in `index.html`. It starts visible so the page doesn't jump while loading.
 4. Remove the `noindex` tag from `index.html` so search engines can list the site.
 5. Add contact details to the Privacy page. Tristan has put this on hold for now.
 

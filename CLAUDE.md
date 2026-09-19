@@ -24,6 +24,7 @@ These override `../SPEC.md`:
 - **Gluten-free filter, contributor recognition, a beer index (most searched/poured) and "tap wars" comparison maps** are post-launch ideas, listed in README "Ideas for after launch". Not designed yet; privacy rules still apply (no accounts, nothing that identifies a person, search counts only as daily totals).
 - **"Submit a beer"** (2026-09-19) replaces "Suggest a beer" in all visible text. Code and API names still say suggestion/suggest.
 - **Dark mode follows sunset** (2026-09-19), not the phone's setting: `public/theme.js` (a small blocking script, since the CSP forbids inline scripts) sets `data-theme` on `<html>` from Walthamstow sunrise/sunset, or from the visitor's Auto/Light/Dark choice in localStorage `tw-theme`. CSS uses `:root[data-theme="dark"]`; the map listens for the `tw-themechange` event. Every page must load `/theme.js` in `<head>`.
+- The sample banner in `index.html` starts visible (no `hidden`) so it doesn't shift the page when the snapshot arrives (Lighthouse CLS was 1.0). At launch, add `hidden` back as well as turning `is_sample` off.
 - `/about/` repeats the freshness thresholds in words (1 month / 4 months). Update it if `src/config.ts` changes.
 - **Location is asked for when the user searches** (not only via a "Use my location" button), and distances are measured from where they are at that moment. A fix under 60 seconds old is reused. Postcode entry is the fallback. If permission was already granted, location is used on page load.
 

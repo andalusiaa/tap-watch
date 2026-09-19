@@ -15,7 +15,9 @@
   <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
-  <p class="sample-banner" id="sample-banner" hidden>Prototype: these tap lists are made up for testing. Don't rely on them yet.</p>
+  <!-- Shown from the start so the page doesn't jump when the data arrives; main.ts hides it when
+       the area isn't sample data. At launch, add `hidden` here once the admin switch is off. -->
+  <p class="sample-banner" id="sample-banner">Prototype: these tap lists are made up for testing. Don't rely on them yet.</p>
 
   <header class="site-header">
     <h1 class="site-title">
