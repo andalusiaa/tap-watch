@@ -5,6 +5,7 @@ import { freshnessOf } from '../freshness';
 import { normalise } from '../search';
 import type { Beer, Dispense, Listing } from '../types';
 import { h } from '../ui/dom';
+import { chosenDispense, dispenseChoice } from '../ui/forms';
 import type { AdminListing, ListingChange } from './adminApi';
 
 type Choice = 'on' | 'gone' | 'delete' | 'keep';
@@ -136,16 +137,23 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
   }
 
   // Add a beer that isn't listed yet.
-  const addInput = h('input', { id: `${id}-add`, type: 'text', list: `${id}-beers`, autocomplete: 'off' });
-  const addDispense = h(
-    'select',
-    { id: `${id}-add-dispense` },
-    h('option', { value: 'keg' }, 'Keg'),
-    h('option', { value: 'cask' }, 'Cask'),
-  );
+  const addInput = h('input', { id: `${id}-add`, type: 'text', list: `${id}-beers`, maxlength: 80, autocomplete: 'off' });
+  const addDispense = dispenseChoice(`${id}-add-dispense`, `${id}-add-dispense-label`);
   const addStatus = h('p', { class: 'form-status', role: 'status' });
-  const addButton = h('button', { type: 'button', class: 'button' }, 'Add');
-  addButton.addEventListener('click', () => {
+  const addForm = h(
+    'form',
+    { class: 'panel-form', 'aria-labelledby': `${id}-add-title`, novalidate: true },
+    h('h3', { id: `${id}-add-title` }, 'Add a beer'),
+    h('p', { class: 'form-help' }, 'Only beers served on draught, and only regulars, not one-off guest beers.'),
+    h('label', { for: `${id}-add` }, 'Which beer?'),
+    addInput,
+    h('p', { class: 'form-label', id: `${id}-add-dispense-label` }, 'Keg or cask?'),
+    addDispense,
+    h('button', { type: 'submit', class: 'button button--primary' }, 'Add beer'),
+    addStatus,
+  );
+  addForm.addEventListener('submit', (e) => {
+    e.preventDefault();
     const beer = findBeer(o.beers, addInput.value);
     if (!beer) {
       addStatus.textContent = addInput.value.trim()
@@ -153,15 +161,15 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
         : 'Type a beer name first.';
       return;
     }
-    const dispense = addDispense.value as Dispense;
+    const dispense = chosenDispense(addDispense) ?? 'keg';
     const existing = rows.find((r) => r.beerId === beer.id && r.dispense === dispense);
     if (existing) {
       existing.choice = 'on';
     } else {
       rows.unshift({ beerId: beer.id, beerName: beer.name, dispense, listing: null, choice: 'on' });
     }
-    addInput.value = '';
-    addStatus.textContent = `${beer.name} (${dispense}) marked as on.`;
+    addForm.reset();
+    addStatus.textContent = `${beer.name} (${dispense}) added and marked as on. Save to update the site.`;
     render();
   });
 
@@ -177,16 +185,9 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
     o.hint ? h('p', { class: 'form-help' }, o.hint) : null,
     h('div', { class: 'editor-tools' }, allOn),
     list,
-    h(
-      'div',
-      { class: 'add-beer' },
-      h('div', null, h('label', { for: `${id}-add` }, 'Add a beer'), addInput),
-      h('div', null, h('label', { for: `${id}-add-dispense` }, 'Served'), addDispense),
-      addButton,
-    ),
-    beerDatalist(`${id}-beers`, o.beers),
-    addStatus,
     summary,
+    addForm,
+    beerDatalist(`${id}-beers`, o.beers),
   );
 
   render();

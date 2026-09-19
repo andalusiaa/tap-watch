@@ -169,7 +169,7 @@ function suggestionCard(ctx: Context, s: QueueSuggestion): HTMLElement {
     'article',
     { class: 'card' },
     h('h2', null, isNew ? `New beer: ${s.proposed_beer_name}${served}${where}` : `${s.beer_name}${served}${where}`),
-    h('p', { class: 'card-meta' }, `Suggested ${sentAgo(s.created_at)}`),
+    h('p', { class: 'card-meta' }, `Submitted ${sentAgo(s.created_at)}`),
     s.pub_name ? null : h('p', { class: 'form-help' }, 'No pub was given, so approving only adds the beer to the list.'),
     newBeerForm,
     h('div', { class: 'card-actions' }, approve, reject),
@@ -212,7 +212,7 @@ function suggestionCard(ctx: Context, s: QueueSuggestion): HTMLElement {
   reject.addEventListener('click', () =>
     run(ctx, card, status, [approve, reject], async () => {
       await adminApi.reviewSuggestion(s.id, { action: 'reject' });
-      return 'Suggestion rejected.';
+      return 'Submission rejected.';
     }),
   );
   return card;

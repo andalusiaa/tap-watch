@@ -8,7 +8,7 @@ const MB = 1_000_000;
 /** Cloudflare's free plan, from developers.cloudflare.com (checked 2026-09-18). Daily limits reset at midnight UTC. */
 const CLOUDFLARE_CAPS: [what: string, cap: string, ifReached: string][] = [
   ['Worker requests', '100,000 a day',
-    'Every page load, vote, photo report and suggestion counts. Page files and map tiles don’t. If reached, pages open but show no beers.'],
+    'Every page load, vote, photo report and beer submission counts. Page files and map tiles don’t. If reached, pages open but show no beers.'],
   ['Worker time', '10 ms of processing per request', 'A request that takes longer fails. Tap Watch’s requests are small and well under this.'],
   ['Database rows read', '5 million a day', 'If reached, beer lists and votes stop working until the reset.'],
   ['Database rows written', '100,000 a day', 'If reached, votes, photos, suggestions and admin saves stop working until the reset.'],
@@ -57,7 +57,7 @@ function render(u: Usage): HTMLElement[] {
         u.today.writes,
         c.daily_write_budget,
         `About ${numberText(u.today.writes)} of ${numberText(c.daily_write_budget)}`,
-        `Tap Watch stops taking votes, photos and suggestions at ${numberText(c.daily_write_budget)}, half of Cloudflare's 100,000, so admin saves and clean-up always have room.`,
+        `Tap Watch stops taking votes, photos and beer submissions at ${numberText(c.daily_write_budget)}, half of Cloudflare's 100,000, so admin saves and clean-up always have room.`,
       ),
       meter(
         'Photos sent',
@@ -71,7 +71,7 @@ function render(u: Usage): HTMLElement[] {
         null,
         `${numberText(u.today.votes)} ${u.today.votes === 1 ? 'vote' : 'votes'}, `,
         `${numberText(u.today.reports)} photo ${u.today.reports === 1 ? 'report' : 'reports'}, `,
-        `${numberText(u.today.suggestions)} ${u.today.suggestions === 1 ? 'suggestion' : 'suggestions'}.`,
+        `${numberText(u.today.suggestions)} beer ${u.today.suggestions === 1 ? 'submission' : 'submissions'}.`,
       ),
     ),
     h(
@@ -96,7 +96,7 @@ function render(u: Usage): HTMLElement[] {
       h(
         'table',
         { class: 'usage-table' },
-        h('thead', null, h('tr', null, h('th', { scope: 'col' }, 'Day'), h('th', { scope: 'col' }, 'Votes'), h('th', { scope: 'col' }, 'Reports'), h('th', { scope: 'col' }, 'Suggestions'))),
+        h('thead', null, h('tr', null, h('th', { scope: 'col' }, 'Day'), h('th', { scope: 'col' }, 'Votes'), h('th', { scope: 'col' }, 'Reports'), h('th', { scope: 'col' }, 'Beers'))),
         h(
           'tbody',
           null,
@@ -138,7 +138,7 @@ function render(u: Usage): HTMLElement[] {
           ['Votes', `${c.votes_per_device_per_hour} per device per hour, and one per beer per device per day`],
           ['Photo reports', `${c.reports_per_device_per_day} per device per day, up to ${c.photos_per_report} photos each`],
           ['Photos from everyone', `${numberText(c.photos_per_day)} a day`],
-          ['Suggestions', `${c.suggestions_per_device_per_day} per device per day`],
+          ['Beer submissions', `${c.suggestions_per_device_per_day} per device per day`],
           ['Database writes from visitors', `About ${numberText(c.daily_write_budget)} a day`],
           ['Admin saves', 'Up to 40 changes at a time'],
           ['Nightly clean-up', 'Deletes up to 10 unchecked photo reports older than 30 days'],

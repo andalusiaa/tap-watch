@@ -1,4 +1,4 @@
-// "Send a photo of the taps" (up to 4 photos) and "Suggest a beer" (SPEC sections 6.4 and 6.5).
+// "Send a photo of the taps" (up to 4 photos) and "Submit a beer" (SPEC sections 6.4 and 6.5).
 
 import { sendPhotoReport, sendSuggestion } from '../api';
 import type { Catalogue } from '../catalogue';
@@ -159,6 +159,27 @@ function findBeer(beers: Beer[], typed: string): Beer | undefined {
   return beers.find((b) => normalise(b.name) === wanted || b.aliases.some((a) => normalise(a) === wanted));
 }
 
+/** Keg or cask as two equal buttons, keg first and chosen. Used by the public form and the admin editor. */
+export function dispenseChoice(name: string, labelledBy: string): HTMLFieldSetElement {
+  const group = h(
+    'fieldset',
+    { class: 'segmented segmented--even', 'aria-labelledby': labelledBy },
+    (['keg', 'cask'] as const).map((d) =>
+      h(
+        'label',
+        null,
+        h('input', { type: 'radio', name, value: d, checked: d === 'keg' }),
+        h('span', null, d === 'cask' ? 'Cask' : 'Keg'),
+      ),
+    ),
+  );
+  return group;
+}
+
+export function chosenDispense(group: HTMLFieldSetElement): Dispense | undefined {
+  return group.querySelector<HTMLInputElement>('input:checked')?.value as Dispense | undefined;
+}
+
 export function suggestForm(o: {
   catalogue: Catalogue;
   honeypot: () => string;
@@ -187,25 +208,13 @@ export function suggestForm(o: {
     autocomplete: 'off',
     value: o.beerName ?? '',
   });
-  const dispense = h(
-    'fieldset',
-    { class: 'segmented segmented--even' },
-    h('legend', { class: 'visually-hidden' }, 'Keg or cask'),
-    (['keg', 'cask'] as const).map((d) =>
-      h(
-        'label',
-        null,
-        h('input', { type: 'radio', name: `${id}-dispense`, value: d, checked: d === 'keg' }),
-        h('span', null, d === 'cask' ? 'Cask' : 'Keg'),
-      ),
-    ),
-  );
-  const submit = h('button', { type: 'submit', class: 'button button--primary' }, 'Send suggestion');
+  const dispense = dispenseChoice(`${id}-dispense`, `${id}-dispense-label`);
+  const submit = h('button', { type: 'submit', class: 'button button--primary' }, 'Submit beer');
 
   const form = h(
     'form',
     { class: 'panel-form', 'aria-labelledby': `${id}-title`, novalidate: true },
-    h('h3', { id: `${id}-title` }, 'Suggest a beer'),
+    h('h3', { id: `${id}-title` }, 'Submit a beer'),
     h('p', { class: 'form-help' }, 'Only beers served on draught, and only regulars, not one-off guest beers.'),
     pubSelect ? [h('label', { for: `${id}-pub` }, 'Which pub?'), pubSelect] : null,
     h('label', { for: `${id}-beer` }, 'Which beer?'),
@@ -216,13 +225,12 @@ export function suggestForm(o: {
     submit,
     status,
   );
-  dispense.setAttribute('aria-labelledby', `${id}-dispense-label`);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const pubId = o.pubId ?? pubSelect?.value ?? '';
     const typed = beerInput.value.trim();
-    const chosen = form.querySelector<HTMLInputElement>(`input[name="${id}-dispense"]:checked`)?.value as Dispense | undefined;
+    const chosen = chosenDispense(dispense);
 
     const problem = !pubId ? 'Choose the pub.' : !typed ? 'Type the name of the beer.' : !chosen ? 'Choose cask or keg.' : null;
     if (problem) {
@@ -239,7 +247,7 @@ export function suggestForm(o: {
     );
     if (result.ok) {
       thanks(form, `Thanks! We'll check ${beer?.name ?? typed} and add it to the list.`, {
-        label: 'Suggest another beer',
+        label: 'Submit another beer',
         make: () => suggestForm(o),
       });
     } else {

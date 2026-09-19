@@ -120,7 +120,7 @@ export function setupPubSheet(o: Options) {
       form.querySelector<HTMLElement>('h3')?.focus();
     };
     const photoButton = h('button', { type: 'button', class: 'button' }, 'Send photos of the taps');
-    const suggestButton = h('button', { type: 'button', class: 'button' }, 'Suggest a beer');
+    const suggestButton = h('button', { type: 'button', class: 'button' }, 'Submit a beer');
     photoButton.addEventListener(
       'click',
       openForm(photoButton, () => photoForm({ pubId: pub.id, pubName: pub.name, honeypot: o.honeypot })),

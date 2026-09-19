@@ -202,15 +202,6 @@
   color: #ffffff;
 }
 
-.add-beer {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 0.5rem;
-  align-items: end;
-}
-
-.add-beer input,
-.add-beer select,
 .new-beer input,
 .new-beer select {
   width: 100%;
@@ -222,21 +213,10 @@
   font-size: 1rem;
 }
 
-.add-beer label,
 .new-beer label {
   display: block;
   font-size: var(--step--1);
   font-weight: 600;
-}
-
-@media (max-width: 30rem) {
-  .add-beer {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .add-beer > :first-child {
-    grid-column: 1 / -1;
-  }
 }
 
 .new-beer {
