@@ -47,6 +47,7 @@
   {"id":"thatchers-zero","name":"Thatchers Zero","brewery":"Thatchers","category":"cider","abv":0,"is_alcohol_free":true,"aliases":["thatchers 0.0","thatchers 00","thatchers alcohol free"],"check":"ABV (0.0 or 0.5?); on draught in E17?"},
   {"id":"westons-stowford-press","name":"Westons Stowford Press","brewery":"Westons","category":"cider","abv":4.5,"is_alcohol_free":false,"aliases":["stowford press","stowford","westons"],"check":null},
   {"id":"amstel","name":"Amstel","brewery":"Heineken","category":"lager","abv":4.1,"is_alcohol_free":false,"aliases":["amstel lager"],"check":"UK draught ABV"},
+  {"id":"angelo-poretti-4-luppoli","name":"Angelo Poretti 4 Luppoli","brewery":"Carlsberg Britvic","category":"lager","abv":4.8,"is_alcohol_free":false,"aliases":["poretti","angelo poretti","birra poretti","4 luppoli","poretti 4"],"check":"Confirm ABV"},
   {"id":"asahi-super-dry","name":"Asahi Super Dry","brewery":"Asahi","category":"lager","abv":5.2,"is_alcohol_free":false,"aliases":["asahi"],"check":"UK draught ABV"},
   {"id":"asahi-super-dry-0-0","name":"Asahi Super Dry 0.0","brewery":"Asahi","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["asahi 0.0","asahi zero","asahi 00","asahi alcohol free"],"check":"On draught in E17?"},
   {"id":"becks","name":"Beck's","brewery":"AB InBev","category":"lager","abv":4,"is_alcohol_free":false,"aliases":["becks lager"],"check":"UK draught ABV"},
@@ -61,10 +62,12 @@
   {"id":"carlsberg-danish-pilsner","name":"Carlsberg Danish Pilsner","brewery":"Carlsberg Britvic","category":"lager","abv":3.8,"is_alcohol_free":false,"aliases":["carlsberg","carlsberg pilsner"],"check":"UK draught ABV"},
   {"id":"cobra","name":"Cobra","brewery":"Molson Coors","category":"lager","abv":4.5,"is_alcohol_free":false,"aliases":["cobra beer"],"check":"UK draught ABV"},
   {"id":"coors","name":"Coors","brewery":"Molson Coors","category":"lager","abv":4,"is_alcohol_free":false,"aliases":["coors light"],"check":null},
+  {"id":"corona-extra","name":"Corona Extra","brewery":"AB InBev","category":"lager","abv":4.5,"is_alcohol_free":false,"aliases":["corona","corona beer","corona lager"],"check":"UK draught ABV; occasional on draught"},
   {"id":"cruzcampo","name":"Cruzcampo","brewery":"Heineken","category":"lager","abv":4.4,"is_alcohol_free":false,"aliases":["cruz campo"],"check":null},
   {"id":"days-lager","name":"Days Lager","brewery":"Days Brewing","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["days","days 0.0","days alcohol free"],"check":"Confirm ABV (0.0?); on draught in E17?"},
   {"id":"estrella-damm","name":"Estrella Damm","brewery":"Damm","category":"lager","abv":4.6,"is_alcohol_free":false,"aliases":["estrella"],"check":null},
   {"id":"estrella-galicia","name":"Estrella Galicia","brewery":"Hijos de Rivera","category":"lager","abv":5.5,"is_alcohol_free":false,"aliases":["galicia"],"check":"UK draught ABV; regular in E17?"},
+  {"id":"estrella-galicia-0-0","name":"Estrella Galicia 0,0","brewery":"Hijos de Rivera","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["estrella galicia 0.0","estrella galicia 00","estrella galicia zero","estrella galicia alcohol free","galicia 0.0","galicia zero"],"check":"On draught in E17?"},
   {"id":"five-points-pils","name":"Five Points Pils","brewery":"Five Points Brewing Co","category":"lager","abv":4.6,"is_alcohol_free":false,"aliases":["five points pilsner"],"check":null},
   {"id":"fosters","name":"Foster's","brewery":"Heineken","category":"lager","abv":3.7,"is_alcohol_free":false,"aliases":["fosters lager"],"check":"UK draught ABV"},
   {"id":"fourpure-pils-lager","name":"Fourpure Pils Lager","brewery":"Fourpure (Lion)","category":"lager","abv":4.7,"is_alcohol_free":false,"aliases":["fourpure lager","basecamp pils"],"check":null},
@@ -156,7 +159,5 @@
   {"id":"murphys-irish-stout","name":"Murphy's Irish Stout","brewery":"Heineken","category":"stout","abv":4,"is_alcohol_free":false,"aliases":["murphys stout","murphies"],"check":null},
   {"id":"redemption-fellowship-porter","name":"Redemption Fellowship Porter","brewery":"Redemption Brewing","category":"stout","abv":5.1,"is_alcohol_free":false,"aliases":["fellowship","fellowship porter"],"check":"Regular in E17?"},
   {"id":"siren-broken-dream","name":"Siren Broken Dream","brewery":"Siren Craft Brew","category":"stout","abv":5.6,"is_alcohol_free":false,"aliases":["broken dream"],"check":"Regular in E17?"},
-  {"id":"estrella-galicia-0-0","name":"Estrella Galicia 0,0","brewery":"Hijos de Rivera","category":"lager","abv":0,"is_alcohol_free":true,"aliases":["estrella galicia 0.0","estrella galicia 00","estrella galicia zero","estrella galicia alcohol free","galicia 0.0","galicia zero"],"check":"On draught in E17?"},
-  {"id":"corona-extra","name":"Corona Extra","brewery":"AB InBev","category":"lager","abv":4.5,"is_alcohol_free":false,"aliases":["corona","corona beer","corona lager"],"check":"UK draught ABV; occasional on draught"},
-  {"id":"angelo-poretti-4-luppoli","name":"Angelo Poretti 4 Luppoli","brewery":"Carlsberg Britvic","category":"lager","abv":4.8,"is_alcohol_free":false,"aliases":["poretti","angelo poretti","birra poretti","4 luppoli","poretti 4"],"check":"Confirm ABV"}
+  {"id":"bud-light","name":"Bud Light","brewery":"AB InBev","category":"lager","abv":3.5,"is_alcohol_free":false,"aliases":["budlight","bud lite"],"check":"UK draught ABV; regular in E17?"}
 ]
