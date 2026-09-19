@@ -56,6 +56,7 @@
   {"id":"brewdog-lost-lager","name":"BrewDog Lost Lager","brewery":"BrewDog","category":"lager","abv":4.7,"is_alcohol_free":false,"aliases":["lost lager"],"check":null},
   {"id":"brixton-coldharbour-lager","name":"Brixton Coldharbour Lager","brewery":"Brixton Brewery (Heineken)","category":"lager","abv":4.4,"is_alcohol_free":false,"aliases":["coldharbour","coldharbour lager"],"check":null},
   {"id":"brooklyn-lager","name":"Brooklyn Lager","brewery":"Brooklyn Brewery","category":"lager","abv":5.2,"is_alcohol_free":false,"aliases":["brooklyn"],"check":"UK draught ABV; regular in E17?"},
+  {"id":"bud-light","name":"Bud Light","brewery":"AB InBev","category":"lager","abv":3.5,"is_alcohol_free":false,"aliases":["budlight","bud lite"],"check":"UK draught ABV; regular in E17?"},
   {"id":"budweiser","name":"Budweiser","brewery":"AB InBev","category":"lager","abv":4.5,"is_alcohol_free":false,"aliases":["bud"],"check":"UK draught ABV"},
   {"id":"camden-hells","name":"Camden Hells","brewery":"Camden Town Brewery","category":"lager","abv":4.6,"is_alcohol_free":false,"aliases":["camden hells lager","camden lager"],"check":null},
   {"id":"carling","name":"Carling","brewery":"Molson Coors","category":"lager","abv":3.7,"is_alcohol_free":false,"aliases":["carling lager"],"check":null},
@@ -159,5 +160,5 @@
   {"id":"murphys-irish-stout","name":"Murphy's Irish Stout","brewery":"Heineken","category":"stout","abv":4,"is_alcohol_free":false,"aliases":["murphys stout","murphies"],"check":null},
   {"id":"redemption-fellowship-porter","name":"Redemption Fellowship Porter","brewery":"Redemption Brewing","category":"stout","abv":5.1,"is_alcohol_free":false,"aliases":["fellowship","fellowship porter"],"check":"Regular in E17?"},
   {"id":"siren-broken-dream","name":"Siren Broken Dream","brewery":"Siren Craft Brew","category":"stout","abv":5.6,"is_alcohol_free":false,"aliases":["broken dream"],"check":"Regular in E17?"},
-  {"id":"bud-light","name":"Bud Light","brewery":"AB InBev","category":"lager","abv":3.5,"is_alcohol_free":false,"aliases":["budlight","bud lite"],"check":"UK draught ABV; regular in E17?"}
+  {"id":"leffe-blonde","name":"Leffe Blonde","brewery":"AB InBev","category":"other","abv":6.6,"is_alcohol_free":false,"aliases":["leffe","leffe blond","leffe blonde beer"],"check":"UK draught ABV; regular in E17?"}
 ]
