@@ -705,6 +705,9 @@ input[type="file"]:focus-visible + .file-button {
   margin-top: 0.4rem;
   font-size: var(--step--1);
   color: var(--ink-muted);
+  /* Keep a line's space while loading, so the list doesn't jump when the text arrives. */
+  min-height: 1.5em;
+  min-height: 1lh;
 }
 
 .status:not(:empty) {
