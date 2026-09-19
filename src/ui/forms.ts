@@ -189,10 +189,15 @@ export function suggestForm(o: {
   });
   const dispense = h(
     'fieldset',
-    { class: 'segmented' },
-    h('legend', { class: 'visually-hidden' }, 'Cask or keg'),
-    (['cask', 'keg'] as const).map((d) =>
-      h('label', null, h('input', { type: 'radio', name: `${id}-dispense`, value: d }), h('span', null, d === 'cask' ? 'Cask' : 'Keg')),
+    { class: 'segmented segmented--even' },
+    h('legend', { class: 'visually-hidden' }, 'Keg or cask'),
+    (['keg', 'cask'] as const).map((d) =>
+      h(
+        'label',
+        null,
+        h('input', { type: 'radio', name: `${id}-dispense`, value: d, checked: d === 'keg' }),
+        h('span', null, d === 'cask' ? 'Cask' : 'Keg'),
+      ),
     ),
   );
   const submit = h('button', { type: 'submit', class: 'button button--primary' }, 'Send suggestion');
@@ -206,7 +211,7 @@ export function suggestForm(o: {
     h('label', { for: `${id}-beer` }, 'Which beer?'),
     beerInput,
     h('datalist', { id: `${id}-beers` }, beers.map((b) => h('option', { value: b.name }))),
-    h('p', { class: 'form-label', id: `${id}-dispense-label` }, 'Cask or keg?'),
+    h('p', { class: 'form-label', id: `${id}-dispense-label` }, 'Keg or cask?'),
     dispense,
     submit,
     status,

@@ -32,6 +32,7 @@
         <input id="beer-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false"
           aria-controls="beer-options" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
           placeholder="Try Guinness or Neck Oil">
+        <button type="button" class="search-clear" id="search-clear" aria-label="Clear the search and show all pubs" hidden>✕</button>
         <ul id="beer-options" class="options" role="listbox" aria-label="Matching beers" hidden></ul>
       </div>
     </form>
@@ -68,6 +69,7 @@
         </div>
         <p class="field-error" id="postcode-error" hidden></p>
       </form>
+      <p class="location-note">Phone location can be a few hundred metres out. Entering a postcode is often more accurate.</p>
       <p class="location-privacy">Your location stays on your device. We never see or store it.</p>
     </div>
 

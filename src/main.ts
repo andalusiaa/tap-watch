@@ -61,6 +61,7 @@ const els = {
   mapHint: byId('map-hint'),
   heading: byId('results-heading'),
   clear: byId<HTMLButtonElement>('results-clear'),
+  searchClear: byId<HTMLButtonElement>('search-clear'),
   summary: byId('results-summary'),
   results: byId('results'),
   status: byId('app-status'),
@@ -258,6 +259,7 @@ function start(catalogue: Catalogue) {
     const beer = state.beerId ? catalogue.beer(state.beerId) : undefined;
     if (beer && document.activeElement !== els.input) autocomplete.setValue(beer.name);
     if (!beer && !state.noMatch && document.activeElement !== els.input) autocomplete.setValue('');
+    updateSearchClear();
 
     for (const input of els.dispense.querySelectorAll<HTMLInputElement>('input')) {
       input.checked = input.value === state.dispense;
@@ -285,6 +287,18 @@ function start(catalogue: Catalogue) {
   els.viewToggle.addEventListener('change', (e) => {
     const value = (e.target as HTMLInputElement).value;
     if (value === 'list' || value === 'map') setState({ view: value }, 'replace');
+  });
+
+  function updateSearchClear() {
+    els.searchClear.hidden = els.input.value === '' && !state.beerId && !state.noMatch;
+  }
+  els.input.addEventListener('input', updateSearchClear);
+
+  els.searchClear.addEventListener('click', () => {
+    autocomplete.setValue('');
+    els.input.focus();
+    if (state.beerId || state.noMatch || state.pubId) setState({ beerId: null, noMatch: null, pubId: null }, 'push');
+    updateSearchClear();
   });
 
   els.clear.addEventListener('click', () => {
