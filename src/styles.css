@@ -1183,3 +1183,9 @@ input[type="file"]:focus-visible + .file-button {
 .prose ul + p {
   margin-top: 0.6rem;
 }
+
+/* Holds a screen's height until the pubs arrive, so the footer doesn't start on screen and then jump. */
+.results-loading {
+  min-height: 100vh;
+  min-height: 100svh;
+}
