@@ -314,6 +314,24 @@ function start(catalogue: Catalogue) {
   render();
 }
 
+// --- Colours (public/theme.js does the work) --------------------------------------
+
+declare global {
+  interface Window {
+    tapWatchTheme?: { choice(): 'auto' | 'light' | 'dark'; set(mode: 'auto' | 'light' | 'dark'): void };
+  }
+}
+
+const themeChoice = document.getElementById('theme-choice');
+if (themeChoice && window.tapWatchTheme) {
+  const current = window.tapWatchTheme.choice();
+  for (const input of themeChoice.querySelectorAll<HTMLInputElement>('input')) input.checked = input.value === current;
+  themeChoice.addEventListener('change', (e) => {
+    const value = (e.target as HTMLInputElement).value;
+    if (value === 'auto' || value === 'light' || value === 'dark') window.tapWatchTheme?.set(value);
+  });
+}
+
 loadSnapshot()
   .then((snapshot) => {
     const catalogue = createCatalogue(snapshot);

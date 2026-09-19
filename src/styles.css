@@ -46,19 +46,20 @@
   --gutter: 1rem;
   --tap: 2.75rem; /* 44px minimum touch target */
 
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --plate: #000000;
-    --ink: #ffffff;
-    --ink-muted: #b3b3b3;
-    --rule: #3a3a3a;
-    --wash: #161616;
-    --gone: #5a5a5a;
-    --backdrop: rgb(0 0 0 / 0.7);
-  }
+/* Dark after sunset: public/theme.js sets data-theme before the page draws. */
+:root[data-theme="dark"] {
+  --plate: #000000;
+  --ink: #ffffff;
+  --ink-muted: #b3b3b3;
+  --rule: #3a3a3a;
+  --wash: #161616;
+  --gone: #5a5a5a;
+  --backdrop: rgb(0 0 0 / 0.7);
+
+  color-scheme: dark;
 }
 
 /* --- Base ------------------------------------------------------------------------- */
@@ -1107,6 +1108,22 @@ input[type="file"]:focus-visible + .file-button {
   border-top: 1px solid var(--rule);
   font-size: var(--step--1);
   color: var(--ink-muted);
+}
+
+.theme-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.theme-label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.theme-help {
+  margin: 0.4rem 0 1rem;
 }
 
 /* --- Motion ------------------------------------------------------------------------ */

@@ -107,7 +107,7 @@ export async function createPubMap(
   if (!res.ok) throw new Error(`Map settings failed to load: ${res.status}`);
   const tiles = (await res.json()) as TileJson;
 
-  const darkQuery = matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => document.documentElement.dataset.theme === 'dark';
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let data = { pubs: EMPTY, you: EMPTY };
   let pubs: PubPoint[] = [];
@@ -116,7 +116,7 @@ export async function createPubMap(
   const [west, south, east, north] = tiles.bounds;
   const map = new MapLibreMap({
     container,
-    style: mapStyle(tiles, darkQuery.matches, data),
+    style: mapStyle(tiles, isDark(), data),
     bounds: [west, south, east, north],
     // Let people pan a little past the edge of the map data, but no further.
     maxBounds: [
@@ -149,7 +149,8 @@ export async function createPubMap(
   map.on('mouseenter', 'pubs-hit', () => (map.getCanvas().style.cursor = 'pointer'));
   map.on('mouseleave', 'pubs-hit', () => (map.getCanvas().style.cursor = ''));
 
-  darkQuery.addEventListener('change', () => map.setStyle(mapStyle(tiles, darkQuery.matches, data)));
+  // Light and dark follow sunset (public/theme.js).
+  document.addEventListener('tw-themechange', () => map.setStyle(mapStyle(tiles, isDark(), data)));
 
   await new Promise<void>((resolve, reject) => {
     map.once('load', () => resolve());

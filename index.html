@@ -6,6 +6,7 @@
   <title>Tap Watch E17: find a beer on tap in Walthamstow</title>
   <meta name="description" content="Find which Walthamstow pubs have your beer on tap, with how recently each one was checked.">
   <meta name="color-scheme" content="light dark">
+  <script src="/theme.js"></script>
   <!-- Prototype: keep search engines out until the tap lists are real. -->
   <meta name="robots" content="noindex">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -100,6 +101,15 @@
   </main>
 
   <footer class="site-footer">
+    <div class="theme-row">
+      <span class="theme-label" id="theme-label">Colours</span>
+      <fieldset class="segmented" id="theme-choice" aria-labelledby="theme-label" aria-describedby="theme-help">
+        <label><input type="radio" name="theme" value="auto"><span>Auto</span></label>
+        <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+        <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+      </fieldset>
+    </div>
+    <p class="theme-help" id="theme-help">Auto is dark from sunset to sunrise.</p>
     <p>Pub names and locations © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
   </footer>
 
