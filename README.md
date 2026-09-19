@@ -27,6 +27,7 @@ Still to do before launch:
 2. A Lighthouse check on the live site (target 95+ for speed and accessibility on a phone).
 3. Turn the test banner off.
 4. Remove the `noindex` tag from `index.html` so search engines can list the site.
+5. Add contact details to the Privacy page. Tristan has put this on hold for now.
 
 Operator core ranges are in Phase 5 but lowest priority, because most E17 pubs are independents.
 
