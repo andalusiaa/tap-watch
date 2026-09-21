@@ -62,6 +62,11 @@ export const ADMIN = {
   minPasswordLength: 12,
 } as const;
 
+export const ADMIN_LOG = {
+  /** Admin changes in the Activity tab are deleted after this many days. */
+  keepDays: 365,
+} as const;
+
 export const PRIVACY = {
   /** Device hashes are cleared from votes after this long. */
   deviceHashMaxAgeMs: 30 * DAY,

@@ -29,6 +29,24 @@
 
 .segmented.admin-tabs {
   margin: 0.5rem 0 2rem;
+  /* Five tabs don't fit one phone row: let them wrap, with the ink showing through the gaps as lines. */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  background: var(--ink);
+}
+
+.admin-tabs label {
+  flex: 1 1 auto;
+  background: var(--plate);
+}
+
+.segmented.admin-tabs label + label {
+  border-left: 0;
+}
+
+.admin-tabs span {
+  justify-content: center;
 }
 
 .admin-panel {
@@ -343,4 +361,66 @@
   border-radius: 4px;
   background: var(--plate);
   font-size: 1rem;
+}
+
+/* --- Activity tab --- */
+
+.activity-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.activity-filters select {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.4rem 0.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: 1rem;
+}
+
+.activity-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-entry {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+}
+
+.activity-kind {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.activity-who {
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+}
+
+.visitor-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.visitor-list li {
+  display: grid;
+  justify-items: start;
 }

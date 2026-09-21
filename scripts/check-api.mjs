@@ -317,6 +317,19 @@ check('Votes store a hash, never an IP address', hashes.length > 0 && hashes.eve
 const dump = ['votes', 'rate_limits', 'photo_reports', 'suggestions'].map((t) => JSON.stringify(sql(`SELECT * FROM ${t}`))).join('');
 check('No IP address appears in votes, reports, suggestions or counters', !dump.includes('203.0.113.'), '');
 
+// --- Activity tab (admin) ---
+r = await admin('/activity?type=all&pub=');
+check('Activity needs sign-in', r.status === 401);
+r = await admin('/activity?type=all&pub=', { cookie });
+check('Activity lists votes, photo reports, submissions and admin changes', r.status === 200 && ['vote', 'report', 'submission', 'admin'].every((k) => r.body.entries.some((e) => e.kind === k)), JSON.stringify(r.body).slice(0, 300));
+check('Activity shows visitor labels, never device hashes', r.body.entries.some((e) => /^[A-Z][a-z]+ [A-Z][a-z]+ \d{1,2}$/.test(e.visitor ?? '')) && !/[0-9a-f]{32}/.test(JSON.stringify(r.body)));
+check('Activity lists the busiest visitors', Array.isArray(r.body.visitors) && r.body.visitors.length > 0 && r.body.visitors.every((v) => v.visitor));
+check('Admin changes are described in words', r.body.entries.some((e) => e.kind === 'admin' && /approved a photo report/.test(e.text)), JSON.stringify(r.body.entries.filter((e) => e.kind === 'admin')).slice(0, 300));
+r = await admin('/activity?type=admin&pub=', { cookie });
+check('Activity can show only admin changes', r.status === 200 && r.body.entries.length > 0 && r.body.entries.every((e) => e.kind === 'admin'));
+r = await admin('/activity?type=nonsense&pub=', { cookie });
+check('An unknown activity type is refused', r.status === 400);
+
 // --- Pubs and the test banner (admin) ---
 r = await admin('/pubs?area=e17');
 check('Pub list needs sign-in', r.status === 401);
@@ -344,6 +357,8 @@ r = await admin('/pubs?area=e17', { cookie, body: { pub: { name: 'The Test Tap',
 check('A second pub with the same name gets its own ID', r.status === 200 && r.body.id === 'the-test-tap-2-e17', JSON.stringify(r.body));
 r = await admin('/area/e17/sample', { cookie, body: { sample: false } });
 check('The test banner can be turned off', r.status === 200);
+r = await admin('/activity?type=admin&pub=', { cookie });
+check('Pub and banner changes are logged', ['Renamed Arms: renamed from', 'Added The Test Tap', 'Test banner turned off'].every((t) => r.body.entries.some((e) => e.text.includes(t))), JSON.stringify(r.body.entries.map((e) => e.text)).slice(0, 400));
 r = await admin('/area/e17/sample', { cookie, body: { sample: false }, origin: 'https://evil.example' });
 check('Pub and banner changes need the same origin', r.status === 403);
 

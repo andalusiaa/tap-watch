@@ -6,6 +6,7 @@ import { byId, h } from '../ui/dom';
 import { adminApi, AdminError, SignedOut } from './adminApi';
 import { renderQueue } from './queue';
 import { confirmDeletes, createTapEditor } from './tapEditor';
+import { renderActivity } from './activity';
 import { renderPubs } from './pubs';
 import { renderUsage } from './usage';
 
@@ -23,6 +24,7 @@ const els = {
   tapsPanel: byId('taps-panel'),
   usagePanel: byId('usage-panel'),
   pubsPanel: byId('pubs-panel'),
+  activityPanel: byId('activity-panel'),
   pubPicker: byId<HTMLSelectElement>('pub-picker'),
   pubEditor: byId('pub-editor'),
 };
@@ -60,6 +62,16 @@ async function refreshUsage() {
   } catch (error) {
     if (error instanceof SignedOut) return showSignIn('Your session ended. Please sign in again.');
     els.usagePanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load usage. Check your connection and try again."));
+  }
+}
+
+async function refreshActivity() {
+  try {
+    const { pubs } = await adminApi.pubs();
+    await renderActivity({ panel: els.activityPanel, pubs });
+  } catch (error) {
+    if (error instanceof SignedOut) return showSignIn('Your session ended. Please sign in again.');
+    els.activityPanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load the activity. Check your connection and try again."));
   }
 }
 
@@ -188,6 +200,8 @@ els.tabs.addEventListener('change', (e) => {
   els.tapsPanel.hidden = tab !== 'taps';
   els.usagePanel.hidden = tab !== 'usage';
   els.pubsPanel.hidden = tab !== 'pubs';
+  els.activityPanel.hidden = tab !== 'activity';
+  if (tab === 'activity') void refreshActivity();
   if (tab === 'pubs') void refreshPubs();
   if (tab === 'queue') void refreshQueue();
   if (tab === 'usage') void refreshUsage();

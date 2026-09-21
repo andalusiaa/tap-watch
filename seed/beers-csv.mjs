@@ -145,6 +145,9 @@ async function importCsv(path) {
 
   const json = `[\n${beers.map((b) => `  ${JSON.stringify(b)}`).join(',\n')}\n]\n`;
   await writeFile(new URL('beers.json', seedDir), json);
+  // The next db:beers load reads this for the admin Activity log.
+  await mkdir(new URL('out/', seedDir), { recursive: true });
+  await writeFile(new URL('out/last-import.json', seedDir), JSON.stringify({ total: beers.length, added, changed, removed }));
   console.log(`Wrote seed/beers.json: ${beers.length} beers.`);
   console.log(`  Added (${added.length}): ${added.join(', ') || 'none'}`);
   console.log(`  Changed (${changed.length}): ${changed.join(', ') || 'none'}`);

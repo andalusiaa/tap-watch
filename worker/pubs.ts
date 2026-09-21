@@ -6,6 +6,7 @@
 //   POST /api/admin/area/:id/sample      { sample } → shows or hides the "made up for testing" banner
 
 import { ApiError, badRequest, isoTime, json, readJsonBody } from './http';
+import { logAdmin } from './activity';
 import { invalidateSnapshot } from './snapshot';
 import { slugify } from './text';
 
@@ -125,13 +126,27 @@ export async function addPub(request: Request, env: Env, areaId: string, now: nu
       )
       .bind(id, areaId, pub.name, pub.address, pub.postcode, pub.venue_type, pub.lat, pub.lng, operator.id, pub.is_active ? 1 : 0, stamp, stamp),
     invalidateSnapshot(db, areaId),
+    logAdmin(db, now, 'pub_added', id, `Added ${pub.name}${pub.is_active ? '' : ' (closed)'}.`),
   ]);
   return json({ ok: true, id });
 }
 
 export async function updatePub(request: Request, env: Env, pubId: string, now: number): Promise<Response> {
   const db = env.DB;
-  const existing = await db.prepare('SELECT area_id FROM pubs WHERE id = ?').bind(pubId).first<{ area_id: string }>();
+  const existing = await db
+    .prepare('SELECT area_id, name, address, postcode, lat, lng, venue_type, operator_id, is_active FROM pubs WHERE id = ?')
+    .bind(pubId)
+    .first<{
+      area_id: string;
+      name: string;
+      address: string;
+      postcode: string;
+      lat: number;
+      lng: number;
+      venue_type: string;
+      operator_id: string | null;
+      is_active: number;
+    }>();
   if (!existing) throw new ApiError(404, 'not_found', "We couldn't find that pub.");
   const body = await readJsonBody(request, 4_000);
   const pub = parsePub(body.pub, await areaBbox(db, existing.area_id));
@@ -145,17 +160,34 @@ export async function updatePub(request: Request, env: Env, pubId: string, now: 
       )
       .bind(pub.name, pub.address, pub.postcode, pub.venue_type, pub.lat, pub.lng, operator.id, pub.is_active ? 1 : 0, isoTime(now), pubId),
     invalidateSnapshot(db, existing.area_id),
+    logAdmin(db, now, 'pub_changed', pubId, describePubChanges(existing, pub, operator.id)),
   ]);
   return json({ ok: true, id: pubId });
 }
 
-export async function setSample(request: Request, env: Env, areaId: string): Promise<Response> {
+function describePubChanges(
+  before: { name: string; address: string; postcode: string; lat: number; lng: number; venue_type: string; operator_id: string | null; is_active: number },
+  after: PubInput,
+  operatorId: string | null,
+): string {
+  const changes: string[] = [];
+  if (before.name !== after.name) changes.push(`renamed from ${before.name}`);
+  if (before.address !== after.address || before.postcode !== after.postcode) changes.push(`address now ${[after.address, after.postcode].filter(Boolean).join(', ') || 'blank'}`);
+  if (before.lat !== after.lat || before.lng !== after.lng) changes.push('map position moved');
+  if (before.venue_type !== after.venue_type) changes.push(`now a ${after.venue_type}`);
+  if (before.operator_id !== operatorId) changes.push(`operator now ${after.new_operator?.name ?? operatorId ?? 'not known'}`);
+  if (!!before.is_active !== after.is_active) changes.push(after.is_active ? 'reopened' : 'marked closed');
+  return `${after.name}: ${changes.length ? changes.join('; ') : 'saved with no changes'}.`;
+}
+
+export async function setSample(request: Request, env: Env, areaId: string, now: number): Promise<Response> {
   const body = await readJsonBody(request, 200);
   if (typeof body.sample !== 'boolean') throw badRequest();
   const db = env.DB;
   const [result] = await db.batch([
     db.prepare('UPDATE areas SET is_sample = ? WHERE id = ?').bind(body.sample ? 1 : 0, areaId),
     invalidateSnapshot(db, areaId),
+    logAdmin(db, now, 'banner', null, body.sample ? 'Test banner turned on.' : 'Test banner turned off.'),
   ]);
   if (!result?.meta.changes) throw new ApiError(404, 'not_found', "We couldn't find that area.");
   return json({ ok: true, sample: body.sample });

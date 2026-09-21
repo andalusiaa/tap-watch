@@ -1,6 +1,6 @@
 // Daily clean-up, run by the Cron Trigger in wrangler.jsonc (SPEC section 7).
 
-import { PHOTOS, PRIVACY } from './config';
+import { ADMIN_LOG, PHOTOS, PRIVACY } from './config';
 import { isoTime } from './http';
 import { rotateSalt } from './security';
 
@@ -9,7 +9,7 @@ export async function housekeeping(env: Env, now: number) {
   const hashCutoff = isoTime(now - PRIVACY.deviceHashMaxAgeMs);
   const photoCutoff = isoTime(now - PHOTOS.maxPendingMs);
 
-  const [votes, reports, suggestions, limits, staleReports] = await db.batch<{ id: number }>([
+  const [votes, reports, suggestions, limits, staleReports, oldLog] = await db.batch<{ id: number }>([
     // Forget which device sent each vote, report and suggestion once it is 30 days old.
     db.prepare('UPDATE votes SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
     db.prepare('UPDATE photo_reports SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
@@ -19,6 +19,8 @@ export async function housekeeping(env: Env, now: number) {
     // per run on the free plan), so take up to 10 reports (40 photos) a day; the store also
     // expires photos after 31 days.
     db.prepare(`SELECT id FROM photo_reports WHERE status = 'pending' AND created_at < ? LIMIT 10`).bind(photoCutoff),
+    // The Activity tab's record of admin changes is kept for a year.
+    db.prepare('DELETE FROM admin_log WHERE created_at < ?').bind(isoTime(now - ADMIN_LOG.keepDays * 86_400_000)),
   ]);
 
   const expired = (staleReports?.results ?? []).map((r) => r.id);
@@ -44,6 +46,6 @@ export async function housekeeping(env: Env, now: number) {
   const cleared = (votes?.meta.changes ?? 0) + (reports?.meta.changes ?? 0) + (suggestions?.meta.changes ?? 0);
   console.log(
     `Housekeeping: cleared ${cleared} device hashes, deleted ${limits?.meta.changes ?? 0} expired counters, ` +
-      `expired ${expired.length} unchecked photos, salt rotated: ${rotated}`,
+      `expired ${expired.length} unchecked photos, deleted ${oldLog?.meta.changes ?? 0} old admin log entries, salt rotated: ${rotated}`,
   );
 }

@@ -4,6 +4,7 @@
 //   POST /api/admin/logout
 //   GET  /api/admin/session                                → { signedIn }
 //   GET/POST /api/admin/pubs, POST /api/admin/pubs/:id, POST /api/admin/area/:id/sample → see pubs.ts
+//   GET  /api/admin/activity?type=&pub=&before=           → see activity.ts
 //   GET  /api/admin/usage                                  → today's activity and limits
 //   GET  /api/admin/queue                                  → photo reports and suggestions to check
 //   GET  /api/admin/photo/:id/:n                           → photo n of a report (JPEG)
@@ -18,6 +19,7 @@ import { ApiError, assertSameOrigin, badRequest, isoTime, json, readJsonBody } f
 import { bumpCounter, deviceHash, readCounter, sameString, signToString } from './security';
 import { invalidateSnapshot, isAreaId } from './snapshot';
 import { normalise, slugify } from './text';
+import { getActivity, logAdmin } from './activity';
 import { addPub, listPubs, setSample, updatePub } from './pubs';
 import { getUsage } from './usage';
 
@@ -172,10 +174,26 @@ async function listingStatements(
   });
 }
 
-async function pubArea(db: D1Database, pubId: string): Promise<string> {
-  const pub = await db.prepare('SELECT area_id FROM pubs WHERE id = ?').bind(pubId).first<{ area_id: string }>();
+async function pubInfo(db: D1Database, pubId: string): Promise<{ area_id: string; name: string }> {
+  const pub = await db.prepare('SELECT area_id, name FROM pubs WHERE id = ?').bind(pubId).first<{ area_id: string; name: string }>();
   if (!pub) throw notFound('pub');
-  return pub.area_id;
+  return pub;
+}
+
+/** "On: Guinness (keg), Heineken (keg). Gone: Carling (keg)." for the Activity log. */
+async function describeChanges(db: D1Database, changes: ListingChange[]): Promise<string> {
+  if (!changes.length) return 'no tap list changes';
+  const ids = [...new Set(changes.map((c) => c.beer_id))];
+  const found = await db
+    .prepare(`SELECT id, name FROM beers WHERE id IN (${ids.map(() => '?').join(', ')})`)
+    .bind(...ids)
+    .all<{ id: string; name: string }>();
+  const names = new Map(found.results.map((b) => [b.id, b.name]));
+  const group = (set: ListingChange['set'], label: string) => {
+    const items = changes.filter((c) => c.set === set).map((c) => `${names.get(c.beer_id) ?? c.beer_id} (${c.dispense})`);
+    return items.length ? `${label}: ${items.join(', ')}.` : '';
+  };
+  return [group('on', 'On'), group('gone', 'Gone'), group('delete', 'Deleted')].filter(Boolean).join(' ');
 }
 
 async function getPub(env: Env, pubId: string): Promise<Response> {
@@ -199,11 +217,14 @@ async function saveListings(request: Request, env: Env, pubId: string, now: numb
   const body = await readJsonBody(request, 20_000);
   const changes = parseChanges(body.changes);
   const db = env.DB;
-  const area = await pubArea(db, pubId);
+  const pub = await pubInfo(db, pubId);
   const stamp = isoTime(now);
+  // D1 allows 50 queries per request: pubInfo, describeChanges, the beer check, then up to 40 changes + 2.
+  const summary = await describeChanges(db, changes);
   await db.batch([
     ...(await listingStatements(db, pubId, changes, 'admin', stamp, stamp)),
-    invalidateSnapshot(db, area),
+    invalidateSnapshot(db, pub.area_id),
+    logAdmin(db, now, 'tap_list', pubId, `${pub.name} tap list. ${summary}`),
   ]);
   return getPub(env, pubId);
 }
@@ -255,14 +276,19 @@ async function reviewReport(request: Request, env: Env, reportId: number, now: n
   const body = await readJsonBody(request, 20_000);
   if (body.action !== 'approve' && body.action !== 'reject') throw badRequest();
   const db = env.DB;
-  const [reports, images] = await db.batch<{ id?: number; pub_id?: string; status?: string; created_at?: string; photo_key?: string | null }>([
-    db.prepare('SELECT id, pub_id, status, created_at FROM photo_reports WHERE id = ?').bind(reportId),
+  const [reports, images] = await db.batch<Record<string, unknown>>([
+    db.prepare(
+      `SELECT r.id, r.pub_id, r.status, r.created_at, p.name AS pub_name, p.area_id
+       FROM photo_reports r JOIN pubs p ON p.id = r.pub_id WHERE r.id = ?`,
+    ).bind(reportId),
     db.prepare('SELECT photo_key FROM photo_report_images WHERE report_id = ? AND photo_key IS NOT NULL').bind(reportId),
   ]);
-  const report = reports?.results[0] as { id: number; pub_id: string; status: string; created_at: string } | undefined;
+  const report = reports?.results[0] as
+    | { id: number; pub_id: string; status: string; created_at: string; pub_name: string; area_id: string }
+    | undefined;
   if (!report) throw notFound('photo report');
   if (report.status !== 'pending') throw alreadyChecked();
-  const photoKeys = (images?.results ?? []).map((i) => i.photo_key).filter((k): k is string => !!k);
+  const photoKeys = (images?.results ?? []).map((i) => i.photo_key).filter((k): k is string => typeof k === 'string' && !!k);
 
   const stamp = isoTime(now);
   const statements: D1PreparedStatement[] = [
@@ -273,8 +299,12 @@ async function reviewReport(request: Request, env: Env, reportId: number, now: n
   if (body.action === 'approve') {
     // Ticks count as confirmations from when the photo was taken, not from now.
     const changes = parseChanges(body.changes ?? []);
+    const summary = await describeChanges(db, changes);
     statements.push(...(await listingStatements(db, report.pub_id, changes, 'photo', report.created_at, stamp)));
-    statements.push(invalidateSnapshot(db, await pubArea(db, report.pub_id)));
+    statements.push(invalidateSnapshot(db, report.area_id));
+    statements.push(logAdmin(db, now, 'photo_approved', report.pub_id, `${report.pub_name}: approved a photo report. ${summary}`));
+  } else {
+    statements.push(logAdmin(db, now, 'photo_rejected', report.pub_id, `${report.pub_name}: rejected a photo report.`));
   }
   await db.batch(statements);
   // The photos go as soon as they have been checked. (The store would also expire them.)
@@ -317,20 +347,39 @@ async function reviewSuggestion(request: Request, env: Env, suggestionId: number
   if (body.action !== 'approve' && body.action !== 'reject') throw badRequest();
   const db = env.DB;
   const suggestion = await db
-    .prepare('SELECT id, pub_id, beer_id, dispense, status, created_at FROM suggestions WHERE id = ?')
+    .prepare(
+      `SELECT s.id, s.pub_id, s.beer_id, s.dispense, s.status, s.created_at,
+              COALESCE(b.name, s.proposed_beer_name) AS beer_name, p.name AS pub_name
+       FROM suggestions s LEFT JOIN beers b ON b.id = s.beer_id LEFT JOIN pubs p ON p.id = s.pub_id
+       WHERE s.id = ?`,
+    )
     .bind(suggestionId)
-    .first<{ id: number; pub_id: string | null; beer_id: string | null; dispense: Dispense | null; status: string; created_at: string }>();
+    .first<{
+      id: number;
+      pub_id: string | null;
+      beer_id: string | null;
+      dispense: Dispense | null;
+      status: string;
+      created_at: string;
+      beer_name: string | null;
+      pub_name: string | null;
+    }>();
   if (!suggestion) throw notFound('suggestion');
   if (suggestion.status !== 'pending') throw alreadyChecked();
 
   const stamp = isoTime(now);
   if (body.action === 'reject') {
-    await db.prepare(`UPDATE suggestions SET status = 'rejected', reviewed_at = ? WHERE id = ?`).bind(stamp, suggestionId).run();
+    await db.batch([
+      db.prepare(`UPDATE suggestions SET status = 'rejected', reviewed_at = ? WHERE id = ?`).bind(stamp, suggestionId),
+      logAdmin(db, now, 'submission_rejected', suggestion.pub_id,
+        `${suggestion.pub_name ? `${suggestion.pub_name}: r` : 'R'}ejected a submission of ${suggestion.beer_name ?? 'a beer'}.`),
+    ]);
     return json({ ok: true });
   }
 
   const statements: D1PreparedStatement[] = [];
   let beerId: string;
+  let beerName: string | null = null;
   let newBeer = false;
 
   if (isId(body.beer_id)) {
@@ -362,17 +411,23 @@ async function reviewSuggestion(request: Request, env: Env, suggestionId: number
       ...beer.aliases.map((alias) => db.prepare('INSERT INTO beer_aliases (alias, beer_id) VALUES (?, ?)').bind(alias, beerId)),
     );
     newBeer = true;
+    beerName = beer.name;
   }
 
-  if (!newBeer && !(await db.prepare('SELECT 1 FROM beers WHERE id = ? AND is_active = 1').bind(beerId).first())) {
-    throw new ApiError(400, 'unknown_beer', `"${beerId}" isn't in the beer list.`);
+  if (!newBeer) {
+    const existing = await db.prepare('SELECT name FROM beers WHERE id = ? AND is_active = 1').bind(beerId).first<{ name: string }>();
+    if (!existing) throw new ApiError(400, 'unknown_beer', `"${beerId}" isn't in the beer list.`);
+    beerName = existing.name;
   }
 
   const pubId = isId(body.pub_id) ? body.pub_id : suggestion.pub_id;
+  let pubName: string | null = null;
   const dispense = body.dispense === 'cask' || body.dispense === 'keg' ? body.dispense : suggestion.dispense;
   if (pubId) {
     if (!dispense) throw new ApiError(400, 'choose_dispense', 'Choose cask or keg.');
-    const area = await pubArea(db, pubId);
+    const pub = await pubInfo(db, pubId);
+    const area = pub.area_id;
+    pubName = pub.name;
     if (newBeer) {
       // The beer is created in this same batch, so it can't be looked up yet.
       statements.push(
@@ -395,6 +450,14 @@ async function reviewSuggestion(request: Request, env: Env, suggestionId: number
   statements.push(
     db.prepare(`UPDATE suggestions SET status = 'approved', reviewed_at = ?, beer_id = ?, dispense = ? WHERE id = ?`)
       .bind(stamp, beerId, dispense ?? null, suggestionId),
+    logAdmin(
+      db,
+      now,
+      'submission_approved',
+      pubId,
+      `${pubName ? `${pubName}: a` : 'A'}pproved a submission of ${beerName ?? beerId}${pubId && dispense ? ` (${dispense})` : ''}.` +
+        (newBeer ? ' Added it to the beer list.' : ''),
+    ),
   );
   await db.batch(statements);
   return json({ ok: true, beer_id: beerId });
@@ -421,6 +484,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
   let m: RegExpMatchArray | null;
   if (path === '/queue' && method === 'GET') return getQueue(env);
   if (path === '/usage' && method === 'GET') return getUsage(env, now);
+  if (path === '/activity' && method === 'GET') return getActivity(env, url, now);
   if (path === '/pubs') {
     const area = url.searchParams.get('area') ?? 'e17';
     if (!isAreaId(area)) throw badRequest();
@@ -430,7 +494,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
   if ((m = path.match(/^\/pubs\/([a-z0-9-]{1,80})$/)) && method === 'POST') return updatePub(request, env, m[1] ?? '', now);
   if ((m = path.match(/^\/area\/([a-z0-9-]{1,20})\/sample$/)) && method === 'POST') {
     if (!isAreaId(m[1] ?? '')) throw badRequest();
-    return setSample(request, env, m[1] ?? '');
+    return setSample(request, env, m[1] ?? '', now);
   }
   if ((m = path.match(/^\/photo\/(\d{1,12})\/([1-4])$/)) && method === 'GET') return getPhoto(env, Number(m[1]), Number(m[2]));
   if ((m = path.match(/^\/pub\/([a-z0-9-]{1,80})$/)) && method === 'GET') return getPub(env, m[1] ?? '');

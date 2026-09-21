@@ -102,6 +102,20 @@ ${rows(listings, (l) => [l.pub_id, l.beer_id, l.dispense, l.status, l.source, l.
 ) WHERE ${isSampleArea};`);
 }
 
+// A line for the admin Activity tab. Names come from the last spreadsheet import, if it matches.
+let importNote = null;
+try {
+  const last = JSON.parse(await readFile(new URL('out/last-import.json', seedDir), 'utf8'));
+  if (last.total === beers.length) importNote = last;
+} catch {
+  // No import on this computer: log just the count.
+}
+const listed = (label, names) => (names?.length ? ` ${label}: ${names.join(', ')}.` : '');
+const logSummary =
+  `Beer list loaded from the spreadsheet: ${beers.length} beers.` +
+  listed('Added', importNote?.added) + listed('Changed', importNote?.changed) + listed('Taken off', importNote?.removed);
+sql.push(`INSERT INTO admin_log (created_at, action, pub_id, summary) VALUES (${list([now, 'beer_list', null, logSummary.slice(0, 1000)])});`);
+
 // The beer list appears in every area's search, so refresh every area.
 sql.push(`INSERT INTO snapshot_cache (area_id, version) VALUES (${q(area.id)}, 2)
 ON CONFLICT (area_id) DO UPDATE SET version = version + 1;`);

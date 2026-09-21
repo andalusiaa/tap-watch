@@ -88,6 +88,32 @@ export interface PubChanges {
   new_operator: { name: string; type: AdminOperator['type'] } | null;
 }
 
+export interface ActivityEntry {
+  kind: 'vote' | 'report' | 'submission' | 'admin';
+  at: string;
+  pub_id: string | null;
+  pub_name: string | null;
+  /** A friendly label for the device, e.g. "Amber Otter 17", for the last 30 days only. */
+  visitor: string | null;
+  text: string;
+  status?: string;
+}
+
+export interface ActivityVisitor {
+  visitor: string | null;
+  votes: number;
+  reports: number;
+  submissions: number;
+  last_at: string;
+}
+
+export interface Activity {
+  entries: ActivityEntry[];
+  next: string | null;
+  visitors?: ActivityVisitor[];
+  log_days: number;
+}
+
 export interface Usage {
   now: string;
   today: { votes: number; reports: number; suggestions: number; photos: number; writes: number };
@@ -121,6 +147,8 @@ export const adminApi = {
   signIn: (password: string) => call<{ ok: true }>('/login', { password }),
   signOut: () => call<{ ok: true }>('/logout', {}),
   usage: () => call<Usage>('/usage'),
+  activity: (filters: { type: string; pub: string; before?: string }) =>
+    call<Activity>(`/activity?${new URLSearchParams({ type: filters.type, pub: filters.pub, ...(filters.before ? { before: filters.before } : {}) })}`),
   pubs: () => call<{ sample: boolean; pubs: EditablePub[]; operators: AdminOperator[] }>('/pubs?area=e17'),
   addPub: (pub: PubChanges) => call<{ ok: true; id: string }>('/pubs?area=e17', { pub }),
   updatePub: (id: string, pub: PubChanges) => call<{ ok: true; id: string }>(`/pubs/${encodeURIComponent(id)}`, { pub }),
