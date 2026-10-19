@@ -17,10 +17,11 @@ export function mapPoints(
   origin: LatLng,
   dispense: DispenseFilter,
   now: number,
+  alcoholFree = false,
 ): PubPoint[] {
   switch (mode.kind) {
     case 'beer': {
-      const { available, gone } = catalogue.pubsForBeer(mode.beer.id, origin, dispense, now);
+      const { available, gone } = catalogue.pubsForBeer(mode.beer.id, origin, dispense, now, alcoholFree);
       return [...available, ...gone].map(({ pub, listings }) => {
         const best = freshest(listings, now);
         return { id: pub.id, name: pub.name, lat: pub.lat, lng: pub.lng, state: best ? freshnessOf(best, now).state : 'none' };
@@ -28,7 +29,7 @@ export function mapPoints(
     }
     case 'browse':
       return catalogue
-        .allPubs(origin, dispense, now)
+        .allPubs(origin, dispense, now, alcoholFree)
         .map(({ pub }) => ({ id: pub.id, name: pub.name, lat: pub.lat, lng: pub.lng, state: 'none' as const }));
     case 'no-match':
       return [];

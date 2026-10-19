@@ -22,6 +22,8 @@ interface Context {
   catalogue: Catalogue;
   origin: LatLng;
   dispense: DispenseFilter;
+  /** Only pubs with an alcohol-free beer on. */
+  alcoholFree: boolean;
   now: number;
   openPub: (pubId: string) => void;
   /** A suggestion form, optionally with the beer name filled in. */
@@ -72,7 +74,7 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
   switch (mode.kind) {
     case 'beer': {
       const { beer } = mode;
-      const { available, gone } = ctx.catalogue.pubsForBeer(beer.id, ctx.origin, ctx.dispense, ctx.now);
+      const { available, gone } = ctx.catalogue.pubsForBeer(beer.id, ctx.origin, ctx.dispense, ctx.now, ctx.alcoholFree);
       const lines = (r: PubResult) =>
         [...r.listings]
           .sort((a, b) => freshnessRank(a, ctx.now) - freshnessRank(b, ctx.now))
@@ -86,7 +88,13 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
       if (available.length === 0 && gone.length === 0) {
         items.push(
           emptyState(
-            h('p', null, `No one's reported ${beer.name}${ctx.dispense === 'any' ? '' : ` on ${ctx.dispense}`} in ${areaCode} yet.`),
+            h(
+              'p',
+              null,
+              ctx.alcoholFree
+                ? `No pub in ${areaCode} is listed with ${beer.name} and an alcohol-free beer on.`
+                : `No one's reported ${beer.name}${ctx.dispense === 'any' ? '' : ` on ${ctx.dispense}`} in ${areaCode} yet.`,
+            ),
             h('p', null, 'Seen it somewhere? ', addLink(ctx, 'Add it', beer.name), '.'),
           ),
         );
@@ -96,7 +104,8 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
         summary:
           available.length === 0
             ? `No pubs listed for ${beer.name}`
-            : `${plural(available.length, 'pub has', 'pubs have')} ${beer.name}${ctx.dispense === 'any' ? '' : ` on ${ctx.dispense}`}${nearestFirst(available.length)}`,
+            : `${plural(available.length, 'pub has', 'pubs have')} ${beer.name}${ctx.dispense === 'any' ? '' : ` on ${ctx.dispense}`}` +
+              `${ctx.alcoholFree ? ' and something alcohol-free' : ''}${nearestFirst(available.length)}`,
         items,
       };
     }
@@ -114,7 +123,7 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
       };
 
     case 'browse': {
-      const results = ctx.catalogue.allPubs(ctx.origin, ctx.dispense, ctx.now);
+      const results = ctx.catalogue.allPubs(ctx.origin, ctx.dispense, ctx.now, ctx.alcoholFree);
       const items = results.map((r) => {
         const freshest = [...r.listings]
           .filter((l) => l.last_confirmed_at)
@@ -128,18 +137,25 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
             { class: 'result-line' },
             r.listings.length === 0
               ? 'No beers listed yet'
-              : plural(r.listings.length, `${dispenseWord(ctx.dispense)}beer`, `${dispenseWord(ctx.dispense)}beers`),
+              : plural(
+                  r.listings.length,
+                  `${ctx.alcoholFree ? 'alcohol-free ' : ''}${dispenseWord(ctx.dispense)}beer`,
+                  `${ctx.alcoholFree ? 'alcohol-free ' : ''}${dispenseWord(ctx.dispense)}beers`,
+                ),
             freshest ? [separator(), h('span', { class: 'muted' }, freshnessOf(freshest, ctx.now).label)] : null,
             operator ? [separator(), h('span', { class: 'muted' }, operator.name)] : null,
           ),
         );
       });
+      const what = `${ctx.alcoholFree ? 'alcohol-free ' : ''}${dispenseWord(ctx.dispense)}beer`;
       if (items.length === 0) {
-        items.push(emptyState(h('p', null, `No pubs with ${ctx.dispense} beer listed yet.`)));
+        items.push(emptyState(h('p', null, `No pubs with ${what} listed yet.`)));
       }
       return {
         heading: [`Pubs in ${areaCode}`],
-        summary: `${plural(results.length, 'pub', 'pubs')}${ctx.dispense === 'any' ? '' : ` with ${ctx.dispense} beer`}${nearestFirst(results.length)}`,
+        summary:
+          `${plural(results.length, 'pub', 'pubs')}` +
+          `${ctx.dispense === 'any' && !ctx.alcoholFree ? '' : ` with ${what}`}${nearestFirst(results.length)}`,
         items,
       };
     }

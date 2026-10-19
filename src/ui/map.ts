@@ -134,7 +134,7 @@ export async function createPubMap(
   map.touchZoomRotate.disableRotation();
   map.keyboard.disableRotation();
   map.addControl(new NavigationControl({ showCompass: false }), 'top-right');
-  map.addControl(new AttributionControl({ compact: true }), 'bottom-right');
+  map.addControl(new AttributionControl({ compact: true }), 'bottom-left');
   const centreControl = new CentreOnYouControl(() => {
     if (!you) return;
     const [lat, lng] = you.point;

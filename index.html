@@ -26,62 +26,72 @@
         <span class="plate"><span class="visually-hidden">, </span>E17</span>
       </a>
     </h1>
+    <p class="tagline">Find a beer on tap, nearest first.</p>
   </header>
 
   <main>
     <form class="search" id="search-form" role="search">
-      <label class="search-label" for="beer-search">Which beer?</label>
-      <div class="combo">
-        <input id="beer-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false"
-          aria-controls="beer-options" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
-          placeholder="Try Guinness or Neck Oil">
-        <button type="button" class="search-clear" id="search-clear" aria-label="Clear the search and show all pubs" hidden>✕</button>
-        <ul id="beer-options" class="options" role="listbox" aria-label="Matching beers" hidden></ul>
+      <button type="button" class="search-pill" id="search-pill" aria-expanded="false" aria-controls="search-panel">
+        <span class="search-pill-row">
+          <span class="search-pill-main" id="search-pill-main">Which beer?</span>
+          <span class="search-pill-chevron" aria-hidden="true">⌄</span>
+        </span>
+        <span class="search-pill-sub" id="search-pill-sub">Cask or keg · Near me</span>
+      </button>
+
+      <div class="search-panel" id="search-panel" hidden>
+        <label class="search-label visually-hidden" for="beer-search">Which beer?</label>
+        <div class="combo">
+          <input id="beer-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false"
+            aria-controls="beer-options" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+            placeholder="Try Guinness or Neck Oil">
+          <button type="button" class="search-clear" id="search-clear" aria-label="Clear the search and show all pubs" hidden>✕</button>
+          <ul id="beer-options" class="options" role="listbox" aria-label="Matching beers" hidden></ul>
+        </div>
+
+        <fieldset class="chips" id="dispense">
+          <legend>Cask or keg</legend>
+          <label><input type="radio" name="dispense" value="cask"><span>Cask</span></label>
+          <label><input type="radio" name="dispense" value="keg"><span>Keg</span></label>
+          <label><input type="radio" name="dispense" value="any" checked><span>Either</span></label>
+        </fieldset>
+
+        <div class="chips" id="alcohol-free">
+          <label><input type="checkbox" id="af-only"><span>Alcohol-free only</span></label>
+        </div>
+
+        <div class="location">
+          <p class="chips-legend">Location</p>
+          <div role="status">
+            <p class="location-status" id="location-status">Distances from central Walthamstow to each pub, as the crow flies.</p>
+            <p class="location-tip" id="location-tip" hidden></p>
+          </div>
+          <div class="location-actions">
+            <button type="button" class="link-button" id="use-location">Use my location</button>
+            <button type="button" class="link-button" id="show-postcode" aria-expanded="false" aria-controls="postcode-form">Enter a postcode</button>
+          </div>
+          <div class="postcode-form" id="postcode-form" hidden>
+            <label for="postcode">Postcode</label>
+            <div class="postcode-row">
+              <input id="postcode" name="postcode" type="text" autocomplete="postal-code" autocapitalize="characters"
+                spellcheck="false" maxlength="8" enterkeyhint="go" aria-describedby="postcode-error">
+              <button type="button" class="button" id="postcode-go">Use postcode</button>
+            </div>
+            <p class="field-error" id="postcode-error" hidden></p>
+          </div>
+          <p class="location-note">Phone location can be a few hundred metres out, so a postcode is often more accurate. Either way, your location stays on your device.</p>
+        </div>
+
+        <button type="button" class="button button--primary search-done" id="search-done">Done</button>
       </div>
     </form>
-
-    <div class="filters">
-      <fieldset class="segmented" id="view-toggle">
-        <legend class="visually-hidden">Show pubs as</legend>
-        <label><input type="radio" name="view" value="list" checked><span>List</span></label>
-        <label><input type="radio" name="view" value="map"><span>Map</span></label>
-      </fieldset>
-      <fieldset class="segmented" id="dispense">
-        <legend class="visually-hidden">Dispense</legend>
-        <label><input type="radio" name="dispense" value="any" checked><span>Cask or keg</span></label>
-        <label><input type="radio" name="dispense" value="cask"><span>Cask</span></label>
-        <label><input type="radio" name="dispense" value="keg"><span>Keg</span></label>
-      </fieldset>
-    </div>
-
-    <div class="location">
-      <div role="status">
-        <p class="location-status" id="location-status">Distances from central Walthamstow to each pub, as the crow flies.</p>
-        <p class="location-tip" id="location-tip" hidden></p>
-      </div>
-      <div class="location-actions">
-        <button type="button" class="link-button" id="use-location">Use my location</button>
-        <button type="button" class="link-button" id="show-postcode" aria-expanded="false" aria-controls="postcode-form">Enter a postcode</button>
-      </div>
-      <form class="postcode-form" id="postcode-form" hidden>
-        <label for="postcode">Postcode</label>
-        <div class="postcode-row">
-          <input id="postcode" name="postcode" type="text" autocomplete="postal-code" autocapitalize="characters"
-            spellcheck="false" maxlength="8" enterkeyhint="go" aria-describedby="postcode-error">
-          <button type="submit" class="button">Use postcode</button>
-        </div>
-        <p class="field-error" id="postcode-error" hidden></p>
-      </form>
-      <p class="location-note">Phone location can be a few hundred metres out. Entering a postcode is often more accurate.</p>
-      <p class="location-privacy">Your location stays on your device. We never see or store it.</p>
-    </div>
 
     <section class="results-section" aria-labelledby="results-heading">
       <div class="results-top">
         <h2 id="results-heading">Pubs in E17</h2>
-        <button type="button" class="link-button" id="results-clear" hidden>Show all pubs</button>
+        <p class="summary" id="results-summary" aria-live="polite"></p>
       </div>
-      <p class="summary" id="results-summary" aria-live="polite"></p>
+      <p class="results-clear-row"><button type="button" class="link-button" id="results-clear" hidden>Show all pubs</button></p>
       <p class="status" id="app-status" role="status"></p>
       <div class="map-view" id="map-view" hidden>
         <div class="map" id="map" role="region"
@@ -101,6 +111,14 @@
       </ol>
     </section>
   </main>
+
+  <button type="button" class="map-fab" id="map-toggle">
+    <svg class="map-fab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linejoin="round" aria-hidden="true"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"></path><path d="M9 4v13M15 7v13"></path></svg>
+    <svg class="map-fab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" aria-hidden="true" hidden><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    <span id="map-toggle-label">Map</span>
+  </button>
 
   <footer class="site-footer">
     <div class="theme-row">

@@ -19,6 +19,8 @@ interface State {
   beerId: string | null;
   noMatch: string | null;
   dispense: DispenseFilter;
+  /** Only pubs with an alcohol-free beer on. */
+  alcoholFree: boolean;
   view: 'list' | 'map';
   pubId: string | null;
 }
@@ -30,6 +32,7 @@ function stateFromUrl(): State {
     beerId: p.get('beer'),
     noMatch: null,
     dispense: dispense === 'cask' || dispense === 'keg' ? dispense : 'any',
+    alcoholFree: p.get('af') === '1',
     view: p.get('view') === 'map' ? 'map' : 'list',
     pubId: p.get('pub'),
   };
@@ -39,6 +42,7 @@ function urlFor(s: State): string {
   const p = new URLSearchParams();
   if (s.beerId) p.set('beer', s.beerId);
   if (s.dispense !== 'any') p.set('dispense', s.dispense);
+  if (s.alcoholFree) p.set('af', '1');
   if (s.view === 'map') p.set('view', 'map');
   if (s.pubId) p.set('pub', s.pubId);
   const query = p.toString();
@@ -53,7 +57,14 @@ const els = {
   input: byId<HTMLInputElement>('beer-search'),
   listbox: byId<HTMLUListElement>('beer-options'),
   dispense: byId<HTMLFieldSetElement>('dispense'),
-  viewToggle: byId<HTMLFieldSetElement>('view-toggle'),
+  alcoholFree: byId<HTMLInputElement>('af-only'),
+  pill: byId<HTMLButtonElement>('search-pill'),
+  pillMain: byId('search-pill-main'),
+  pillSub: byId('search-pill-sub'),
+  panel: byId('search-panel'),
+  searchDone: byId<HTMLButtonElement>('search-done'),
+  mapToggle: byId<HTMLButtonElement>('map-toggle'),
+  mapToggleLabel: byId('map-toggle-label'),
   mapView: byId('map-view'),
   map: byId('map'),
   mapStatus: byId('map-status'),
@@ -108,6 +119,8 @@ function start(catalogue: Catalogue) {
     onSelect: (beer) => {
       locationBar.onSearch();
       setState({ beerId: beer.id, noMatch: null, pubId: null }, 'push');
+      // The beer is chosen: fold the filters away so the results have the screen.
+      showPanel(false, false);
     },
     onNoMatch: (query) => setState({ beerId: null, noMatch: query, pubId: null }, 'replace'),
     onClear: () => {
@@ -135,6 +148,7 @@ function start(catalogue: Catalogue) {
     areaName: catalogue.area.name,
     areaCentre: catalogue.area.centre,
     onChange: () => {
+      updatePill();
       renderList();
       sheet.refreshDistance();
       updateMapYou();
@@ -158,8 +172,8 @@ function start(catalogue: Catalogue) {
   function updateMapPubs() {
     if (!pubMap) return;
     const mode = currentMode();
-    const fitKey = `${mode.kind === 'beer' ? mode.beer.id : mode.kind}|${state.dispense}`;
-    const points = mapPoints(mode, catalogue, locationBar.origin(), state.dispense, Date.now());
+    const fitKey = `${mode.kind === 'beer' ? mode.beer.id : mode.kind}|${state.dispense}|${state.alcoholFree}`;
+    const points = mapPoints(mode, catalogue, locationBar.origin(), state.dispense, Date.now(), state.alcoholFree);
     pubMap.showPubs(points, { fit: fitKey !== lastFitKey });
     lastFitKey = fitKey;
     els.mapLegend.hidden = mode.kind !== 'beer';
@@ -241,6 +255,7 @@ function start(catalogue: Catalogue) {
       catalogue,
       origin: locationBar.origin(),
       dispense: state.dispense,
+      alcoholFree: state.alcoholFree,
       now: Date.now(),
       openPub: (pubId) => setState({ pubId }, 'push'),
       suggestForm: (beerName) => suggestForm({ catalogue, beerName, honeypot: () => els.honeypot.value }),
@@ -255,6 +270,26 @@ function start(catalogue: Catalogue) {
     if (onMap) showMap();
   }
 
+  /** Opens or closes the filter panel. The pill shows what's set while it's closed. */
+  function showPanel(open: boolean, focusInput = true) {
+    els.panel.hidden = !open;
+    els.pill.setAttribute('aria-expanded', String(open));
+    if (open && focusInput) els.input.focus();
+    if (!open) updatePill();
+  }
+
+  const DISPENSE_WORD: Record<DispenseFilter, string> = { any: 'Cask or keg', cask: 'Cask', keg: 'Keg' };
+
+  function updatePill() {
+    const beer = state.beerId ? catalogue.beer(state.beerId) : undefined;
+    const typed = els.input.value.trim();
+    els.pillMain.textContent = beer?.name ?? (state.noMatch ?? (typed || 'Which beer?'));
+    els.pillMain.classList.toggle('search-pill-main--empty', !beer && !state.noMatch && !typed);
+    els.pillSub.textContent = [DISPENSE_WORD[state.dispense], state.alcoholFree ? 'Alcohol-free' : null, locationBar.summary()]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
   function render() {
     const beer = state.beerId ? catalogue.beer(state.beerId) : undefined;
     if (beer && document.activeElement !== els.input) autocomplete.setValue(beer.name);
@@ -264,9 +299,14 @@ function start(catalogue: Catalogue) {
     for (const input of els.dispense.querySelectorAll<HTMLInputElement>('input')) {
       input.checked = input.value === state.dispense;
     }
-    for (const input of els.viewToggle.querySelectorAll<HTMLInputElement>('input')) {
-      input.checked = input.value === state.view;
+    els.alcoholFree.checked = state.alcoholFree;
+    const onMapView = state.view === 'map';
+    els.mapToggleLabel.textContent = onMapView ? 'List' : 'Map';
+    els.mapToggle.setAttribute('aria-label', onMapView ? 'Show the pubs as a list' : 'Show the pubs on a map');
+    for (const [i, icon] of [...els.mapToggle.querySelectorAll<SVGElement>('.map-fab-icon')].entries()) {
+      icon.toggleAttribute('hidden', onMapView ? i === 0 : i === 1);
     }
+    updatePill();
     els.status.textContent = '';
     renderList();
 
@@ -284,15 +324,33 @@ function start(catalogue: Catalogue) {
     if (value === 'any' || value === 'cask' || value === 'keg') setState({ dispense: value }, 'replace');
   });
 
-  els.viewToggle.addEventListener('change', (e) => {
-    const value = (e.target as HTMLInputElement).value;
-    if (value === 'list' || value === 'map') setState({ view: value }, 'replace');
+  els.alcoholFree.addEventListener('change', () => setState({ alcoholFree: els.alcoholFree.checked }, 'replace'));
+
+  els.mapToggle.addEventListener('click', () => {
+    showPanel(false);
+    setState({ view: state.view === 'map' ? 'list' : 'map' }, 'replace');
+    if (state.view === 'list') els.results.scrollIntoView({ block: 'nearest' });
+  });
+
+  els.pill.addEventListener('click', () => showPanel(els.panel.hasAttribute('hidden')));
+  els.searchDone.addEventListener('click', () => {
+    showPanel(false);
+    els.pill.focus();
+  });
+  els.panel.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || els.panel.hidden) return;
+    e.preventDefault();
+    showPanel(false);
+    els.pill.focus();
   });
 
   function updateSearchClear() {
     els.searchClear.hidden = els.input.value === '' && !state.beerId && !state.noMatch;
   }
-  els.input.addEventListener('input', updateSearchClear);
+  els.input.addEventListener('input', () => {
+    updateSearchClear();
+    updatePill();
+  });
 
   els.searchClear.addEventListener('click', () => {
     autocomplete.setValue('');
@@ -303,7 +361,9 @@ function start(catalogue: Catalogue) {
 
   els.clear.addEventListener('click', () => {
     setState({ beerId: null, noMatch: null, pubId: null }, 'push');
-    els.input.focus();
+    // Only move focus into the panel if it's open; otherwise stay on the pill.
+    if (els.panel.hasAttribute('hidden')) els.pill.focus();
+    else els.input.focus();
   });
 
   window.addEventListener('popstate', () => {

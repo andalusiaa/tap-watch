@@ -40,7 +40,8 @@ export function setupLocationBar(o: Options) {
     tip: byId('location-tip'),
     useLocation: byId<HTMLButtonElement>('use-location'),
     showPostcode: byId<HTMLButtonElement>('show-postcode'),
-    form: byId<HTMLFormElement>('postcode-form'),
+    panel: byId('postcode-form'),
+    go: byId<HTMLButtonElement>('postcode-go'),
     input: byId<HTMLInputElement>('postcode'),
     error: byId('postcode-error'),
   };
@@ -127,17 +128,17 @@ export function setupLocationBar(o: Options) {
   }
 
   function togglePostcode(open: boolean) {
-    els.form.hidden = !open;
+    els.panel.hidden = !open;
     els.showPostcode.setAttribute('aria-expanded', String(open));
     els.error.hidden = true;
     if (open) els.input.focus();
   }
 
   els.useLocation.addEventListener('click', () => void locate());
-  els.showPostcode.addEventListener('click', () => togglePostcode(els.form.hasAttribute('hidden')));
+  els.showPostcode.addEventListener('click', () => togglePostcode(els.panel.hasAttribute('hidden')));
 
-  els.form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // Not a <form>: the whole search panel is already inside one, and forms can't nest.
+  async function usePostcode() {
     const showError = (message: string) => {
       els.error.textContent = message;
       els.error.hidden = false;
@@ -161,6 +162,13 @@ export function setupLocationBar(o: Options) {
       show();
       showError("We couldn't look up postcodes just now. Check your connection and try again.");
     }
+  }
+
+  els.go.addEventListener('click', () => void usePostcode());
+  els.input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    void usePostcode();
   });
 
   show();
@@ -173,6 +181,13 @@ export function setupLocationBar(o: Options) {
 
   return {
     origin: () => origin,
+
+    /** A few words for the collapsed search pill, e.g. "Near me" or "From E17 4NE". */
+    summary(): string {
+      if (source.kind === 'device') return 'Near me';
+      if (source.kind === 'postcode') return `From ${source.postcode}`;
+      return `Near ${o.areaName} centre`;
+    },
 
     /** Where distances are measured from, for drawing on the map. */
     current(): { point: LatLng; kind: Source['kind']; accuracy?: number; settled: boolean } {

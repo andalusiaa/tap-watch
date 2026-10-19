@@ -93,28 +93,44 @@ export function createCatalogue(snapshot: Snapshot) {
       return beerIndex.search(query, { limit, popularity: pubCount });
     },
 
-    /** Pubs listing a beer, split into those that have it and those where it was reported gone. */
-    pubsForBeer(beerId: string, origin: LatLng, dispense: DispenseFilter, now: number) {
+    /** True when the pub has an alcohol-free beer on now (any dispense). */
+    hasAlcoholFree(pubId: string): boolean {
+      return (listingsByPub.get(pubId) ?? []).some((l) => isAvailable(l) && beerById.get(l.beer_id)?.af);
+    },
+
+    /**
+     * Pubs listing a beer, split into those that have it and those where it was reported gone.
+     * With alcoholFreeOnly, only pubs that also have an alcohol-free beer on.
+     */
+    pubsForBeer(beerId: string, origin: LatLng, dispense: DispenseFilter, now: number, alcoholFreeOnly = false) {
+      const withAf = (results: PubResult[]) =>
+        alcoholFreeOnly
+          ? results.filter((r) => (listingsByPub.get(r.pub.id) ?? []).some((l) => isAvailable(l) && beerById.get(l.beer_id)?.af))
+          : results;
       const listings = (listingsByBeer.get(beerId) ?? []).filter((l) => matchesDispense(l, dispense));
-      const available = toResults(listings.filter(isAvailable), origin, now);
+      const available = withAf(toResults(listings.filter(isAvailable), origin, now));
       const availablePubs = new Set(available.map((r) => r.pub.id));
-      const gone = toResults(
-        listings.filter((l) => !isAvailable(l) && !availablePubs.has(l.pub_id)),
-        origin,
-        now,
+      const gone = withAf(
+        toResults(
+          listings.filter((l) => !isAvailable(l) && !availablePubs.has(l.pub_id)),
+          origin,
+          now,
+        ),
       );
       return { available, gone };
     },
 
-    /** Every pub, with the listings that match the dispense filter. */
-    allPubs(origin: LatLng, dispense: DispenseFilter, now: number): PubResult[] {
+    /** Every pub, with the listings that match the filters. */
+    allPubs(origin: LatLng, dispense: DispenseFilter, now: number, alcoholFreeOnly = false): PubResult[] {
       const results = snapshot.pubs.map((pub) => ({
         pub,
         km: distanceKm(origin, [pub.lat, pub.lng]),
-        listings: (listingsByPub.get(pub.id) ?? []).filter((l) => isAvailable(l) && matchesDispense(l, dispense)),
+        listings: (listingsByPub.get(pub.id) ?? []).filter(
+          (l) => isAvailable(l) && matchesDispense(l, dispense) && (!alcoholFreeOnly || beerById.get(l.beer_id)?.af),
+        ),
       }));
       return sortResults(
-        dispense === 'any' ? results : results.filter((r) => r.listings.length > 0),
+        dispense === 'any' && !alcoholFreeOnly ? results : results.filter((r) => r.listings.length > 0),
         now,
       );
     },
