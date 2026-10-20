@@ -128,6 +128,16 @@ Security review (2026-09-19, Phase 5):
 
 What the API stores about visitors: a 32-character device hash per vote, photo report and suggestion (an HMAC of a rotating salt, the IP address and the browser name), cleared after 30 days. Photos are shrunk and re-encoded in the browser, which removes location data; the server also strips any metadata. Photos are only visible to the admin and are deleted once checked, or after 30 days. IP addresses and locations are never stored, and per-request logging is switched off.
 
+## Saved versions to roll back to
+
+Each push is a version, and some are labelled ("tagged") so they are easy to find again:
+
+| Label | What it is |
+| --- | --- |
+| `design-before-pill` | The site as it looked before the October 2026 top-section redesign: separate beer box, List/Map switch, cask/keg filter and location row all on show. |
+
+To see the labels: `git tag`. To go back to one, ask Claude Code to "roll the site back to `design-before-pill`". It undoes those changes with a new commit, so nothing is lost and the newer design can be brought back the same way. Labels only cover the code: pubs, beers, votes and photos live in the database and are not affected.
+
 ## Credits
 
 Pub names and locations © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database Licence. Map data from [Protomaps](https://protomaps.com), built from OpenStreetMap. Map labels use Noto Sans (SIL Open Font License). Postcode lookups by [postcodes.io](https://postcodes.io) (only when you type a postcode; your device location never leaves your browser). Headings use Bricolage Grotesque under the SIL Open Font License (see `public/fonts/`).
