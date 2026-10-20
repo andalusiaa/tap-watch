@@ -121,7 +121,7 @@ function start(catalogue: Catalogue) {
       locationBar.onSearch();
       setState({ beerId: beer.id, noMatch: null, pubId: null }, 'push');
       // The beer is chosen: fold the filters away so the results have the screen.
-      showPanel(false, false);
+      showPanel(false);
     },
     onNoMatch: (query) => setState({ beerId: null, noMatch: query, pubId: null }, 'replace'),
     onClear: () => {
@@ -283,10 +283,10 @@ function start(catalogue: Catalogue) {
   }
 
   /** Opens or closes the filter panel. The pill shows what's set while it's closed. */
-  function showPanel(open: boolean, focusInput = true) {
+  function showPanel(open: boolean) {
     els.panel.hidden = !open;
     els.pill.setAttribute('aria-expanded', String(open));
-    if (open && focusInput) els.input.focus();
+    // The box is left alone on purpose: focusing it opens the phone keyboard over the filters.
     if (!open) updatePill();
   }
 
