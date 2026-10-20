@@ -10,6 +10,7 @@ import { setupAutocomplete } from './ui/autocomplete';
 import { byId, h } from './ui/dom';
 import { setupLocationBar } from './ui/locationBar';
 import { setupPubSheet } from './ui/pubSheet';
+import { exampleBeers, typedPlaceholder } from './ui/typedPlaceholder';
 import { suggestForm } from './ui/forms';
 import { renderResults, type ResultsMode } from './ui/results';
 
@@ -126,6 +127,17 @@ function start(catalogue: Catalogue) {
     onClear: () => {
       if (state.beerId || state.noMatch) setState({ beerId: null, noMatch: null }, 'replace');
     },
+  });
+
+  // Examples in the search box, typed out one at a time, from beers people can actually find.
+  const examples = exampleBeers(
+    catalogue.beers().filter((b) => catalogue.pubCount(b) > 0),
+    8,
+  );
+  typedPlaceholder({
+    input: els.input,
+    names: examples.length ? examples : exampleBeers(catalogue.beers(), 8),
+    active: () => !els.panel.hasAttribute('hidden'),
   });
 
   const sheet = setupPubSheet({
