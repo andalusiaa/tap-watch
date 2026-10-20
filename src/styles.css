@@ -212,7 +212,19 @@ textarea {
 
 /* --- Search ------------------------------------------------------------------------ */
 
-/* The collapsed control: one tap opens the filters, so the top of the page stays quiet. */
+/* One card: the question is its header, and it opens to show the filters inside. */
+.search-card {
+  border: 2px solid var(--ink);
+  border-radius: 20px;
+  background: var(--plate);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.search-card:hover {
+  border-color: var(--ink-muted);
+}
+
 .search-pill {
   display: flex;
   flex-direction: column;
@@ -220,18 +232,13 @@ textarea {
   width: 100%;
   min-height: clamp(7.5rem, 20vh, 11rem);
   padding: 1.5rem;
-  border: 2px solid var(--ink);
-  border-radius: 20px;
-  background: var(--plate);
+  border: 0;
+  background: none;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease, min-height 0.15s ease;
-}
-
-.search-pill:hover {
-  border-color: var(--ink-muted);
+  transition: min-height 0.15s ease;
 }
 
 /* Once the filters are open, the card steps back out of the way. */
@@ -282,10 +289,8 @@ textarea {
 }
 
 .search-panel {
-  margin-top: 0.75rem;
   padding: 1.25rem;
-  border: 2px solid var(--ink);
-  border-radius: 20px;
+  border-top: 1px solid var(--rule);
 }
 
 .search-panel > * + * {
