@@ -73,9 +73,9 @@ export function typedPlaceholder(o: Options) {
   };
 }
 
-/** A handful of beers to use as examples: well-known ones first, then a random spread. */
-export function exampleBeers(all: { name: string }[], pick: number, random = Math.random): string[] {
-  const names = all.map((b) => b.name).filter((n) => n.length <= 22);
+/** A random handful of beers to use as examples, by their everyday name where there is one. */
+export function exampleBeers(all: { name: string; common_name?: string | null }[], pick: number, random = Math.random): string[] {
+  const names = all.map((b) => b.common_name || b.name).filter((n) => n.length <= 22);
   const chosen: string[] = [];
   const pool = [...names];
   while (chosen.length < pick && pool.length) {

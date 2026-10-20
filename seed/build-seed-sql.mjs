@@ -72,10 +72,10 @@ ${rows(operators, (o) => [o.id, o.name, o.type])}
 ON CONFLICT (id) DO UPDATE SET name = excluded.name, type = excluded.type;`);
 }
 
-sql.push(`INSERT INTO beers (id, name, brewery, category, abv, is_alcohol_free, is_regular, is_active) VALUES
-${rows(beers, (b) => [b.id, b.name, b.brewery, b.category, b.abv ?? null, b.is_alcohol_free, true, true])}
-ON CONFLICT (id) DO UPDATE SET name = excluded.name, brewery = excluded.brewery, category = excluded.category,
-  abv = excluded.abv, is_alcohol_free = excluded.is_alcohol_free, is_active = 1;`);
+sql.push(`INSERT INTO beers (id, name, common_name, brewery, category, abv, is_alcohol_free, is_regular, is_active) VALUES
+${rows(beers, (b) => [b.id, b.name, b.common_name ?? null, b.brewery, b.category, b.abv ?? null, b.is_alcohol_free, true, true])}
+ON CONFLICT (id) DO UPDATE SET name = excluded.name, common_name = excluded.common_name, brewery = excluded.brewery,
+  category = excluded.category, abv = excluded.abv, is_alcohol_free = excluded.is_alcohol_free, is_active = 1;`);
 sql.push(`UPDATE beers SET is_active = 0 WHERE id NOT IN (${list(beers.map((b) => b.id))});`);
 
 const aliases = beers.flatMap((b) => b.aliases.map((a) => [normalise(a), b.id]));

@@ -36,6 +36,8 @@ export interface Pub {
 export interface Beer {
   id: string;
   name: string;
+  /** A shorter everyday name ("Neck Oil"), used for the search box examples. */
+  common_name?: string | null;
   brewery: string | null;
   category: Category;
   abv: number | null;

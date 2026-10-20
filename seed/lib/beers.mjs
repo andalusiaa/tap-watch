@@ -34,6 +34,12 @@ export function validateBeers(beers) {
     if (b.abv != null && (b.abv < 0 || b.abv > 15)) problems.push(`${b.id}: odd ABV ${b.abv}`);
     if (b.is_alcohol_free && b.abv != null && b.abv > 0.5) problems.push(`${b.id}: alcohol-free but ABV ${b.abv}`);
     if (!b.is_alcohol_free && b.abv != null && b.abv <= 0.5) problems.push(`${b.id}: ABV ${b.abv} but not marked alcohol-free`);
+    if (b.common_name) {
+      if (b.common_name.length > 60) problems.push(`${b.id}: common name "${b.common_name}" is too long`);
+      if (!normalise(b.name).includes(normalise(b.common_name))) {
+        problems.push(`${b.id}: common name "${b.common_name}" isn't part of "${b.name}"`);
+      }
+    }
     names.set(normalise(b.name), b.id);
   }
 

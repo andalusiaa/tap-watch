@@ -27,6 +27,7 @@ const STYLES = {
 
 const COLUMNS = {
   name: 'Name',
+  commonName: 'Common name (blank = use the full name)',
   brewery: 'Brewery',
   style: 'Style',
   abv: 'ABV %',
@@ -57,7 +58,7 @@ async function exportCsv() {
     'npx',
     [
       'wrangler', 'd1', 'execute', 'tap-watch', useLocal ? '--local' : '--remote', '--json', '--command',
-      `SELECT b.id, b.name, b.brewery, b.category, b.abv, b.is_alcohol_free,
+      `SELECT b.id, b.name, b.common_name, b.brewery, b.category, b.abv, b.is_alcohol_free,
               (SELECT group_concat(a.alias, '; ') FROM beer_aliases a WHERE a.beer_id = b.id) AS aliases
        FROM beers b WHERE b.is_active = 1 ORDER BY b.category, b.name`,
     ],
@@ -68,6 +69,7 @@ async function exportCsv() {
 
   const rows = beers.map((b) => ({
     [COLUMNS.name]: b.name,
+    [COLUMNS.commonName]: b.common_name ?? '',
     [COLUMNS.brewery]: b.brewery ?? '',
     [COLUMNS.style]: STYLES[b.category] ?? b.category,
     [COLUMNS.abv]: b.abv ?? '',
@@ -109,6 +111,7 @@ async function importCsv(path) {
       beers.push({
         id: get('id') || slugify(name),
         name,
+        common_name: get('commonName').replace(/\s+/g, ' ') || null,
         brewery: get('brewery') || null,
         category: parseStyle(get('style'), line),
         abv,
