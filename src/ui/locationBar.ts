@@ -186,7 +186,7 @@ export function setupLocationBar(o: Options) {
     summary(): string {
       if (source.kind === 'device') return 'Near me';
       if (source.kind === 'postcode') return `From ${source.postcode}`;
-      return `Near ${o.areaName} centre`;
+      return `${o.areaName} centre`;
     },
 
     /** Where distances are measured from, for drawing on the map. */

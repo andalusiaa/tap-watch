@@ -227,8 +227,8 @@ textarea {
 
 .search-pill {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  gap: 0.9rem;
   width: 100%;
   min-height: clamp(7.5rem, 20vh, 11rem);
   padding: 1.5rem;
@@ -241,7 +241,8 @@ textarea {
   transition: min-height 0.15s ease;
 }
 
-/* Once the filters are open, the card steps back out of the way. */
+/* Once the filters are open, the card steps back out of the way and the summary goes:
+   the filters themselves are on screen. */
 .search-pill[aria-expanded="true"] {
   min-height: 0;
   padding: 1rem 1.25rem;
@@ -251,14 +252,22 @@ textarea {
   font-size: var(--step-1);
 }
 
-.search-pill-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+.search-pill[aria-expanded="true"] .search-pill-sub {
+  display: none;
+}
+
+.search-pill-icon {
+  flex-shrink: 0;
+  color: var(--ink-muted);
+}
+
+.search-pill-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .search-pill-main {
+  display: block;
   font-size: var(--step-2);
   font-weight: 700;
   line-height: 1.2;

@@ -33,11 +33,13 @@
     <form class="search" id="search-form" role="search">
       <div class="search-card" id="search-card">
       <button type="button" class="search-pill" id="search-pill" aria-expanded="false" aria-controls="search-panel">
-        <span class="search-pill-row">
+        <svg class="search-pill-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5L21 21"></path></svg>
+        <span class="search-pill-text">
           <span class="search-pill-main" id="search-pill-main">Which beer?</span>
-          <span class="search-pill-chevron" aria-hidden="true">⌄</span>
+          <span class="search-pill-sub" id="search-pill-sub">Cask or keg · Near me</span>
         </span>
-        <span class="search-pill-sub" id="search-pill-sub">Cask or keg · Near me</span>
+        <span class="search-pill-chevron" aria-hidden="true">⌄</span>
       </button>
 
       <div class="search-panel" id="search-panel" hidden>
