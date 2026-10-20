@@ -35,9 +35,13 @@ export function validateBeers(beers) {
     if (b.is_alcohol_free && b.abv != null && b.abv > 0.5) problems.push(`${b.id}: alcohol-free but ABV ${b.abv}`);
     if (!b.is_alcohol_free && b.abv != null && b.abv <= 0.5) problems.push(`${b.id}: ABV ${b.abv} but not marked alcohol-free`);
     if (b.common_name) {
+      // Every word has to come from the beer's own name or spellings, so a slip can't turn
+      // one beer into another. "Asahi Zero" is fine for "Asahi Super Dry 0.0" (alias "asahi zero").
       if (b.common_name.length > 60) problems.push(`${b.id}: common name "${b.common_name}" is too long`);
-      if (!normalise(b.name).includes(normalise(b.common_name))) {
-        problems.push(`${b.id}: common name "${b.common_name}" isn't part of "${b.name}"`);
+      const known = new Set([normalise(b.name), ...b.aliases.map(normalise)].flatMap((t) => t.split(' ')));
+      const stray = normalise(b.common_name).split(' ').filter((w) => w && !known.has(w));
+      if (stray.length) {
+        problems.push(`${b.id}: common name "${b.common_name}" uses ${stray.map((w) => `"${w}"`).join(', ')}, which isn't in its name or spellings`);
       }
     }
     names.set(normalise(b.name), b.id);
