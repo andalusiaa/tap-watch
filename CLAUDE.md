@@ -17,7 +17,7 @@ These override `../SPEC.md`:
 
 - **Typeface:** Bricolage Grotesque (open question 1 closed). Fraunces removed.
 - **No "Alcohol-free near me" shortcut and no "Alcohol-free only" filter** (removed 2026-09-17: too prominent). Alcohol-free beers are just part of the beer search, labelled, and typing "alcohol free", "0.0", "zero" etc. lists them. The pub sheet still groups them separately.
-- **Freshness colours** (2026-09-18): green = checked within 30 days, amber = within 120 days, grey after that (`src/config.ts`). The map key text is generated from those values.
+- **Freshness colours** (2026-10-20): green = checked within 56 days (8 weeks), amber = within 180 days (6 months), grey after that (`src/config.ts`). The map key text is generated from those values; `/about/` repeats them in words.
 - **Photo reports carry up to 4 photos**, and after sending a photo or suggestion the form offers to send another.
 - **Admin can delete a listing for good** (and its votes), as well as mark it Gone (hidden, restorable). Deleting asks for confirmation.
 - **Phase 4 closed on 2026-09-18.** Moved to Phase 5: pubs/operators editing on the admin page, the switch to clear sample tap lists (`areas.is_sample` to 0, delete sample listings; needed before walkaround data), and operator core ranges.
