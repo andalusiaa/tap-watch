@@ -35,7 +35,7 @@ Operator core ranges are in Phase 5 but lowest priority, because most E17 pubs a
 
 Noted, not designed yet:
 
-- **Gluten-free filter.** A gluten-free yes/no per beer, filled in as a spreadsheet column.
+- **Gluten-free filter.** Planned in some detail; see "Gluten-free: how we would do it" below.
 - **Recognising contributors** without accounts or tracking. For example, an optional nickname kept on the device and sent with votes and submissions, feeding a leaderboard or badges. It must stay opt-in and store nothing that identifies a person.
 - **A beer index.** Which drinks are most searched for and most poured across E17, which pubs could use to understand drinkers. Search counts would be totals per beer per day, never linked to a person or device.
 - **Tap wars.** Fun comparison maps, such as Guinness vs Murphy's vs Beamish, or Camden Hells vs Neck Oil, with pins coloured by which one each pub pours.
@@ -127,6 +127,32 @@ Security review (2026-09-19, Phase 5):
 - **Biggest remaining risk: the accounts.** Keep two-factor authentication on for Cloudflare and GitHub, and use a unique admin password.
 
 What the API stores about visitors: a 32-character device hash per vote, photo report and suggestion (an HMAC of a rotating salt, the IP address and the browser name), cleared after 30 days. Photos are shrunk and re-encoded in the browser, which removes location data; the server also strips any metadata. Photos are only visible to the admin and are deleted once checked, or after 30 days. IP addresses and locations are never stored, and per-request logging is switched off.
+
+## Gluten-free: how we would do it
+
+Not built yet. The code is roughly half a day's work and follows the alcohol-free filter exactly:
+a setting on each beer, a new spreadsheet column, a chip in the filter panel and a label on the
+pub page. The care needed is in the data, not the code.
+
+**Three settings per beer, not a yes/no:**
+
+| Setting | What it means |
+| --- | --- |
+| Gluten-free | No gluten grains at all. Every cider qualifies. |
+| Gluten-removed | Brewed from barley, then treated so the gluten measures under 20 ppm. Sold as gluten-free in the UK (Peroni, Daura and similar). Many coeliacs avoid these, so they are labelled separately rather than hidden or lumped in. |
+| Not suitable | The default for everything else. |
+
+**Why it matters:** someone could get ill from a wrong entry, so no beer is ever marked from a
+guess. A beer is only marked gluten-free or gluten-removed when the brewery labels it so.
+Cider is naturally gluten-free, and there are 19 ciders on the list, so without the three-way
+split the filter would mostly return cider.
+
+**Wording the site would carry:** the filter is called "Gluten-free", shows both kinds, labels
+which is which, and every pub page says to check at the bar, because lines and glasses are shared.
+
+**The work for Tristan:** a new column for 181 drinks. Ciders can be filled in automatically,
+about 25 more can be pre-filled from brewery labelling for him to check, and the rest stay
+"Not suitable" unless he knows otherwise.
 
 ## Saved versions to roll back to
 
