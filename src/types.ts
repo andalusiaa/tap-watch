@@ -47,6 +47,8 @@ export interface Beer {
   common_name?: string | null;
   brewery: string | null;
   brewery_id?: string | null;
+  /** This beer's own logo, for the few better known than their brewery (Hop House 13). */
+  logo?: 'svg' | 'png' | null;
   category: Category;
   abv: number | null;
   /** Alcohol-free: ABV 0.5% or lower. */

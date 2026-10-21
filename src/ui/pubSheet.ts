@@ -72,7 +72,7 @@ export function setupPubSheet(o: Options) {
     return h(
       'li',
       { class: gone ? 'tap tap--gone' : 'tap', 'data-listing': String(listing.id) },
-      breweryMark(o.catalogue.brewery(beer.brewery_id)),
+      breweryMark(beer, o.catalogue.brewery(beer.brewery_id)),
       h(
         'p',
         { class: 'tap-name' },

@@ -12,22 +12,26 @@ export function initials(name: string): string {
 }
 
 /**
- * A small square beside a beer: the brewery's logo where we have one, otherwise its initials.
- * Decorative only, because the brewery name is in the text next to it.
+ * A small square beside a beer: the beer's own logo if it has one, otherwise the brewery's,
+ * otherwise the brewery's initials. Decorative, because the names are in the text beside it.
  */
-export function breweryMark(brewery: { id: string; name: string; logo?: 'svg' | 'png' } | undefined): HTMLElement {
-  if (!brewery) return h('span', { class: 'mark mark--empty', 'aria-hidden': 'true' });
-  if (brewery.logo) {
+export function breweryMark(
+  beer: { id: string; logo?: 'svg' | 'png' | null },
+  brewery: { id: string; name: string; logo?: 'svg' | 'png' } | undefined,
+): HTMLElement {
+  const file = beer.logo ? `/beers/${beer.id}.${beer.logo}` : brewery?.logo ? `/breweries/${brewery.id}.${brewery.logo}` : null;
+  if (file) {
     return h('img', {
       class: 'mark mark--logo',
-      src: `/breweries/${brewery.id}.${brewery.logo}`,
+      src: file,
       alt: '',
-      width: '32',
-      height: '32',
+      width: '48',
+      height: '48',
       loading: 'lazy',
       decoding: 'async',
     });
   }
+  if (!brewery) return h('span', { class: 'mark mark--empty', 'aria-hidden': 'true' });
   return h('span', { class: 'mark', 'aria-hidden': 'true', title: brewery.name }, initials(brewery.name));
 }
 

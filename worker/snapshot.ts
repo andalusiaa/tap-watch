@@ -36,7 +36,7 @@ async function build(db: D1Database, areaId: string, now: number): Promise<strin
       `SELECT id, name, address, postcode, lat, lng, operator_id, venue_type
        FROM pubs WHERE area_id = ?1 AND is_active = 1`,
     ).bind(areaId),
-    db.prepare('SELECT id, name, common_name, brewery, brewery_id, category, abv, is_alcohol_free FROM beers WHERE is_active = 1'),
+    db.prepare('SELECT id, name, common_name, brewery, brewery_id, logo, category, abv, is_alcohol_free FROM beers WHERE is_active = 1'),
     db.prepare('SELECT alias, beer_id FROM beer_aliases'),
     db.prepare(
       `SELECT l.id, l.pub_id, l.beer_id, l.dispense, l.status, l.last_confirmed_at, l.reported_gone_at
@@ -78,6 +78,7 @@ async function build(db: D1Database, areaId: string, now: number): Promise<strin
       ...beer,
       // Left out when blank, to keep the snapshot small.
       common_name: beer.common_name || undefined,
+      logo: beer.logo || undefined,
       af: is_alcohol_free === 1,
       aliases: aliasesByBeer.get(beer.id) ?? [],
     })),

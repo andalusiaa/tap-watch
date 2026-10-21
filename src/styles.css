@@ -1190,46 +1190,42 @@ input[type="file"]:focus-visible + .file-button {
 
 .tap {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 3.25rem minmax(0, 1fr) auto;
   grid-template-areas:
-    "mark name name"
+    "mark name vote"
     "mark status vote"
     "note note note";
   align-items: center;
-  column-gap: 0.75rem;
-  row-gap: 0.15rem;
-  padding: 0.7rem 0;
+  column-gap: 0.85rem;
+  row-gap: 0.3rem;
+  padding: 0.85rem 0;
   border-bottom: 1px solid var(--rule);
 }
 
-/* The brewery square: its logo, or its initials until we have one. */
+/* The logo: the beer's own, or its brewery's, or the brewery's initials. */
 .mark {
   grid-area: mark;
   align-self: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  background: var(--wash);
+  width: 3.25rem;
+  height: 3.25rem;
   color: var(--ink-muted);
-  font-size: var(--step--1);
+  font-size: var(--step-0);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 
-/* Logos are drawn in their own colours, so they sit on white in both light and dark. */
 .mark--logo {
-  padding: 0.25rem;
-  background: #ffffff;
   object-fit: contain;
 }
 
-.mark--empty {
-  background: none;
-  border-color: transparent;
+/* Initials keep a soft outline so they don't look like a missing picture. */
+.mark:not(.mark--logo):not(.mark--empty) {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--wash);
 }
 
 .tap-name {
@@ -1247,6 +1243,7 @@ input[type="file"]:focus-visible + .file-button {
 
 .tap-status {
   grid-area: status;
+  justify-self: start;
 }
 
 .tap--gone .tap-beer {

@@ -32,9 +32,10 @@ if (!area) throw new Error(`No area "${areaId}" in seed/areas.json`);
 const operators = await readJson('operators.json');
 const beers = await readJson('beers.json');
 const breweries = await readJson('breweries.json');
-// A brewery has a logo when the file is there: no flag to keep in step by hand.
-const logoFor = (id) =>
-  ['svg', 'png'].find((ext) => existsSync(new URL(`../public/breweries/${id}.${ext}`, seedDir))) ?? null;
+// A logo exists when the file is there: no flag to keep in step by hand.
+const logoIn = (folder, id) =>
+  ['svg', 'png'].find((ext) => existsSync(new URL(`../public/${folder}/${id}.${ext}`, seedDir))) ?? null;
+const logoFor = (id) => logoIn('breweries', id);
 validateBeers(beers);
 
 const pubs = parseCsv(await readFile(new URL(`pubs-${area.id}.review.csv`, seedDir), 'utf8')).filter(
@@ -81,10 +82,10 @@ sql.push(`INSERT INTO breweries (id, name, owner, logo) VALUES
 ${rows(breweries, (b) => [b.id, b.name, b.owner ?? null, logoFor(b.id)])}
 ON CONFLICT (id) DO UPDATE SET name = excluded.name, owner = excluded.owner, logo = excluded.logo;`);
 
-sql.push(`INSERT INTO beers (id, name, common_name, brewery, brewery_id, category, abv, is_alcohol_free, is_regular, is_active) VALUES
-${rows(beers, (b) => [b.id, b.name, b.common_name ?? null, b.brewery, b.brewery_id ?? null, b.category, b.abv ?? null, b.is_alcohol_free, true, true])}
+sql.push(`INSERT INTO beers (id, name, common_name, brewery, brewery_id, logo, category, abv, is_alcohol_free, is_regular, is_active) VALUES
+${rows(beers, (b) => [b.id, b.name, b.common_name ?? null, b.brewery, b.brewery_id ?? null, logoIn('beers', b.id), b.category, b.abv ?? null, b.is_alcohol_free, true, true])}
 ON CONFLICT (id) DO UPDATE SET name = excluded.name, common_name = excluded.common_name, brewery = excluded.brewery,
-  brewery_id = excluded.brewery_id, category = excluded.category, abv = excluded.abv,
+  brewery_id = excluded.brewery_id, logo = excluded.logo, category = excluded.category, abv = excluded.abv,
   is_alcohol_free = excluded.is_alcohol_free, is_active = 1;`);
 sql.push(`UPDATE beers SET is_active = 0 WHERE id NOT IN (${list(beers.map((b) => b.id))});`);
 
