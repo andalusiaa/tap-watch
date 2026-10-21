@@ -128,6 +128,16 @@ Security review (2026-09-19, Phase 5):
 
 What the API stores about visitors: a 32-character device hash per vote, photo report and suggestion (an HMAC of a rotating salt, the IP address and the browser name), cleared after 30 days. Photos are shrunk and re-encoded in the browser, which removes location data; the server also strips any metadata. Photos are only visible to the admin and are deleted once checked, or after 30 days. IP addresses and locations are never stored, and per-request logging is switched off.
 
+## Brewery logos
+
+Each beer belongs to a brewery named after the pump clip, not the group that owns it
+(`seed/breweries.json`, 98 of them). The pub page shows a small square beside every beer:
+the brewery's logo if there is one, otherwise its initials.
+
+To add a logo, follow `public/breweries/README.md`: drop in `<brewery-id>.svg`, set
+`"has_logo": true` in `seed/breweries.json`, and run `npm run db:beers:remote`. Logos sit on a
+white tile so they work in dark mode, and load only when scrolled into view.
+
 ## Gluten-free: how we would do it
 
 Not built yet. The code is roughly half a day's work and follows the alcohol-free filter exactly:

@@ -30,6 +30,7 @@ const area = (await readJson('areas.json')).find((a) => a.id === areaId);
 if (!area) throw new Error(`No area "${areaId}" in seed/areas.json`);
 const operators = await readJson('operators.json');
 const beers = await readJson('beers.json');
+const breweries = await readJson('breweries.json');
 validateBeers(beers);
 
 const pubs = parseCsv(await readFile(new URL(`pubs-${area.id}.review.csv`, seedDir), 'utf8')).filter(
@@ -72,10 +73,15 @@ ${rows(operators, (o) => [o.id, o.name, o.type])}
 ON CONFLICT (id) DO UPDATE SET name = excluded.name, type = excluded.type;`);
 }
 
-sql.push(`INSERT INTO beers (id, name, common_name, brewery, category, abv, is_alcohol_free, is_regular, is_active) VALUES
-${rows(beers, (b) => [b.id, b.name, b.common_name ?? null, b.brewery, b.category, b.abv ?? null, b.is_alcohol_free, true, true])}
+sql.push(`INSERT INTO breweries (id, name, owner, has_logo) VALUES
+${rows(breweries, (b) => [b.id, b.name, b.owner ?? null, b.has_logo === true])}
+ON CONFLICT (id) DO UPDATE SET name = excluded.name, owner = excluded.owner, has_logo = excluded.has_logo;`);
+
+sql.push(`INSERT INTO beers (id, name, common_name, brewery, brewery_id, category, abv, is_alcohol_free, is_regular, is_active) VALUES
+${rows(beers, (b) => [b.id, b.name, b.common_name ?? null, b.brewery, b.brewery_id ?? null, b.category, b.abv ?? null, b.is_alcohol_free, true, true])}
 ON CONFLICT (id) DO UPDATE SET name = excluded.name, common_name = excluded.common_name, brewery = excluded.brewery,
-  category = excluded.category, abv = excluded.abv, is_alcohol_free = excluded.is_alcohol_free, is_active = 1;`);
+  brewery_id = excluded.brewery_id, category = excluded.category, abv = excluded.abv,
+  is_alcohol_free = excluded.is_alcohol_free, is_active = 1;`);
 sql.push(`UPDATE beers SET is_active = 0 WHERE id NOT IN (${list(beers.map((b) => b.id))});`);
 
 const aliases = beers.flatMap((b) => b.aliases.map((a) => [normalise(a), b.id]));

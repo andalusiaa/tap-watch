@@ -29,6 +29,7 @@ const COLUMNS = {
   name: 'Name',
   commonName: 'Common name (blank = use the full name)',
   brewery: 'Brewery',
+  owner: 'Owner (blank if independent)',
   style: 'Style',
   abv: 'ABV %',
   af: 'Alcohol-free (yes or no)',
@@ -48,6 +49,31 @@ function slugify(text) {
     .replace(/^-|-$/g, '');
 }
 
+/** The brewery list follows the spreadsheet; "has a logo" is kept from the existing list. */
+async function writeBreweries(beers) {
+  let before = [];
+  try {
+    before = JSON.parse(await readFile(new URL('breweries.json', seedDir), 'utf8'));
+  } catch {
+    // First run: start from scratch.
+  }
+  const logos = new Map(before.map((b) => [b.id, b.has_logo === true]));
+  const breweries = new Map();
+  for (const beer of beers) {
+    if (!beer.brewery_id) continue;
+    const existing = breweries.get(beer.brewery_id);
+    breweries.set(beer.brewery_id, {
+      id: beer.brewery_id,
+      name: beer.brewery,
+      owner: existing?.owner ?? beer.owner ?? null,
+      ...(logos.get(beer.brewery_id) ? { has_logo: true } : {}),
+    });
+  }
+  const ordered = [...breweries.values()].sort((a, b) => a.name.localeCompare(b.name));
+  await writeFile(new URL('breweries.json', seedDir), `[\n${ordered.map((b) => `  ${JSON.stringify(b)}`).join(',\n')}\n]\n`);
+  console.log(`Wrote seed/breweries.json: ${ordered.length} breweries.`);
+}
+
 async function readBeersJson() {
   return JSON.parse(await readFile(new URL('beers.json', seedDir), 'utf8'));
 }
@@ -58,9 +84,10 @@ async function exportCsv() {
     'npx',
     [
       'wrangler', 'd1', 'execute', 'tap-watch', useLocal ? '--local' : '--remote', '--json', '--command',
-      `SELECT b.id, b.name, b.common_name, b.brewery, b.category, b.abv, b.is_alcohol_free,
+      `SELECT b.id, b.name, b.common_name, b.brewery, b.brewery_id, w.owner, b.category, b.abv, b.is_alcohol_free,
               (SELECT group_concat(a.alias, '; ') FROM beer_aliases a WHERE a.beer_id = b.id) AS aliases
-       FROM beers b WHERE b.is_active = 1 ORDER BY b.category, b.name`,
+       FROM beers b LEFT JOIN breweries w ON w.id = b.brewery_id
+       WHERE b.is_active = 1 ORDER BY b.category, b.name`,
     ],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] },
   );
@@ -71,6 +98,7 @@ async function exportCsv() {
     [COLUMNS.name]: b.name,
     [COLUMNS.commonName]: b.common_name ?? '',
     [COLUMNS.brewery]: b.brewery ?? '',
+    [COLUMNS.owner]: b.owner ?? '',
     [COLUMNS.style]: STYLES[b.category] ?? b.category,
     [COLUMNS.abv]: b.abv ?? '',
     [COLUMNS.af]: b.is_alcohol_free ? 'yes' : 'no',
@@ -113,6 +141,8 @@ async function importCsv(path) {
         name,
         common_name: get('commonName').replace(/\s+/g, ' ') || null,
         brewery: get('brewery') || null,
+        brewery_id: get('brewery') ? slugify(get('brewery')) : null,
+        owner: get('owner') || null,
         category: parseStyle(get('style'), line),
         abv,
         is_alcohol_free: ['yes', 'y', 'true', '1'].includes(afText),
@@ -148,6 +178,7 @@ async function importCsv(path) {
 
   const json = `[\n${beers.map((b) => `  ${JSON.stringify(b)}`).join(',\n')}\n]\n`;
   await writeFile(new URL('beers.json', seedDir), json);
+  await writeBreweries(beers);
   // The next db:beers load reads this for the admin Activity log.
   await mkdir(new URL('out/', seedDir), { recursive: true });
   await writeFile(new URL('out/last-import.json', seedDir), JSON.stringify({ total: beers.length, added, changed, removed }));

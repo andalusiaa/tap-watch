@@ -26,16 +26,17 @@ const memory = new Map<string, { json: string; at: number }>();
 export const isAreaId = (value: string | null): value is string => !!value && /^[a-z0-9-]{1,20}$/.test(value);
 
 async function build(db: D1Database, areaId: string, now: number): Promise<string | null> {
-  const [areas, operators, pubs, beers, aliases, listings] = await db.batch([
+  const [areas, operators, breweries, pubs, beers, aliases, listings] = await db.batch([
     db.prepare(
       'SELECT id, name, postcode_district, borough, centre_lat, centre_lng, bbox, is_sample FROM areas WHERE id = ?1',
     ).bind(areaId),
     db.prepare('SELECT id, name, type FROM operators'),
+    db.prepare('SELECT id, name, has_logo FROM breweries'),
     db.prepare(
       `SELECT id, name, address, postcode, lat, lng, operator_id, venue_type
        FROM pubs WHERE area_id = ?1 AND is_active = 1`,
     ).bind(areaId),
-    db.prepare('SELECT id, name, common_name, brewery, category, abv, is_alcohol_free FROM beers WHERE is_active = 1'),
+    db.prepare('SELECT id, name, common_name, brewery, brewery_id, category, abv, is_alcohol_free FROM beers WHERE is_active = 1'),
     db.prepare('SELECT alias, beer_id FROM beer_aliases'),
     db.prepare(
       `SELECT l.id, l.pub_id, l.beer_id, l.dispense, l.status, l.last_confirmed_at, l.reported_gone_at
@@ -67,6 +68,11 @@ async function build(db: D1Database, areaId: string, now: number): Promise<strin
       bbox: JSON.parse(area.bbox) as Snapshot['area']['bbox'],
     },
     operators: (operators?.results ?? []) as Operator[],
+    breweries: ((breweries?.results ?? []) as { id: string; name: string; has_logo: number }[]).map((b) => ({
+      id: b.id,
+      name: b.name,
+      ...(b.has_logo === 1 ? { logo: true as const } : {}),
+    })),
     pubs: (pubs?.results ?? []) as Pub[],
     beers: ((beers?.results ?? []) as BeerRow[]).map(({ is_alcohol_free, ...beer }) => ({
       ...beer,

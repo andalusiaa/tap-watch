@@ -33,12 +33,20 @@ export interface Pub {
   venue_type: 'pub' | 'bar';
 }
 
+export interface Brewery {
+  id: string;
+  name: string;
+  /** True when there is a logo file at /breweries/<id>.svg. */
+  logo?: true;
+}
+
 export interface Beer {
   id: string;
   name: string;
   /** A shorter everyday name ("Neck Oil"), used for the search box examples. */
   common_name?: string | null;
   brewery: string | null;
+  brewery_id?: string | null;
   category: Category;
   abv: number | null;
   /** Alcohol-free: ABV 0.5% or lower. */
@@ -66,6 +74,7 @@ export interface Snapshot {
   sample: boolean;
   area: Area;
   operators: Operator[];
+  breweries: Brewery[];
   pubs: Pub[];
   beers: Beer[];
   listings: Listing[];

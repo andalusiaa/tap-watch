@@ -3,7 +3,7 @@
 import { freshnessRank } from './freshness';
 import { distanceKm, type LatLng } from './geo';
 import { buildBeerIndex } from './search';
-import type { Beer, Dispense, Listing, Operator, Pub, ServerListing, Snapshot } from './types';
+import type { Beer, Brewery, Dispense, Listing, Operator, Pub, ServerListing, Snapshot } from './types';
 
 export type DispenseFilter = Dispense | 'any';
 
@@ -31,6 +31,7 @@ export function createCatalogue(snapshot: Snapshot) {
   const pubById = new Map(snapshot.pubs.map((p) => [p.id, p]));
   const beerById = new Map(snapshot.beers.map((b) => [b.id, b]));
   const operatorById = new Map(snapshot.operators.map((o) => [o.id, o]));
+  const breweryById = new Map((snapshot.breweries ?? []).map((b) => [b.id, b]));
   const listingById = new Map(snapshot.listings.map((l) => [l.id, l]));
   const listingsByPub = groupBy(snapshot.listings, (l) => l.pub_id);
   const listingsByBeer = groupBy(snapshot.listings, (l) => l.beer_id);
@@ -65,6 +66,7 @@ export function createCatalogue(snapshot: Snapshot) {
     beer: (id: string): Beer | undefined => beerById.get(id),
     pub: (id: string): Pub | undefined => pubById.get(id),
     operator: (id: string | null): Operator | undefined => (id ? operatorById.get(id) : undefined),
+    brewery: (id: string | null | undefined): Brewery | undefined => (id ? breweryById.get(id) : undefined),
     listing: (id: number): Listing | undefined => listingById.get(id),
     listingsAt: (pubId: string): Listing[] => listingsByPub.get(pubId) ?? [],
     pubCount,

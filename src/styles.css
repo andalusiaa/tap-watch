@@ -1190,16 +1190,46 @@ input[type="file"]:focus-visible + .file-button {
 
 .tap {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   grid-template-areas:
-    "name name"
-    "status vote"
-    "note note";
+    "mark name name"
+    "mark status vote"
+    "note note note";
   align-items: center;
   column-gap: 0.75rem;
   row-gap: 0.15rem;
-  padding: 0.6rem 0;
+  padding: 0.7rem 0;
   border-bottom: 1px solid var(--rule);
+}
+
+/* The brewery square: its logo, or its initials until we have one. */
+.mark {
+  grid-area: mark;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--wash);
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Logos are drawn in their own colours, so they sit on white in both light and dark. */
+.mark--logo {
+  padding: 0.25rem;
+  background: #ffffff;
+  object-fit: contain;
+}
+
+.mark--empty {
+  background: none;
+  border-color: transparent;
 }
 
 .tap-name {

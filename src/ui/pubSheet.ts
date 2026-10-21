@@ -8,7 +8,7 @@ import type { VoteDirection } from '../rules';
 import type { Beer, Listing, Pub } from '../types';
 import { h } from './dom';
 import { photoForm, suggestForm } from './forms';
-import { alcoholFreeLabel, dispenseLabel, freshnessBadge, separator } from './labels';
+import { alcoholFreeLabel, breweryMark, dispenseLabel, freshnessBadge, separator } from './labels';
 
 interface Options {
   dialog: HTMLDialogElement;
@@ -72,6 +72,7 @@ export function setupPubSheet(o: Options) {
     return h(
       'li',
       { class: gone ? 'tap tap--gone' : 'tap', 'data-listing': String(listing.id) },
+      breweryMark(o.catalogue.brewery(beer.brewery_id)),
       h(
         'p',
         { class: 'tap-name' },
