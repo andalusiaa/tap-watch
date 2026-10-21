@@ -39,3 +39,6 @@ Thumbs.db
 # Personal Claude Code settings
 .claude/settings.local.json
 .claude/launch.json
+
+# Full-size brewery logos before shrinking (the published copies live in public/breweries/)
+seed/raw/logos-original/

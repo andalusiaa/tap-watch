@@ -49,15 +49,8 @@ function slugify(text) {
     .replace(/^-|-$/g, '');
 }
 
-/** The brewery list follows the spreadsheet; "has a logo" is kept from the existing list. */
+/** The brewery list follows the spreadsheet. Logos are picked up from the files themselves. */
 async function writeBreweries(beers) {
-  let before = [];
-  try {
-    before = JSON.parse(await readFile(new URL('breweries.json', seedDir), 'utf8'));
-  } catch {
-    // First run: start from scratch.
-  }
-  const logos = new Map(before.map((b) => [b.id, b.has_logo === true]));
   const breweries = new Map();
   for (const beer of beers) {
     if (!beer.brewery_id) continue;
@@ -66,7 +59,6 @@ async function writeBreweries(beers) {
       id: beer.brewery_id,
       name: beer.brewery,
       owner: existing?.owner ?? beer.owner ?? null,
-      ...(logos.get(beer.brewery_id) ? { has_logo: true } : {}),
     });
   }
   const ordered = [...breweries.values()].sort((a, b) => a.name.localeCompare(b.name));

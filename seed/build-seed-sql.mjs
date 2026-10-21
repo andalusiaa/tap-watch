@@ -13,6 +13,7 @@
 // --sample-listings replaces the area's tap lists with INVENTED ones, but only while the
 // area is marked as sample data (areas.is_sample = 1). Once real data is in, it does nothing.
 
+import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { normalise, validateBeers } from './lib/beers.mjs';
 import { parseCsv } from './lib/csv.mjs';
@@ -31,6 +32,9 @@ if (!area) throw new Error(`No area "${areaId}" in seed/areas.json`);
 const operators = await readJson('operators.json');
 const beers = await readJson('beers.json');
 const breweries = await readJson('breweries.json');
+// A brewery has a logo when the file is there: no flag to keep in step by hand.
+const logoFor = (id) =>
+  ['svg', 'png'].find((ext) => existsSync(new URL(`../public/breweries/${id}.${ext}`, seedDir))) ?? null;
 validateBeers(beers);
 
 const pubs = parseCsv(await readFile(new URL(`pubs-${area.id}.review.csv`, seedDir), 'utf8')).filter(
@@ -73,9 +77,9 @@ ${rows(operators, (o) => [o.id, o.name, o.type])}
 ON CONFLICT (id) DO UPDATE SET name = excluded.name, type = excluded.type;`);
 }
 
-sql.push(`INSERT INTO breweries (id, name, owner, has_logo) VALUES
-${rows(breweries, (b) => [b.id, b.name, b.owner ?? null, b.has_logo === true])}
-ON CONFLICT (id) DO UPDATE SET name = excluded.name, owner = excluded.owner, has_logo = excluded.has_logo;`);
+sql.push(`INSERT INTO breweries (id, name, owner, logo) VALUES
+${rows(breweries, (b) => [b.id, b.name, b.owner ?? null, logoFor(b.id)])}
+ON CONFLICT (id) DO UPDATE SET name = excluded.name, owner = excluded.owner, logo = excluded.logo;`);
 
 sql.push(`INSERT INTO beers (id, name, common_name, brewery, brewery_id, category, abv, is_alcohol_free, is_regular, is_active) VALUES
 ${rows(beers, (b) => [b.id, b.name, b.common_name ?? null, b.brewery, b.brewery_id ?? null, b.category, b.abv ?? null, b.is_alcohol_free, true, true])}

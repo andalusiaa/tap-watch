@@ -31,7 +31,7 @@ async function build(db: D1Database, areaId: string, now: number): Promise<strin
       'SELECT id, name, postcode_district, borough, centre_lat, centre_lng, bbox, is_sample FROM areas WHERE id = ?1',
     ).bind(areaId),
     db.prepare('SELECT id, name, type FROM operators'),
-    db.prepare('SELECT id, name, has_logo FROM breweries'),
+    db.prepare('SELECT id, name, logo FROM breweries'),
     db.prepare(
       `SELECT id, name, address, postcode, lat, lng, operator_id, venue_type
        FROM pubs WHERE area_id = ?1 AND is_active = 1`,
@@ -68,10 +68,10 @@ async function build(db: D1Database, areaId: string, now: number): Promise<strin
       bbox: JSON.parse(area.bbox) as Snapshot['area']['bbox'],
     },
     operators: (operators?.results ?? []) as Operator[],
-    breweries: ((breweries?.results ?? []) as { id: string; name: string; has_logo: number }[]).map((b) => ({
+    breweries: ((breweries?.results ?? []) as { id: string; name: string; logo: string | null }[]).map((b) => ({
       id: b.id,
       name: b.name,
-      ...(b.has_logo === 1 ? { logo: true as const } : {}),
+      ...(b.logo ? { logo: b.logo as 'svg' | 'png' } : {}),
     })),
     pubs: (pubs?.results ?? []) as Pub[],
     beers: ((beers?.results ?? []) as BeerRow[]).map(({ is_alcohol_free, ...beer }) => ({

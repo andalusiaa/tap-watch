@@ -6,8 +6,9 @@ CREATE TABLE breweries (
   id TEXT PRIMARY KEY,                       -- 'camden-town'
   name TEXT NOT NULL,                        -- 'Camden Town'
   owner TEXT,                                -- 'Heineken', or NULL if independent
-  -- 1 once a logo file exists at public/breweries/<id>.svg
-  has_logo INTEGER NOT NULL DEFAULT 0 CHECK (has_logo IN (0, 1))
+  -- 'svg' or 'png' when public/breweries/<id>.<ext> exists, otherwise NULL (initials are shown).
+  -- Filled in automatically by seed/build-seed-sql.mjs from what is in that folder.
+  logo TEXT CHECK (logo IS NULL OR logo IN ('svg', 'png'))
 );
 
 ALTER TABLE beers ADD COLUMN brewery_id TEXT REFERENCES breweries (id);

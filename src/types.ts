@@ -36,8 +36,8 @@ export interface Pub {
 export interface Brewery {
   id: string;
   name: string;
-  /** True when there is a logo file at /breweries/<id>.svg. */
-  logo?: true;
+  /** The kind of logo file at /breweries/<id>.<logo>, when there is one. */
+  logo?: 'svg' | 'png';
 }
 
 export interface Beer {

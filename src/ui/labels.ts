@@ -15,12 +15,12 @@ export function initials(name: string): string {
  * A small square beside a beer: the brewery's logo where we have one, otherwise its initials.
  * Decorative only, because the brewery name is in the text next to it.
  */
-export function breweryMark(brewery: { id: string; name: string; logo?: true } | undefined): HTMLElement {
+export function breweryMark(brewery: { id: string; name: string; logo?: 'svg' | 'png' } | undefined): HTMLElement {
   if (!brewery) return h('span', { class: 'mark mark--empty', 'aria-hidden': 'true' });
   if (brewery.logo) {
     return h('img', {
       class: 'mark mark--logo',
-      src: `/breweries/${brewery.id}.svg`,
+      src: `/breweries/${brewery.id}.${brewery.logo}`,
       alt: '',
       width: '32',
       height: '32',
