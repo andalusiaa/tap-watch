@@ -7,6 +7,7 @@ import { issueFormToken } from './security';
 import { getSnapshotJson, isAreaId } from './snapshot';
 import { handleAdmin } from './admin';
 import { handleFeedback } from './feedback';
+import { getPage, pageSlugFrom } from './pages';
 import { handleReport, handleSuggest } from './reports';
 import { handleVote } from './vote';
 
@@ -48,9 +49,15 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (request.method !== 'GET') throw methodNotAllowed('GET');
       return json({ ok: true }, 200, { 'X-Form-Token': await issueFormToken(env.APP_SECRET, now) });
 
-    default:
+    default: {
       if (url.pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url, now);
+      const page = pageSlugFrom(url.pathname);
+      if (page) {
+        if (request.method !== 'GET') throw methodNotAllowed('GET');
+        return getPage(env, page);
+      }
       throw new ApiError(404, 'not_found', "There's nothing at this address.");
+    }
   }
 }
 

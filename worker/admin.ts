@@ -4,6 +4,7 @@
 //   POST /api/admin/logout
 //   GET  /api/admin/session                                → { signedIn }
 //   GET/POST /api/admin/pubs, POST /api/admin/pubs/:id, POST /api/admin/area/:id/sample → see pubs.ts
+//   GET  /api/admin/pages, POST /api/admin/pages/:slug            → see pages.ts
 //   GET  /api/admin/feedback, POST /api/admin/feedback/:id        → see feedback.ts
 //   GET  /api/admin/activity?type=&pub=&before=           → see activity.ts
 //   GET  /api/admin/usage                                  → today's activity and limits
@@ -22,6 +23,7 @@ import { invalidateSnapshot, isAreaId } from './snapshot';
 import { normalise, slugify } from './text';
 import { getActivity, logAdmin } from './activity';
 import { getFeedback, reviewFeedback } from './feedback';
+import { isPageSlug, listPages, savePage } from './pages';
 import { addPub, listPubs, setSample, updatePub } from './pubs';
 import { getUsage } from './usage';
 
@@ -502,6 +504,11 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
   if (path === '/queue' && method === 'GET') return getQueue(env);
   if (path === '/usage' && method === 'GET') return getUsage(env, now);
   if (path === '/activity' && method === 'GET') return getActivity(env, url, now);
+  if (path === '/pages' && method === 'GET') return listPages(env);
+  if ((m = path.match(/^\/pages\/([a-z0-9-]{1,40})$/)) && method === 'POST') {
+    if (!isPageSlug(m[1] ?? '')) throw badRequest();
+    return savePage(request, env, m[1] ?? '', now);
+  }
   if (path === '/feedback' && method === 'GET') return getFeedback(env);
   if ((m = path.match(/^\/feedback\/(\d{1,12})$/)) && method === 'POST') return reviewFeedback(request, env, Number(m[1]), now);
   if (path === '/pubs') {

@@ -369,6 +369,29 @@ check('Grouped votes keep one visitor label', typeof grouped?.visitor === 'strin
 r = await admin('/activity?type=nonsense&pub=', { cookie });
 check('An unknown activity type is refused', r.status === 400);
 
+// --- Editable pages ---
+r = await fetch(`${API}/api/pages/about`).then(async (res) => ({ status: res.status, body: await res.json() }));
+check('Anyone can read a page', r.status === 200 && r.body.title.length > 3 && r.body.body.includes('##'), JSON.stringify(r.body).slice(0, 120));
+r = await fetch(`${API}/api/pages/not-a-page`).then(async (res) => ({ status: res.status }));
+check('An unknown page is a 404', r.status === 404);
+r = await admin('/pages');
+check('Editing pages needs sign-in', r.status === 401);
+r = await admin('/pages', { cookie });
+check('The admin sees every page', r.status === 200 && r.body.pages.length === 4, JSON.stringify(r.body.pages?.map((p) => p.slug)));
+r = await admin('/pages/about', { cookie, body: { title: 'About Tap Watch', body: '## Hello\n\nA new first line.' } });
+check('A page can be saved', r.status === 200);
+r = await fetch(`${API}/api/pages/about`).then(async (res) => res.json());
+check('The saved words are what visitors get', r.body.includes('A new first line.'));
+r = await admin('/pages/about', { cookie, body: { title: 'About', body: '<script>alert(1)</script>' } });
+check('HTML in a page is refused', r.status === 400 && r.body.error === 'no_html', JSON.stringify(r.body));
+r = await admin('/pages/about', { cookie, body: { title: '', body: 'words' } });
+check('A page needs a title', r.status === 400);
+r = await admin('/pages/about', { cookie, body: { title: 'About', body: '' } });
+check('A page needs some words', r.status === 400);
+r = await admin('/pages/about', { cookie, body: { title: 'About', body: 'words' }, origin: 'https://evil.example' });
+check('Page edits need the same origin', r.status === 403);
+check('A page edit is logged', sql(`SELECT COUNT(*) AS n FROM admin_log WHERE action = 'page_edited'`)[0].n >= 1);
+
 // --- Feedback box ---
 const tokenRes = await fetch(`${API}/api/form-token`);
 const plainToken = tokenRes.headers.get('X-Form-Token');

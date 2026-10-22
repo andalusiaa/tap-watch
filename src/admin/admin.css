@@ -34,11 +34,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
   gap: 2px;
-  background: var(--ink);
+  /* No background here: a short last row would show it as a block. Each tab draws its own
+     hairline instead. */
+  background: none;
 }
 
 .admin-tabs label {
   background: var(--plate);
+  box-shadow: 0 0 0 1px var(--ink);
 }
 
 .segmented.admin-tabs label + label {
@@ -492,4 +495,41 @@
 .idea-list li {
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--rule);
+}
+
+/* --- Pages tab --- */
+
+#page-picker,
+#page-title {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.5rem 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  font-size: 1rem;
+}
+
+#page-body {
+  width: 100%;
+  padding: 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--plate);
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--step--1);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.page-preview {
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--rule);
+  border-radius: 8px;
+}
+
+.page-preview h2 {
+  margin-top: 1rem;
+  font-size: var(--step-1);
 }

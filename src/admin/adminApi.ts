@@ -118,6 +118,13 @@ export interface Activity {
   log_days: number;
 }
 
+export interface SitePage {
+  slug: string;
+  title: string;
+  body: string;
+  updated_at: string;
+}
+
 export interface FeedbackMessage {
   id: number;
   message: string;
@@ -158,6 +165,8 @@ export const adminApi = {
   signIn: (password: string) => call<{ ok: true }>('/login', { password }),
   signOut: () => call<{ ok: true }>('/logout', {}),
   usage: () => call<Usage>('/usage'),
+  pages: () => call<{ pages: SitePage[] }>('/pages'),
+  savePage: (slug: string, title: string, body: string) => call<{ ok: true }>(`/pages/${slug}`, { title, body }),
   feedback: () => call<{ pending: FeedbackMessage[]; kept: FeedbackMessage[] }>('/feedback'),
   reviewFeedback: (id: number, action: 'keep' | 'reject') => call<{ ok: true }>(`/feedback/${id}`, { action }),
   activity: (filters: { type: string; pub: string; before?: string }) =>
