@@ -188,5 +188,5 @@
   {"id":"bowland-bumble","name":"Bowland Bumble","common_name":null,"brewery":"Bowland","brewery_id":"bowland","owner":null,"category":"bitter_cask","abv":4,"is_alcohol_free":false,"aliases":["bumble","bumble beer","bowland bumble beer"],"check":"Confirm ABV; usually cask"},
   {"id":"sharps-sea-fury","name":"Sharp's Sea Fury","common_name":"Sea Fury","brewery":"Sharp's","brewery_id":"sharps","owner":"Molson Coors","category":"bitter_cask","abv":5,"is_alcohol_free":false,"aliases":["sea fury"],"check":"Confirm ABV; usually cask"},
   {"id":"budweiser-budvar","name":"Budweiser Budvar","common_name":"Budvar","brewery":"Budvar","brewery_id":"budvar","owner":null,"category":"lager","abv":5,"is_alcohol_free":false,"aliases":["budvar","czech budvar","budvar original"],"check":"Not the same as Budweiser (AB InBev); UK draught ABV"},
-  {"id":"style and ABV","name":"Alpaca-lypse","common_name":null,"brewery":null,"brewery_id":null,"owner":null,"category":"pale_ipa","abv":null,"is_alcohol_free":false,"aliases":["alpacalypse"],"check":"Confirm brewer"}
+  {"id":"alpaca-lypse","name":"Alpaca-lypse","common_name":null,"brewery":null,"brewery_id":null,"owner":null,"category":"pale_ipa","abv":null,"is_alcohol_free":false,"aliases":["alpacalypse","alpaca lypse"],"check":"Confirm brewer, style and ABV"}
 ]
