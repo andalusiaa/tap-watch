@@ -11,6 +11,7 @@ export default defineConfig({
         notFound: '404.html',
         admin: 'admin/index.html',
         about: 'about/index.html',
+        howItWorks: 'how-it-works/index.html',
         privacy: 'privacy/index.html',
         faq: 'faq/index.html',
         feedback: 'feedback/index.html',
