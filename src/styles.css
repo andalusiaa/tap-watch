@@ -239,8 +239,7 @@ textarea {
   align-items: center;
   gap: 0.9rem;
   width: 100%;
-  min-height: clamp(7.5rem, 20vh, 11rem);
-  padding: 1.5rem;
+  padding: 0.85rem 1rem;
   border: 0;
   background: none;
   color: inherit;
@@ -250,17 +249,7 @@ textarea {
   transition: min-height 0.15s ease;
 }
 
-/* Once the filters are open, the card steps back out of the way and the summary goes:
-   the filters themselves are on screen. */
-.search-pill[aria-expanded="true"] {
-  min-height: 0;
-  padding: 1rem 1.25rem;
-}
-
-.search-pill[aria-expanded="true"] .search-pill-main {
-  font-size: var(--step-1);
-}
-
+/* Once the filters are open the summary goes: the filters themselves are on screen. */
 .search-pill[aria-expanded="true"] .search-pill-sub {
   display: none;
 }
@@ -277,7 +266,7 @@ textarea {
 
 .search-pill-main {
   display: block;
-  font-size: var(--step-2);
+  font-size: var(--step-1);
   font-weight: 700;
   line-height: 1.2;
 }
