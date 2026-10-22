@@ -424,3 +424,8 @@
   display: grid;
   justify-items: start;
 }
+
+.card-dated {
+  display: grid;
+  gap: 0.4rem;
+}

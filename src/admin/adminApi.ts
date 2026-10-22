@@ -34,6 +34,8 @@ export interface QueueReport {
   pub_name: string;
   note: string | null;
   created_at: string;
+  /** Earliest date any photo in the report was taken, if the files said. */
+  taken_at: string | null;
   photo_count: number;
 }
 
@@ -157,8 +159,8 @@ export const adminApi = {
   pub: (pubId: string) => call<AdminPub>(`/pub/${encodeURIComponent(pubId)}`),
   saveListings: (pubId: string, changes: ListingChange[]) =>
     call<AdminPub>(`/pub/${encodeURIComponent(pubId)}/listings`, { changes }),
-  reviewReport: (id: number, action: 'approve' | 'reject', changes: ListingChange[] = []) =>
-    call<{ ok: true }>(`/report/${id}`, { action, changes }),
+  reviewReport: (id: number, action: 'approve' | 'reject', changes: ListingChange[] = [], dated: 'taken' | 'sent' = 'taken') =>
+    call<{ ok: true }>(`/report/${id}`, { action, changes, dated }),
   reviewSuggestion: (
     id: number,
     decision:

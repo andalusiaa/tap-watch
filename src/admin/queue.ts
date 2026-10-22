@@ -54,6 +54,21 @@ async function run(ctx: Context, card: HTMLElement, status: HTMLElement, buttons
   }
 }
 
+/** "today", "yesterday", "8 days ago" — for a date without a useful time of day. */
+function dayAgo(iso: string): string {
+  const days = Math.floor((Date.now() - Date.parse(iso)) / 86_400_000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 14) return `${days} days ago`;
+  const weeks = Math.round(days / 7);
+  return weeks < 9 ? `${weeks} weeks ago` : `${Math.round(days / 30.44)} months ago`;
+}
+
+/** True when the photo was taken on an earlier day than it was sent. */
+function takenEarlier(report: QueueReport): boolean {
+  return Boolean(report.taken_at) && (report.taken_at ?? '').slice(0, 10) < report.created_at.slice(0, 10);
+}
+
 function reportCard(ctx: Context, report: QueueReport): HTMLElement {
   const status = h('p', { class: 'form-status', role: 'status' });
   const editorSlot = h('div', null, h('p', { class: 'form-help' }, 'Loading the tap list…'));
@@ -61,11 +76,29 @@ function reportCard(ctx: Context, report: QueueReport): HTMLElement {
   const reject = actionButton('Reject');
   let editor: ReturnType<typeof createTapEditor> | null = null;
 
+  // Which date the ticks count from. Only worth asking when the two differ.
+  const datedName = `dated-${report.id}`;
+  const datedChoice = takenEarlier(report)
+    ? h(
+        'fieldset',
+        { class: 'chips' },
+        h('legend', null, 'Count the ticks from'),
+        h('label', null, h('input', { type: 'radio', name: datedName, value: 'taken', checked: true }), h('span', null, `When taken (${dayAgo(report.taken_at ?? '')})`)),
+        h('label', null, h('input', { type: 'radio', name: datedName, value: 'sent' }), h('span', null, 'When sent (today)')),
+      )
+    : null;
+  const datedBlock = datedChoice ? h('div', { class: 'card-dated' }, datedChoice) : null;
+
   const card = h(
     'article',
     { class: 'card' },
     h('h2', null, `${report.photo_count === 1 ? 'Photo' : 'Photos'} from ${report.pub_name}`),
-    h('p', { class: 'card-meta' }, `Sent ${sentAgo(report.created_at)}`),
+    h(
+      'p',
+      { class: 'card-meta' },
+      `Sent ${sentAgo(report.created_at)}`,
+      report.taken_at ? `, taken ${dayAgo(report.taken_at)}` : ', no date on the photos',
+    ),
     report.note ? h('p', { class: 'card-note' }, `“${report.note}”`) : null,
     report.photo_count
       ? h(
@@ -85,6 +118,7 @@ function reportCard(ctx: Context, report: QueueReport): HTMLElement {
         )
       : h('p', { class: 'form-help' }, 'The photos have expired.'),
     editorSlot,
+    datedBlock,
     h('div', { class: 'card-actions' }, approve, reject),
     status,
   );
@@ -95,7 +129,7 @@ function reportCard(ctx: Context, report: QueueReport): HTMLElement {
       editor = createTapEditor({
         beers: ctx.beers,
         listings,
-        hint: 'Mark what the photo shows. "On" counts as checked when the photo was taken.',
+        hint: 'Mark what the photo shows. "On" counts as checked when the photo was taken, where the photo says so.',
       });
       editorSlot.replaceChildren(editor.element);
     })
@@ -107,9 +141,11 @@ function reportCard(ctx: Context, report: QueueReport): HTMLElement {
   approve.addEventListener('click', () => {
     const changes = editor?.changes() ?? [];
     if (!confirmDeletes(changes)) return;
+    const dated = (datedChoice?.querySelector<HTMLInputElement>('input:checked')?.value ?? 'taken') as 'taken' | 'sent';
     void run(ctx, card, status, [approve, reject], async () => {
-      await adminApi.reviewReport(report.id, 'approve', changes);
-      return `Approved the photos from ${report.pub_name}${changes.length ? ` and saved ${changes.length} changes` : ''}. The photos have been deleted.`;
+      await adminApi.reviewReport(report.id, 'approve', changes, dated);
+      const when = report.taken_at && dated === 'taken' ? ` dated ${dayAgo(report.taken_at)}` : '';
+      return `Approved the photos from ${report.pub_name}${changes.length ? ` and saved ${changes.length} changes` : ''}${when}. The photos have been deleted.`;
     });
   });
   reject.addEventListener('click', () =>

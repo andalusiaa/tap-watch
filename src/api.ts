@@ -65,7 +65,12 @@ export function sendVote(listingId: number, direction: VoteDirection, honeypot: 
   );
 }
 
-export function sendPhotoReport(pubId: string, photos: Blob[], note: string, honeypot: string) {
+export function sendPhotoReport(
+  pubId: string,
+  photos: { blob: Blob; takenAt: Date | null }[],
+  note: string,
+  honeypot: string,
+) {
   return sendWrite(
     '/api/report',
     (t) => {
@@ -74,7 +79,11 @@ export function sendPhotoReport(pubId: string, photos: Blob[], note: string, hon
       form.set('note', note);
       form.set('hp', honeypot);
       form.set('token', t);
-      photos.forEach((photo, i) => form.append('photo', photo, `taps-${i + 1}.jpg`));
+      photos.forEach((photo, i) => {
+        form.append('photo', photo.blob, `taps-${i + 1}.jpg`);
+        // One entry per photo, in the same order. Empty when the file didn't say.
+        form.append('taken_at', photo.takenAt ? photo.takenAt.toISOString() : '');
+      });
       return form;
     },
     false,

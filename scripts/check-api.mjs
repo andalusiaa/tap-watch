@@ -152,10 +152,13 @@ const fakeJpeg = Buffer.concat([
 
 function reporter(name) {
   const ip = `203.0.113.${++deviceCount}`;
-  return (fields, file = { bytes: fakeJpeg, type: 'image/jpeg' }, copies = 1) => {
+  return (fields, file = { bytes: fakeJpeg, type: 'image/jpeg' }, copies = 1, takenAt) => {
     const form = new FormData();
     for (const [k, v] of Object.entries({ hp: '', token, ...fields })) form.set(k, v);
-    for (let i = 0; i < copies && file; i++) form.append('photo', new Blob([file.bytes], { type: file.type }), `taps-${i + 1}.jpg`);
+    for (let i = 0; i < copies && file; i++) {
+      form.append('photo', new Blob([file.bytes], { type: file.type }), `taps-${i + 1}.jpg`);
+      form.append('taken_at', takenAt ?? '');
+    }
     return fetch(`${API}/api/report`, {
       method: 'POST',
       headers: { Origin: API, 'User-Agent': `check-api ${name}`, 'CF-Connecting-IP': ip },
@@ -266,6 +269,32 @@ const keysLeft = sql(`SELECT COUNT(*) AS n FROM photo_report_images WHERE report
 check('The report is marked approved and its photo keys cleared', reportRow.status === 'approved' && keysLeft === 0, JSON.stringify({ reportRow, keysLeft }));
 check('Both photos themselves are deleted', (await admin(`/photo/${report.id}/1`, { cookie })).status === 404 && (await admin(`/photo/${report.id}/2`, { cookie })).status === 404);
 check('A report cannot be decided twice', (await admin(`/report/${report.id}`, { cookie, body: { action: 'reject' } })).status === 409);
+// --- When the photo was taken ---
+const twoWeeksAgo = new Date(Date.now() - 14 * 86_400_000).toISOString();
+const dater = reporter('dater');
+await dater({ pub_id: pubId, note: 'Old photo' }, undefined, 1, twoWeeksAgo);
+await dater({ pub_id: pubId, note: 'Silly date' }, undefined, 1, new Date(Date.now() + 40 * 86_400_000).toISOString());
+await dater({ pub_id: pubId, note: 'Nonsense date' }, undefined, 1, 'not a date');
+r = await admin('/queue', { cookie });
+const dated = r.body.reports.find((x) => x.note === 'Old photo');
+const future = r.body.reports.find((x) => x.note === 'Silly date');
+const nonsense = r.body.reports.find((x) => x.note === 'Nonsense date');
+check('The date a photo was taken is kept', dated?.taken_at?.slice(0, 10) === twoWeeksAgo.slice(0, 10), JSON.stringify(dated));
+check('A date in the future is ignored', future?.taken_at === null, JSON.stringify(future));
+check('An unreadable date is ignored', nonsense?.taken_at === null, JSON.stringify(nonsense));
+
+r = await admin(`/report/${dated.id}`, { cookie, body: { action: 'approve', changes: [{ beer_id: 'guinness', dispense: 'keg', set: 'on' }] } });
+check('Approving dates the tick from when the photo was taken', r.status === 200 &&
+  sql(`SELECT last_confirmed_at FROM listings WHERE pub_id = '${pubId}' AND beer_id = 'guinness' AND dispense = 'keg'`)[0]?.last_confirmed_at.slice(0, 10) === twoWeeksAgo.slice(0, 10),
+  JSON.stringify(r.body));
+
+await dater({ pub_id: pubId, note: 'Old photo, dated today' }, undefined, 1, twoWeeksAgo);
+r = await admin('/queue', { cookie });
+const overridden = r.body.reports.find((x) => x.note === 'Old photo, dated today');
+r = await admin(`/report/${overridden.id}`, { cookie, body: { action: 'approve', dated: 'sent', changes: [{ beer_id: 'carling', dispense: 'keg', set: 'on' }] } });
+check('"When sent" overrides the photo date', r.status === 200 &&
+  sql(`SELECT last_confirmed_at FROM listings WHERE pub_id = '${pubId}' AND beer_id = 'carling' AND dispense = 'keg'`)[0]?.last_confirmed_at.slice(0, 10) === new Date().toISOString().slice(0, 10));
+
 
 // Suggestions: approve the listed beer, add the new one as a new beer.
 const [known, fresh] = sql('SELECT id, beer_id FROM suggestions ORDER BY id');

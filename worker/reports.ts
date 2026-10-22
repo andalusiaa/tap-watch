@@ -36,6 +36,7 @@ export async function handleReport(request: Request, env: Env, now: number): Pro
   const pubId = form.get('pub_id');
   const note = (form.get('note') ?? '').toString().trim();
   const files = form.getAll('photo');
+  const takenAt = form.getAll('taken_at').map((value) => readTakenAt(value, now));
   if (!isId(pubId)) throw badRequest();
   if (note.length > LIMITS.maxNoteLength) throw new ApiError(400, 'note_too_long', 'Please keep the note under 280 characters.');
   if (files.length === 0) throw notAPhoto();
@@ -84,8 +85,8 @@ export async function handleReport(request: Request, env: Env, now: number): Pro
     await db.batch([
       ...photos.map((photo, i) =>
         db
-          .prepare('INSERT INTO photo_report_images (report_id, position, photo_key, photo_bytes) VALUES (?, ?, ?, ?)')
-          .bind(reportId, i + 1, keys[i], photo.length),
+          .prepare('INSERT INTO photo_report_images (report_id, position, photo_key, photo_bytes, taken_at) VALUES (?, ?, ?, ?, ?)')
+          .bind(reportId, i + 1, keys[i], photo.length, takenAt[i] ?? null),
       ),
       bumpCounter(db, `photos:${day}`, photos.length, now + 2 * 86_400_000),
       bumpCounter(db, guard.budget.key, LIMITS.reportWriteCost + LIMITS.photoWriteCost * photos.length, guard.budget.expiresAt),
@@ -98,6 +99,19 @@ export async function handleReport(request: Request, env: Env, now: number): Pro
   }
 
   return json({ ok: true });
+}
+
+/**
+ * The date a photo was taken, as sent by the browser. Anything missing, unreadable, in the
+ * future or absurdly old is ignored rather than refused: it is a nicety, not a requirement.
+ */
+function readTakenAt(value: File | string | undefined, now: number): string | null {
+  if (typeof value !== 'string' || !value) return null;
+  const when = Date.parse(value);
+  if (Number.isNaN(when)) return null;
+  // A day's grace for clocks that run fast; nothing older than two years.
+  if (when > now + 86_400_000 || when < now - 730 * 86_400_000) return null;
+  return isoTime(when);
 }
 
 const notAPhoto = () =>

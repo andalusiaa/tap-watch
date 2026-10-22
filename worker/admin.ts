@@ -236,7 +236,8 @@ async function getQueue(env: Env): Promise<Response> {
   const [reports, suggestions] = await db.batch([
     db.prepare(
       `SELECT r.id, r.pub_id, p.name AS pub_name, r.note, r.created_at,
-              (SELECT COUNT(*) FROM photo_report_images i WHERE i.report_id = r.id AND i.photo_key IS NOT NULL) AS photo_count
+              (SELECT COUNT(*) FROM photo_report_images i WHERE i.report_id = r.id AND i.photo_key IS NOT NULL) AS photo_count,
+              (SELECT MIN(i.taken_at) FROM photo_report_images i WHERE i.report_id = r.id) AS taken_at
        FROM photo_reports r JOIN pubs p ON p.id = r.pub_id
        WHERE r.status = 'pending'
        ORDER BY r.created_at
@@ -278,13 +279,22 @@ async function reviewReport(request: Request, env: Env, reportId: number, now: n
   const db = env.DB;
   const [reports, images] = await db.batch<Record<string, unknown>>([
     db.prepare(
-      `SELECT r.id, r.pub_id, r.status, r.created_at, p.name AS pub_name, p.area_id
+      `SELECT r.id, r.pub_id, r.status, r.created_at, p.name AS pub_name, p.area_id,
+              (SELECT MIN(i.taken_at) FROM photo_report_images i WHERE i.report_id = r.id) AS taken_at
        FROM photo_reports r JOIN pubs p ON p.id = r.pub_id WHERE r.id = ?`,
     ).bind(reportId),
     db.prepare('SELECT photo_key FROM photo_report_images WHERE report_id = ? AND photo_key IS NOT NULL').bind(reportId),
   ]);
   const report = reports?.results[0] as
-    | { id: number; pub_id: string; status: string; created_at: string; pub_name: string; area_id: string }
+    | {
+        id: number;
+        pub_id: string;
+        status: string;
+        created_at: string;
+        pub_name: string;
+        area_id: string;
+        taken_at: string | null;
+      }
     | undefined;
   if (!report) throw notFound('photo report');
   if (report.status !== 'pending') throw alreadyChecked();
@@ -297,12 +307,17 @@ async function reviewReport(request: Request, env: Env, reportId: number, now: n
     db.prepare('UPDATE photo_report_images SET photo_key = NULL WHERE report_id = ?').bind(reportId),
   ];
   if (body.action === 'approve') {
-    // Ticks count as confirmations from when the photo was taken, not from now.
+    // Ticks count from when the photo was taken, falling back to when it was sent.
+    // "sent" overrides that, for a photo whose date looks wrong.
     const changes = parseChanges(body.changes ?? []);
     const summary = await describeChanges(db, changes);
-    statements.push(...(await listingStatements(db, report.pub_id, changes, 'photo', report.created_at, stamp)));
+    const checkedAt = body.dated === 'sent' ? report.created_at : report.taken_at ?? report.created_at;
+    statements.push(...(await listingStatements(db, report.pub_id, changes, 'photo', checkedAt, stamp)));
     statements.push(invalidateSnapshot(db, report.area_id));
-    statements.push(logAdmin(db, now, 'photo_approved', report.pub_id, `${report.pub_name}: approved a photo report. ${summary}`));
+    const dated = checkedAt === report.created_at ? 'when it was sent' : `when it was taken (${checkedAt.slice(0, 10)})`;
+    statements.push(
+      logAdmin(db, now, 'photo_approved', report.pub_id, `${report.pub_name}: approved a photo report, dated ${dated}. ${summary}`),
+    );
   } else {
     statements.push(logAdmin(db, now, 'photo_rejected', report.pub_id, `${report.pub_name}: rejected a photo report.`));
   }

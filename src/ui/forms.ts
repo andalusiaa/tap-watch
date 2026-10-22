@@ -44,7 +44,7 @@ const MAX_PHOTOS = 4;
 
 export function photoForm(o: { pubId: string; pubName: string; honeypot: () => string }): HTMLElement {
   const id = `photo-form-${++formCount}`;
-  const photos: { blob: Blob; url: string }[] = [];
+  const photos: { blob: Blob; url: string; takenAt: Date | null }[] = [];
 
   const status = statusLine();
   const previews = h('ul', { class: 'photo-previews', 'aria-label': 'Photos to send' });
@@ -86,8 +86,8 @@ export function photoForm(o: { pubId: string; pubName: string; honeypot: () => s
     let failed = 0;
     for (const file of files.slice(0, room)) {
       try {
-        const blob = await preparePhoto(file);
-        photos.push({ blob, url: URL.createObjectURL(blob) });
+        const { blob, takenAt } = await preparePhoto(file);
+        photos.push({ blob, url: URL.createObjectURL(blob), takenAt });
       } catch {
         failed++;
       }
@@ -115,7 +115,8 @@ export function photoForm(o: { pubId: string; pubName: string; honeypot: () => s
       'p',
       { class: 'form-help' },
       `Photograph the taps, not people. You can send up to ${MAX_PHOTOS} photos at once. A person checks them to update ` +
-        'the list, then deletes them. Location details are removed from photos before they are sent.',
+        'the list, then deletes them. Location details are removed from photos before they are sent; the date ' +
+        'a photo was taken is kept, so an older photo can be dated properly.',
     ),
     previews,
     fileInput,
@@ -136,7 +137,7 @@ export function photoForm(o: { pubId: string; pubName: string; honeypot: () => s
     }
     busy(submit, 'Sending…');
     status.textContent = '';
-    const result = await sendPhotoReport(o.pubId, photos.map((p) => p.blob), note.value.trim(), o.honeypot());
+    const result = await sendPhotoReport(o.pubId, photos, note.value.trim(), o.honeypot());
     if (result.ok) {
       const sent = photos.length;
       for (const photo of photos) URL.revokeObjectURL(photo.url);
