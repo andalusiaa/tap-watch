@@ -57,8 +57,8 @@
 
 /* Dark after sunset: public/theme.js sets data-theme before the page draws. */
 :root[data-theme="dark"] {
-  --save: #2e9b63;
-  --on-save: #04150c;
+  /* A touch lighter than the light-mode green, so it lifts off black and still reads in white. */
+  --save: #208452;
   --reject: #ff9f98;
   --reject-wash: #2a110f;
   --plate: #000000;
