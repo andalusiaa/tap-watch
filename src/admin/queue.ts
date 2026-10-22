@@ -33,8 +33,10 @@ export function sentAgo(iso: string): string {
   return `${days} ${days === 1 ? 'day' : 'days'} ago`;
 }
 
+/** Approve and reject are colour-coded, so the two aren't confused in a hurry. */
 function actionButton(label: string, primary = false) {
-  return h('button', { type: 'button', class: primary ? 'button button--primary' : 'button' }, label);
+  const tone = primary ? 'button--save' : label === 'Reject' ? 'button--reject' : '';
+  return h('button', { type: 'button', class: `button ${tone}`.trim() }, label);
 }
 
 /** Runs an admin action, showing progress and errors in the card. */

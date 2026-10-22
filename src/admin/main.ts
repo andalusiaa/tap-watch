@@ -122,7 +122,7 @@ async function openPub(pubId: string) {
       hint: 'Standing at the bar? Mark each beer On or Gone, add any that are missing, then save. "On" counts as checked now.',
     });
     const status = h('p', { class: 'form-status save-status', role: 'status' });
-    const save = h('button', { type: 'button', class: 'button button--primary' }, 'Save');
+    const save = h('button', { type: 'button', class: 'button button--save' }, 'Save');
     save.addEventListener('click', async () => {
       const changes = editor.changes();
       if (changes.length === 0) {

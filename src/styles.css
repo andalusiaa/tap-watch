@@ -21,6 +21,11 @@
   --rule: #d4d4d4;
   --wash: #f2f2f2;
   --district-red: #d0021b;
+  /* Admin buttons: green saves, soft red rejections. */
+  --save: #1f7a4d;
+  --on-save: #ffffff;
+  --reject: #a4231c;
+  --reject-wash: #fbe9e7;
   --fresh: #1f7a4d;
   --on-fresh: #ffffff;
   --ageing: #e3a21a;
@@ -52,6 +57,10 @@
 
 /* Dark after sunset: public/theme.js sets data-theme before the page draws. */
 :root[data-theme="dark"] {
+  --save: #2e9b63;
+  --on-save: #04150c;
+  --reject: #ff9f98;
+  --reject-wash: #2a110f;
   --plate: #000000;
   --ink: #ffffff;
   --ink-muted: #b3b3b3;
