@@ -310,6 +310,11 @@ textarea {
   width: 100%;
 }
 
+/* Room under the open card so Done can always be scrolled clear of the floating Map button. */
+.search:has(.search-panel:not([hidden])) {
+  padding-bottom: 4rem;
+}
+
 /* Filter chips: cask/keg and alcohol-free. */
 .chips {
   display: flex;

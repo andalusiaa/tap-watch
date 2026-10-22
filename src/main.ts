@@ -286,8 +286,6 @@ function start(catalogue: Catalogue) {
   function showPanel(open: boolean) {
     els.panel.hidden = !open;
     els.pill.setAttribute('aria-expanded', String(open));
-    // The floating Map button would sit on top of the filters.
-    els.mapToggle.hidden = open;
     // The box is left alone on purpose: focusing it opens the phone keyboard over the filters.
     if (!open) updatePill();
   }
