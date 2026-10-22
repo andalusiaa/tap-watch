@@ -260,6 +260,10 @@
   font-weight: 600;
 }
 
+#pub-editor .button--save {
+  margin-top: 1.25rem;
+}
+
 /* Saving and approving are green; rejecting is red. Written as `.button.button--save`
    because the shared stylesheet loads after this one and its plain `.button` would win. */
 .button.button--save {

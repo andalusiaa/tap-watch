@@ -149,7 +149,7 @@ function pubForm(pub: EditablePub | null, operators: AdminOperator[], o: Options
   const open = choice(`${id}-open`, `${id}-open-label`, [['open', 'Open'], ['closed', 'Closed']], pub && !pub.is_active ? 'closed' : 'open');
 
   const status = h('p', { class: 'form-status', role: 'status' });
-  const submit = h('button', { type: 'submit', class: 'button button--primary' }, pub ? 'Save changes' : 'Add pub');
+  const submit = h('button', { type: 'submit', class: `button ${pub ? 'button--save' : 'button--primary'}` }, pub ? 'Save changes' : 'Add pub');
 
   const form = h(
     'form',
