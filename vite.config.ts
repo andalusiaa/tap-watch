@@ -13,6 +13,7 @@ export default defineConfig({
         about: 'about/index.html',
         privacy: 'privacy/index.html',
         faq: 'faq/index.html',
+        feedback: 'feedback/index.html',
       },
     },
   },

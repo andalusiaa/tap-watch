@@ -6,6 +6,7 @@ import { housekeeping } from './housekeeping';
 import { issueFormToken } from './security';
 import { getSnapshotJson, isAreaId } from './snapshot';
 import { handleAdmin } from './admin';
+import { handleFeedback } from './feedback';
 import { handleReport, handleSuggest } from './reports';
 import { handleVote } from './vote';
 
@@ -37,6 +38,15 @@ async function route(request: Request, env: Env): Promise<Response> {
     case '/api/suggest':
       if (request.method !== 'POST') throw methodNotAllowed('POST');
       return handleSuggest(request, env, now);
+
+    case '/api/feedback':
+      if (request.method !== 'POST') throw methodNotAllowed('POST');
+      return handleFeedback(request, env, now);
+
+    case '/api/form-token':
+      // A page token on its own, for pages that don't need the whole snapshot.
+      if (request.method !== 'GET') throw methodNotAllowed('GET');
+      return json({ ok: true }, 200, { 'X-Form-Token': await issueFormToken(env.APP_SECRET, now) });
 
     default:
       if (url.pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url, now);

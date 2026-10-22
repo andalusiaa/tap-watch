@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tell us · Tap Watch E17</title>
+  <meta name="description" content="Send a thought, a problem or an idea to Tap Watch E17.">
+  <meta name="color-scheme" content="light dark">
+  <script src="/theme.js"></script>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/src/styles.css">
+  <script type="module" src="/src/feedback.ts"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="wordmark">Tap Watch</span>
+      <span class="plate"><span class="visually-hidden">, </span>E17</span>
+    </a>
+  </header>
+  <main class="prose">
+    <h1 class="page-title">Tell us</h1>
+    <p>Something broken, something missing, or an idea worth stealing? Send it here. It goes to the one person who runs Tap Watch, and there's no reply address, so leave one in the message if you'd like one.</p>
+    <p class="form-help">To add a beer or fix a tap list, it's quicker to use <strong>Submit a beer</strong> or <strong>Send photos of the taps</strong> on the pub itself.</p>
+
+    <form class="panel-form" id="feedback-form" novalidate>
+      <label for="feedback-message">Your message</label>
+      <textarea id="feedback-message" rows="6" maxlength="1000" required></textarea>
+      <p class="form-help" id="feedback-count">1000 characters left.</p>
+      <div class="visually-hidden" aria-hidden="true">
+        <label for="website">Leave this empty</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <button type="submit" class="button button--primary" id="feedback-send">Send</button>
+      <p class="form-status" id="feedback-status" role="status"></p>
+    </form>
+
+    <p><a href="/">Back to the beer search</a></p>
+  </main>
+  <footer class="site-footer">
+    <p class="footer-links"><a href="/about/">How it works</a> <span aria-hidden="true">·</span> <a href="/faq/">Questions</a> <span aria-hidden="true">·</span> <a href="/feedback/">Tell us</a> <span aria-hidden="true">·</span> <a href="/privacy/">Privacy</a></p>
+    <p>Pub names and locations © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+  </footer>
+</body>
+</html>

@@ -34,6 +34,11 @@ export const LIMITS = {
   maxPhotoBytes: 2_000_000,
   maxNoteLength: 280,
 
+  /** Feedback messages per device per day, and how long one can be. */
+  feedbackPerDay: 5,
+  maxFeedbackLength: 1_000,
+  feedbackWriteCost: 4,
+
   /** Beer suggestions per device per day. */
   suggestionsPerDay: 10,
   suggestionWriteCost: 8,

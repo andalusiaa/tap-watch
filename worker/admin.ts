@@ -4,6 +4,7 @@
 //   POST /api/admin/logout
 //   GET  /api/admin/session                                → { signedIn }
 //   GET/POST /api/admin/pubs, POST /api/admin/pubs/:id, POST /api/admin/area/:id/sample → see pubs.ts
+//   GET  /api/admin/feedback, POST /api/admin/feedback/:id        → see feedback.ts
 //   GET  /api/admin/activity?type=&pub=&before=           → see activity.ts
 //   GET  /api/admin/usage                                  → today's activity and limits
 //   GET  /api/admin/queue                                  → photo reports and suggestions to check
@@ -20,6 +21,7 @@ import { bumpCounter, deviceHash, readCounter, sameString, signToString } from '
 import { invalidateSnapshot, isAreaId } from './snapshot';
 import { normalise, slugify } from './text';
 import { getActivity, logAdmin } from './activity';
+import { getFeedback, reviewFeedback } from './feedback';
 import { addPub, listPubs, setSample, updatePub } from './pubs';
 import { getUsage } from './usage';
 
@@ -500,6 +502,8 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
   if (path === '/queue' && method === 'GET') return getQueue(env);
   if (path === '/usage' && method === 'GET') return getUsage(env, now);
   if (path === '/activity' && method === 'GET') return getActivity(env, url, now);
+  if (path === '/feedback' && method === 'GET') return getFeedback(env);
+  if ((m = path.match(/^\/feedback\/(\d{1,12})$/)) && method === 'POST') return reviewFeedback(request, env, Number(m[1]), now);
   if (path === '/pubs') {
     const area = url.searchParams.get('area') ?? 'e17';
     if (!isAreaId(area)) throw badRequest();

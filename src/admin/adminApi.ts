@@ -118,6 +118,13 @@ export interface Activity {
   log_days: number;
 }
 
+export interface FeedbackMessage {
+  id: number;
+  message: string;
+  created_at: string;
+  reviewed_at?: string | null;
+}
+
 export interface Usage {
   now: string;
   today: { votes: number; reports: number; suggestions: number; photos: number; writes: number };
@@ -151,6 +158,8 @@ export const adminApi = {
   signIn: (password: string) => call<{ ok: true }>('/login', { password }),
   signOut: () => call<{ ok: true }>('/logout', {}),
   usage: () => call<Usage>('/usage'),
+  feedback: () => call<{ pending: FeedbackMessage[]; kept: FeedbackMessage[] }>('/feedback'),
+  reviewFeedback: (id: number, action: 'keep' | 'reject') => call<{ ok: true }>(`/feedback/${id}`, { action }),
   activity: (filters: { type: string; pub: string; before?: string }) =>
     call<Activity>(`/activity?${new URLSearchParams({ type: filters.type, pub: filters.pub, ...(filters.before ? { before: filters.before } : {}) })}`),
   pubs: () => call<{ sample: boolean; pubs: EditablePub[]; operators: AdminOperator[] }>('/pubs?area=e17'),

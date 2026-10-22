@@ -12,6 +12,13 @@ let tokenReceivedAt = 0;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** A page token on its own, for pages that don't load the snapshot. */
+async function fetchToken(): Promise<void> {
+  const res = await fetch('/api/form-token', { headers: { Accept: 'application/json' } });
+  token = res.headers.get('X-Form-Token') ?? '';
+  tokenReceivedAt = Date.now();
+}
+
 async function fetchSnapshot(): Promise<Snapshot> {
   const res = await fetch(`/api/snapshot?area=${AREA_ID}`, { headers: { Accept: 'application/json' } });
   if (!res.ok) throw new Error(`Snapshot request failed: ${res.status}`);
@@ -43,7 +50,8 @@ async function sendWrite<T>(url: string, makeBody: (token: string) => BodyInit, 
   try {
     let { status, body } = await post();
     if (status === 403 && body.error === 'page_expired') {
-      await fetchSnapshot();
+      // The snapshot carries a token too, but a plain token is enough to retry with.
+      await (document.getElementById('results') ? fetchSnapshot() : fetchToken());
       ({ status, body } = await post());
     }
     if (status === 200 && body.ok) return body as { ok: true } & Partial<T>;
@@ -55,6 +63,11 @@ async function sendWrite<T>(url: string, makeBody: (token: string) => BodyInit, 
   } catch {
     return { ok: false, error: 'network', message: "We couldn't reach Tap Watch. Check your connection and try again." };
   }
+}
+
+export async function sendFeedback(message: string, honeypot: string) {
+  if (!token) await fetchToken();
+  return sendWrite('/api/feedback', (t) => JSON.stringify({ message, hp: honeypot, token: t }), true);
 }
 
 export function sendVote(listingId: number, direction: VoteDirection, honeypot: string) {

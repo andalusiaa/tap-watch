@@ -9,11 +9,12 @@ export async function housekeeping(env: Env, now: number) {
   const hashCutoff = isoTime(now - PRIVACY.deviceHashMaxAgeMs);
   const photoCutoff = isoTime(now - PHOTOS.maxPendingMs);
 
-  const [votes, reports, suggestions, limits, staleReports, oldLog] = await db.batch<{ id: number }>([
+  const [votes, reports, suggestions, feedback, limits, staleReports, oldLog] = await db.batch<{ id: number }>([
     // Forget which device sent each vote, report and suggestion once it is 30 days old.
     db.prepare('UPDATE votes SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
     db.prepare('UPDATE photo_reports SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
     db.prepare('UPDATE suggestions SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
+    db.prepare('UPDATE feedback SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
     db.prepare('DELETE FROM rate_limits WHERE expires_at < ?').bind(isoTime(now)),
     // Reports nobody checked within 30 days. Each photo deletion is a subrequest (50 allowed
     // per run on the free plan), so take up to 10 reports (40 photos) a day; the store also
@@ -43,7 +44,8 @@ export async function housekeeping(env: Env, now: number) {
   const rotated = !salt || now - Date.parse(salt.created_at) > PRIVACY.saltMaxAgeMs;
   if (rotated) await rotateSalt(db, now);
 
-  const cleared = (votes?.meta.changes ?? 0) + (reports?.meta.changes ?? 0) + (suggestions?.meta.changes ?? 0);
+  const cleared =
+    (votes?.meta.changes ?? 0) + (reports?.meta.changes ?? 0) + (suggestions?.meta.changes ?? 0) + (feedback?.meta.changes ?? 0);
   console.log(
     `Housekeeping: cleared ${cleared} device hashes, deleted ${limits?.meta.changes ?? 0} expired counters, ` +
       `expired ${expired.length} unchecked photos, deleted ${oldLog?.meta.changes ?? 0} old admin log entries, salt rotated: ${rotated}`,

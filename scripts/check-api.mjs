@@ -369,6 +369,51 @@ check('Grouped votes keep one visitor label', typeof grouped?.visitor === 'strin
 r = await admin('/activity?type=nonsense&pub=', { cookie });
 check('An unknown activity type is refused', r.status === 400);
 
+// --- Feedback box ---
+const tokenRes = await fetch(`${API}/api/form-token`);
+const plainToken = tokenRes.headers.get('X-Form-Token');
+check('The token endpoint hands out a page token', tokenRes.status === 200 && typeof plainToken === 'string' && plainToken.length > 10);
+const tell = (message, extra = {}, ip = '203.0.113.180') =>
+  fetch(`${API}/api/feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: API, 'User-Agent': 'check-api teller', 'CF-Connecting-IP': ip },
+    body: JSON.stringify({ hp: '', token: plainToken, message, ...extra }),
+  }).then(async (res) => ({ status: res.status, body: await res.json() }));
+
+await sleep(2_100);
+r = await tell('Could you add a dartboard filter?');
+check('Feedback is accepted', r.status === 200 && r.body.ok, JSON.stringify(r));
+r = await tell('');
+check('An empty message is refused', r.status === 400);
+r = await tell('x'.repeat(1_001));
+check('An over-long message is refused', r.status === 400);
+r = await tell('spam', { hp: 'http://spam.example' });
+check('A filled spam trap is quietly ignored', r.status === 200 && sql(`SELECT COUNT(*) AS n FROM feedback WHERE message = 'spam'`)[0].n === 0);
+r = await fetch(`${API}/api/feedback`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' },
+  body: JSON.stringify({ message: 'hello', hp: '', token: plainToken }),
+});
+check('Feedback from another website is refused', r.status === 403);
+
+r = await admin('/feedback');
+check('Feedback needs sign-in', r.status === 401);
+r = await admin('/feedback', { cookie });
+const waiting = r.body.pending.find((f) => f.message.includes('dartboard'));
+check('The admin sees waiting messages', Boolean(waiting) && r.body.kept.length === 0, JSON.stringify(r.body).slice(0, 200));
+check('Messages never carry a device hash to the browser', !/[0-9a-f]{32}/.test(JSON.stringify(r.body)));
+r = await admin(`/feedback/${waiting.id}`, { cookie, body: { action: 'keep' } });
+check('A message can be kept as an idea', r.status === 200);
+r = await admin('/feedback', { cookie });
+check('Kept ideas stay on the page', r.body.kept.some((f) => f.message.includes('dartboard')) && r.body.pending.length === 0);
+
+await tell('Delete me please', {}, '203.0.113.181');
+r = await admin('/feedback', { cookie });
+const binned = r.body.pending.find((f) => f.message === 'Delete me please');
+r = await admin(`/feedback/${binned.id}`, { cookie, body: { action: 'reject' } });
+check('A discarded message is deleted outright', r.status === 200 && sql(`SELECT COUNT(*) AS n FROM feedback WHERE id = ${binned.id}`)[0].n === 0);
+check('A decision is written to the activity log', sql(`SELECT COUNT(*) AS n FROM admin_log WHERE action LIKE 'feedback_%'`)[0].n === 2);
+
 // --- Pubs and the test banner (admin) ---
 r = await admin('/pubs?area=e17');
 check('Pub list needs sign-in', r.status === 401);
