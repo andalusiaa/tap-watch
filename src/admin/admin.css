@@ -260,25 +260,26 @@
   font-weight: 600;
 }
 
-/* Saving and approving are green; rejecting is red. */
-.button--save {
+/* Saving and approving are green; rejecting is red. Written as `.button.button--save`
+   because the shared stylesheet loads after this one and its plain `.button` would win. */
+.button.button--save {
   border-color: var(--save);
   background: var(--save);
   color: var(--on-save);
 }
 
-.button--save:hover {
+.button.button--save:hover {
   background: var(--save);
   text-decoration: underline;
 }
 
-.button--reject {
+.button.button--reject {
   border-color: var(--reject);
   background: var(--reject-wash);
   color: var(--reject);
 }
 
-.button--reject:hover {
+.button.button--reject:hover {
   background: var(--reject-wash);
   text-decoration: underline;
 }
