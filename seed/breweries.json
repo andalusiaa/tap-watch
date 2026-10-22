@@ -83,6 +83,7 @@
   {"id":"sierra-nevada","name":"Sierra Nevada","owner":null},
   {"id":"signature-brew","name":"Signature Brew","owner":null},
   {"id":"siren","name":"Siren","owner":"Siren Craft Brew"},
+  {"id":"small-beer","name":"Small Beer","owner":null},
   {"id":"somersby","name":"Somersby","owner":"Carlsberg Britvic"},
   {"id":"st-austell","name":"St Austell","owner":null},
   {"id":"staropramen","name":"Staropramen","owner":"Molson Coors"},
