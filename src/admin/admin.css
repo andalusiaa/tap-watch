@@ -429,3 +429,15 @@
   display: grid;
   gap: 0.4rem;
 }
+
+/* Beers added in this sitting, listed under the buttons so nothing shifts above them. */
+.editor-added {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--ink);
+}
+
+.editor-added h3 {
+  margin-bottom: 0.25rem;
+  font-size: var(--step-0);
+}

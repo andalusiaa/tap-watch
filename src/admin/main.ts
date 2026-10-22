@@ -157,6 +157,7 @@ async function openPub(pubId: string) {
       editor.element,
       save,
       status,
+      editor.addedElement,
     );
   } catch (error) {
     if (error instanceof SignedOut) return showSignIn('Please sign in.');

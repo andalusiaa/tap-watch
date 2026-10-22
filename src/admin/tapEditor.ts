@@ -60,6 +60,9 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
     );
 
   const list = h('ul', { class: 'edit-rows' });
+  /** Beers added during this session, kept apart so they can sit under the Add a beer form. */
+  const addedList = h('ul', { class: 'edit-rows' });
+  const addedPanel = h('div', { class: 'editor-added', hidden: true }, h('h3', null, 'Just added'), addedList);
   const summary = h('p', { class: 'editor-summary', 'aria-live': 'polite' });
 
   function updateSummary() {
@@ -132,7 +135,11 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
   }
 
   function render() {
-    list.replaceChildren(...rows.map(rowElement));
+    const listed = rows.filter((r) => r.listing);
+    const added = rows.filter((r) => !r.listing);
+    list.replaceChildren(...listed.map((row) => rowElement(row, rows.indexOf(row))));
+    addedList.replaceChildren(...added.map((row) => rowElement(row, rows.indexOf(row))));
+    addedPanel.hidden = added.length === 0;
     updateSummary();
   }
 
@@ -166,7 +173,7 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
     if (existing) {
       existing.choice = 'on';
     } else {
-      rows.unshift({ beerId: beer.id, beerName: beer.name, dispense, listing: null, choice: 'on' });
+      rows.push({ beerId: beer.id, beerName: beer.name, dispense, listing: null, choice: 'on' });
     }
     addForm.reset();
     addStatus.textContent = `${beer.name} (${dispense}) added and marked as on. Save to update the site.`;
@@ -194,6 +201,8 @@ export function createTapEditor(o: { beers: Beer[]; listings: AdminListing[]; hi
 
   return {
     element,
+    /** Beers added just now. Goes after the Save or Approve buttons, so the page doesn't jump. */
+    addedElement: addedPanel,
     changes(): ListingChange[] {
       return rows
         .filter((r) => r.choice !== 'keep')

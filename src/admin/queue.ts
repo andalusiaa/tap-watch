@@ -72,6 +72,7 @@ function takenEarlier(report: QueueReport): boolean {
 function reportCard(ctx: Context, report: QueueReport): HTMLElement {
   const status = h('p', { class: 'form-status', role: 'status' });
   const editorSlot = h('div', null, h('p', { class: 'form-help' }, 'Loading the tap list…'));
+  const addedSlot = h('div');
   const approve = actionButton('Approve and save ticks', true);
   const reject = actionButton('Reject');
   let editor: ReturnType<typeof createTapEditor> | null = null;
@@ -120,6 +121,7 @@ function reportCard(ctx: Context, report: QueueReport): HTMLElement {
     editorSlot,
     datedBlock,
     h('div', { class: 'card-actions' }, approve, reject),
+    addedSlot,
     status,
   );
 
@@ -132,6 +134,7 @@ function reportCard(ctx: Context, report: QueueReport): HTMLElement {
         hint: 'Mark what the photo shows. "On" counts as checked when the photo was taken, where the photo says so.',
       });
       editorSlot.replaceChildren(editor.element);
+      addedSlot.replaceChildren(editor.addedElement);
     })
     .catch((error) => {
       if (error instanceof SignedOut) return ctx.onSignedOut();
