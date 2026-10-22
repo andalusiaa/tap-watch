@@ -37,7 +37,7 @@ Noted, not designed yet:
 
 - **Gluten-free filter.** Planned in some detail; see "Gluten-free: how we would do it" below.
 - **Recognising contributors** without accounts or tracking. For example, an optional nickname kept on the device and sent with votes and submissions, feeding a leaderboard or badges. It must stay opt-in and store nothing that identifies a person.
-- **A beer index.** Which drinks are most searched for and most poured across E17, which pubs could use to understand drinkers. Search counts would be totals per beer per day, never linked to a person or device.
+- **A beer index.** Which drinks are most searched for and most poured across E17, which pubs could use to understand drinkers. Search counts would be totals per beer per day, never linked to a person or device. See "Data the admin page could show" for the groundwork.
 - **Tap wars.** Fun comparison maps, such as Guinness vs Murphy's vs Beamish, or Camden Hells vs Neck Oil, with pins coloured by which one each pub pours.
 
 ## How it's built
@@ -137,6 +137,39 @@ the brewery's logo if there is one, otherwise its initials.
 To add a logo, follow `public/breweries/README.md`: drop in `<brewery-id>.svg`, set
 `"has_logo": true` in `seed/breweries.json`, and run `npm run db:beers:remote`. Logos sit on a
 white tile so they work in dark mode, and load only when scrolled into view.
+
+## Data the admin page could show
+
+Not built. Notes from 2026-10-22 for when there is enough data to be worth it. Everything here
+stays within the privacy promise: counts and totals, never anything about a person.
+
+**Free with what's already stored** (the database knows these; it's only a query away):
+
+| Idea | Where it comes from | Worth it when |
+| --- | --- | --- |
+| Most poured beers in E17 | count of listings per beer | now, once 10+ pubs have lists |
+| Beers on at the most pubs, by style | listings joined to beers | now |
+| Longest-standing beers | oldest `listings.created_at` still on | after a few months |
+| Most changeable pubs | listings added or removed per pub per month | after a few months |
+| Breweries with the widest reach | listings grouped by brewery | now |
+| Coverage | pubs with no list, or not checked in 6 months | now, as a to-do list |
+| Who keeps it fresh | votes and reports per week | now |
+
+**Needs new counting, and a decision:**
+
+- **Most searched beers.** Nothing records searches today, deliberately. It would mean a new
+  table of daily totals per beer: a date, a beer and a number, written at most once a device
+  per beer per day, with no device code kept. Interesting to pubs, and the thing most likely
+  to tempt scope creep, so it needs care: counts only, never a log of what one person typed.
+- **Searches that found nothing.** The same shape, and genuinely useful: it shows which beers
+  are missing from the list.
+
+**Costs.** A daily counts table is tiny: a few hundred rows a day at most, well inside the free
+plan. The queries are the sort D1 handles in a few milliseconds, though the admin usage page
+should cache anything heavier than a simple count.
+
+**Shape.** A "Numbers" tab beside Usage, with a date range, or a public page later if the
+"beer index" idea in "Ideas for after launch" ever happens.
 
 ## Gluten-free: how we would do it
 

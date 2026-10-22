@@ -52,6 +52,7 @@
 .admin-panel {
   display: grid;
   gap: 1.25rem;
+  padding-bottom: 3rem;
 }
 
 .admin-label {
@@ -468,4 +469,8 @@
 .editor-added h3 {
   margin-bottom: 0.25rem;
   font-size: var(--step-0);
+}
+
+.activity-text {
+  line-height: 1.45;
 }

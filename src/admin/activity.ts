@@ -68,11 +68,12 @@ export async function renderActivity(o: Options): Promise<void> {
       h(
         'p',
         { class: 'activity-meta' },
-        h('span', { class: 'activity-kind' }, KIND_LABEL[e.kind]),
+        h('span', { class: 'activity-kind' }, e.votes && e.votes > 1 ? `${e.votes} votes` : KIND_LABEL[e.kind]),
         h('span', null, when(e.at)),
         e.pub_name && e.kind !== 'admin' ? h('span', null, e.pub_name) : null,
       ),
-      h('p', { class: 'activity-text' }, e.text),
+      // A grouped visit lists each beer on its own line.
+      h('p', { class: 'activity-text' }, e.text.split('\n').flatMap((line, i) => (i ? [h('br'), line] : [line]))),
       visitor || (e.status && STATUS_LABEL[e.status])
         ? h(
             'p',

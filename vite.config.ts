@@ -12,6 +12,7 @@ export default defineConfig({
         admin: 'admin/index.html',
         about: 'about/index.html',
         privacy: 'privacy/index.html',
+        faq: 'faq/index.html',
       },
     },
   },

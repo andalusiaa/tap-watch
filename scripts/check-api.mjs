@@ -356,6 +356,16 @@ check('Activity lists the busiest visitors', Array.isArray(r.body.visitors) && r
 check('Admin changes are described in words', r.body.entries.some((e) => e.kind === 'admin' && /approved a photo report/.test(e.text)), JSON.stringify(r.body.entries.filter((e) => e.kind === 'admin')).slice(0, 300));
 r = await admin('/activity?type=admin&pub=', { cookie });
 check('Activity can show only admin changes', r.status === 200 && r.body.entries.length > 0 && r.body.entries.every((e) => e.kind === 'admin'));
+// One visitor ticking several beers at one pub is a single activity entry.
+const barfly = device('barfly');
+const pubForVotes = sql(`SELECT pub_id FROM listings WHERE status != 'removed' GROUP BY pub_id HAVING COUNT(*) >= 3 LIMIT 1`)[0].pub_id;
+const threeListings = sql(`SELECT id FROM listings WHERE pub_id = '${pubForVotes}' AND status != 'removed' LIMIT 3`);
+for (const row of threeListings) await barfly({ listing_id: row.id, direction: 1 }, token);
+r = await admin('/activity?type=votes&pub=', { cookie });
+const grouped = r.body.entries.find((e) => (e.votes ?? 1) > 1);
+check('A run of votes at one pub is grouped into one entry', grouped?.votes === 3 && grouped.text.split('\n').length === 3, JSON.stringify(grouped));
+check('Grouped votes keep one visitor label', typeof grouped?.visitor === 'string' && grouped.visitor.length > 3);
+
 r = await admin('/activity?type=nonsense&pub=', { cookie });
 check('An unknown activity type is refused', r.status === 400);
 

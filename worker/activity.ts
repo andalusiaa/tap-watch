@@ -49,6 +49,38 @@ interface Entry {
   visitor: string | null;
   text: string;
   status?: string;
+  /** How many votes this one line stands for, when a run has been rolled into one. */
+  votes?: number;
+}
+
+/** Votes from the same person at the same pub within this long are treated as one visit. */
+const SAME_VISIT_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * One person ticking off ten beers at the bar is one visit, not ten entries. Runs of votes by
+ * the same visitor at the same pub, close together in time, are rolled into a single line.
+ */
+function groupVotes(entries: Entry[]): Entry[] {
+  const out: Entry[] = [];
+  for (const entry of entries) {
+    const last = out[out.length - 1];
+    const sameVisit =
+      entry.kind === 'vote' &&
+      last?.kind === 'vote' &&
+      entry.visitor !== null &&
+      last.visitor === entry.visitor &&
+      last.pub_id === entry.pub_id &&
+      Date.parse(last.at) - Date.parse(entry.at) < SAME_VISIT_MS;
+    if (!sameVisit || !last) {
+      out.push({ ...entry });
+      continue;
+    }
+    last.votes = (last.votes ?? 1) + 1;
+    // Keep the beers readable: list the first few, then say how many more.
+    const beers = last.text.split('\n');
+    if (beers.length < 8) last.text = `${last.text}\n${entry.text}`;
+  }
+  return out;
 }
 
 export async function getActivity(env: Env, url: URL, now: number): Promise<Response> {
@@ -129,8 +161,9 @@ export async function getActivity(env: Env, url: URL, now: number): Promise<Resp
     }
   });
   entries.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
-  const page = entries.slice(0, PAGE);
-  const more = full || entries.length > PAGE;
+  const grouped = groupVotes(entries);
+  const page = grouped.slice(0, PAGE);
+  const more = full || grouped.length > PAGE;
 
   const visitors = (results[queries.length]?.results ?? []).map((v) => ({
     visitor: visitorLabel(v.device_hash as string),

@@ -93,6 +93,8 @@ export interface PubChanges {
 export interface ActivityEntry {
   kind: 'vote' | 'report' | 'submission' | 'admin';
   at: string;
+  /** More than one when a run of votes from the same person has been rolled into one line. */
+  votes?: number;
   pub_id: string | null;
   pub_name: string | null;
   /** A friendly label for the device, e.g. "Amber Otter 17", for the last 30 days only. */
