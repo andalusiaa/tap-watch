@@ -21,6 +21,7 @@
     "db:beers:remote": "node seed/guard-beer-list.mjs && node seed/build-seed-sql.mjs e17 --beers-only && wrangler d1 execute tap-watch --remote --file seed/out/seed-beers.sql",
     "seed:pubs": "node seed/fetch-pubs.mjs",
     "seed:map": "node seed/open-map.mjs",
+    "copy:export": "node seed/copy-export.mjs",
     "beers:export": "node seed/beers-csv.mjs export",
     "beers:import": "node seed/beers-csv.mjs import",
     "map:build": "node seed/build-basemap.mjs"
