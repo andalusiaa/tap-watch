@@ -12,7 +12,7 @@ Then reload Tap Watch and tap **Use my location** again. If it's still out, ente
 
 ## Can I keep Tap Watch on my home screen?
 
-Yes, and it's the quickest way in. It opens like an app, with no address bar.
+Yes, and it's the quickest way in. It opens like an app, with no address bar, but doesn’t require you to download anything.
 
 - **iPhone or iPad:** open Tap Watch in Safari, tap the share button at the bottom, then **Add to Home Screen**.
 

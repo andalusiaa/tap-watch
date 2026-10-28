@@ -218,7 +218,7 @@ function start(catalogue: Catalogue) {
       })
       .catch((error: unknown) => {
         console.error(error);
-        els.mapStatus.textContent = "The map couldn't load. Check your connection, or switch to the list.";
+        els.mapStatus.textContent = "The map couldn't load. Check your connection, or switch back to the list.";
       })
       .finally(() => {
         mapLoading = false;
@@ -295,7 +295,7 @@ function start(catalogue: Catalogue) {
   function updatePill() {
     const beer = state.beerId ? catalogue.beer(state.beerId) : undefined;
     const typed = els.input.value.trim();
-    els.pillMain.textContent = beer?.name ?? (state.noMatch ?? (typed || 'Which beer?'));
+    els.pillMain.textContent = beer?.name ?? (state.noMatch ?? (typed || 'What’s your fancy?'));
     els.pillMain.classList.toggle('search-pill-main--empty', !beer && !state.noMatch && !typed);
     els.pillSub.textContent = [DISPENSE_WORD[state.dispense], state.alcoholFree ? 'Alcohol-free' : null, locationBar.summary()]
       .filter(Boolean)

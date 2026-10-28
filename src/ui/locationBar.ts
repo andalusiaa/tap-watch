@@ -69,7 +69,7 @@ export function setupLocationBar(o: Options) {
         text = `Distances from ${source.postcode} to each pub, as the crow flies.`;
         break;
       default:
-        text = `Distances from central ${o.areaName} to each pub, as the crow flies.`;
+        text = `Default distances are from ${o.areaName} Central to each pub, as the crow flies.`;
     }
     const away = distanceKm(origin, o.areaCentre);
     if (source.kind !== 'area' && away > FAR_KM) {

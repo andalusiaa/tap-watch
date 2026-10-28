@@ -219,6 +219,21 @@ textarea {
   margin-bottom: 1rem;
 }
 
+/* A heading where only the first word carries the weight. */
+.page-title--plain {
+  font-weight: 400;
+}
+
+/* An aside above a form: quieter, and set apart from what follows. */
+.form-help--aside {
+  margin-bottom: 1.75rem;
+  font-style: italic;
+}
+
+.back-link {
+  margin-top: 2rem;
+}
+
 /* --- Search ------------------------------------------------------------------------ */
 
 /* One card: the question is its header, and it opens to show the filters inside. */

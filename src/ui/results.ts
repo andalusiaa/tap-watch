@@ -103,7 +103,7 @@ export function renderResults(mode: ResultsMode, ctx: Context): ResultsView {
         heading: [h('span', { class: 'heading-beer' }, beer.name), ' ', alcoholFreeLabel(beer)],
         summary:
           available.length === 0
-            ? `No pubs listed for ${beer.name}`
+            ? `No pubs are currently listed as stocking ${beer.name}`
             : `${plural(available.length, 'pub has', 'pubs have')} ${beer.name}${ctx.dispense === 'any' ? '' : ` on ${ctx.dispense}`}` +
               `${ctx.alcoholFree ? ' and something alcohol-free' : ''}${nearestFirst(available.length)}`,
         items,

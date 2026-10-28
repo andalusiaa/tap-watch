@@ -4,11 +4,11 @@ Tap Watch shows which Walthamstow pubs have your beer on tap, and how recently s
 
 ## Where the lists come from
 
-Each pub's tap list starts from a visit or a photo of the bar. After that, it's kept up to date by people drinking there.
+Each pub's tap list starts from a visit or a photo of the bar. After that, it's kept up to date by people drinking there (not only is crowd-sourced data easier for everyone - it also saves me having to go on a Walthamstow pub crawl once a week!).
 
 ## Still on?
 
-At the pub, open it on Tap Watch and tap:
+While you’re at a pub, open it up on Tap Watch and tap:
 
 - 👍 if a beer is still on. Its date updates straight away.
 
@@ -28,17 +28,17 @@ Each phone can vote on each beer once a day.
 
 Spotted a beer that isn't listed, or a list that's out of date? Open the pub and use **Submit a beer** or **Send photos of the taps**. Everything sent in is checked before it goes on the site.
 
-A photo counts from the day it was taken, not the day it was sent, so sending last week's picture won't make a pub look freshly checked.
+The date that the photo was taken is read during the upload process, and so if you took a photo last week but forgot to send it in, the system will recognise that the data as accurate on the date the photo was taken.
 
-Only regular beers are listed, not one-off guest beers.
+Only regular beers are listed, not one-off guest beers (though this is open to change if demand exists).
 
 ## Distances
 
-Distances are measured in a straight line from where you are, or from a postcode you enter. Phone location can be a few hundred metres out, so a postcode is often more accurate.
+Distances are measured in a straight line from where you are, or from a postcode you enter. If you have difficulties with location accuracy, check the FAQ page for more details on troubleshooting.
 
 ## Light and dark
 
-The site turns dark from sunset to sunrise in Walthamstow. Choose Light or Dark at the bottom of the main page if you'd rather keep one.
+The site turns dark from sunset to sunrise. Choose Light or Dark at the bottom of the main page if you'd rather keep one.
 
 [About Tap Watch](/about/)
 
