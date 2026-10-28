@@ -48,7 +48,9 @@
   border-left: 0;
 }
 
+/* The label fills its cell, so the chosen tab's block of colour fills it too. */
 .admin-tabs span {
+  flex: 1;
   justify-content: center;
 }
 
@@ -290,6 +292,57 @@
 .button.button--reject:hover {
   background: var(--reject-wash);
   text-decoration: underline;
+}
+
+/* --- Home tab --- */
+
+/* The Home tab's cards space themselves; the panel wrapper only keeps the bottom padding. */
+.admin-panel--plain {
+  gap: 1.25rem;
+}
+
+.job-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.job {
+  display: grid;
+  justify-items: start;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem;
+  border-left: 4px solid var(--rule);
+  background: var(--wash);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Waiting on Tristan, rather than just worth knowing. */
+.job--urgent {
+  border-left-color: var(--save);
+}
+
+.job-what {
+  font-weight: 700;
+}
+
+.job-detail {
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+}
+
+.job-open {
+  margin-top: 0.15rem;
+  min-height: var(--tap);
+}
+
+.tally {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.1rem;
 }
 
 /* --- Usage tab --- */

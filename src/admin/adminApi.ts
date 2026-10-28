@@ -132,6 +132,22 @@ export interface FeedbackMessage {
   reviewed_at?: string | null;
 }
 
+export interface Dashboard {
+  now: string;
+  /** True while the public site still carries the "made up for testing" banner. */
+  sample: boolean;
+  queue: { reports: number; suggestions: number; oldest_at: string | null };
+  ideas: { pending: number; oldest_at: string | null };
+  pubs: {
+    total: number;
+    /** Days after which a tap list turns grey on the public site. */
+    stale_days: number;
+    no_beers: { count: number; names: string[] };
+    stale: { count: number; names: string[] };
+  };
+  usage: { writes: number; write_budget: number; photos: number; photos_cap: number };
+}
+
 export interface Usage {
   now: string;
   today: { votes: number; reports: number; suggestions: number; photos: number; writes: number };
@@ -164,6 +180,7 @@ export const adminApi = {
   session: () => call<{ signedIn: boolean; setUp: boolean }>('/session'),
   signIn: (password: string) => call<{ ok: true }>('/login', { password }),
   signOut: () => call<{ ok: true }>('/logout', {}),
+  dashboard: () => call<Dashboard>('/dashboard?area=e17'),
   usage: () => call<Usage>('/usage'),
   pages: () => call<{ pages: SitePage[] }>('/pages'),
   savePage: (slug: string, title: string, body: string) => call<{ ok: true }>(`/pages/${slug}`, { title, body }),

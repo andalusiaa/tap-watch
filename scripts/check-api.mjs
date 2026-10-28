@@ -469,5 +469,24 @@ check('Pub and banner changes are logged', ['Renamed Arms: renamed from', 'Added
 r = await admin('/area/e17/sample', { cookie, body: { sample: false }, origin: 'https://evil.example' });
 check('Pub and banner changes need the same origin', r.status === 403);
 
+// --- The admin home tab ---
+check('The dashboard needs sign-in', (await admin('/dashboard?area=e17')).status === 401);
+check('The dashboard refuses a made-up area', (await admin('/dashboard?area=NOT AN AREA', { cookie })).status === 400);
+r = await admin('/dashboard?area=e17', { cookie });
+const home = r.body;
+const pendingNow = (table) => sql(`SELECT COUNT(*) AS n FROM ${table} WHERE status = 'pending'`)[0].n;
+check(
+  'The dashboard counts what is still waiting',
+  r.status === 200 &&
+    home.queue.reports === pendingNow('photo_reports') &&
+    home.queue.suggestions === pendingNow('suggestions') &&
+    home.ideas.pending === pendingNow('feedback'),
+  JSON.stringify(home.queue) + JSON.stringify(home.ideas),
+);
+check('The dashboard names pubs with no beers listed', home.pubs.no_beers.count >= 1 && home.pubs.no_beers.names.includes('The Test Tap'), JSON.stringify(home.pubs));
+check('The dashboard follows the banner switch', home.sample === false);
+check('The dashboard reports the write budget', home.usage.write_budget === 50000 && home.usage.writes > 0, JSON.stringify(home.usage));
+check('The dashboard sends no personal data', !JSON.stringify(home).includes('device') && !JSON.stringify(home).includes('message'));
+
 console.log(failures ? `\n${failures} check(s) failed.` : '\nAll checks passed.');
 process.exit(failures ? 1 : 0);

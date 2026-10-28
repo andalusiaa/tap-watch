@@ -8,6 +8,8 @@ import { sentAgo } from './queue';
 interface Options {
   panel: HTMLElement;
   onSignedOut: () => void;
+  /** Called after a message is kept or discarded, so the Home tab's count catches up. */
+  onChanged?: () => void;
 }
 
 export async function renderIdeas(o: Options): Promise<void> {
@@ -30,6 +32,7 @@ export async function renderIdeas(o: Options): Promise<void> {
       status.textContent = 'Saving…';
       try {
         await adminApi.reviewFeedback(message.id, action);
+        o.onChanged?.();
         reload();
       } catch (error) {
         if (error instanceof SignedOut) return o.onSignedOut();

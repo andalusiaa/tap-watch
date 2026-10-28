@@ -42,16 +42,19 @@
 
       <fieldset class="segmented admin-tabs" id="tabs">
         <legend class="visually-hidden">Section</legend>
-        <label><input type="radio" name="tab" value="queue" checked><span id="queue-tab-label">To check</span></label>
+        <label><input type="radio" name="tab" value="home" checked><span id="home-tab-label">Home</span></label>
+        <label><input type="radio" name="tab" value="queue"><span id="queue-tab-label">To check</span></label>
         <label><input type="radio" name="tab" value="taps"><span>Tap lists</span></label>
         <label><input type="radio" name="tab" value="pubs"><span>Pubs</span></label>
         <label><input type="radio" name="tab" value="activity"><span>Activity</span></label>
-        <label><input type="radio" name="tab" value="ideas"><span>Ideas</span></label>
+        <label><input type="radio" name="tab" value="ideas"><span id="ideas-tab-label">Ideas</span></label>
         <label><input type="radio" name="tab" value="pages"><span>Pages</span></label>
         <label><input type="radio" name="tab" value="usage"><span>Usage</span></label>
       </fieldset>
 
-      <div id="queue-panel" class="admin-panel"></div>
+      <div id="home-panel"></div>
+
+      <div id="queue-panel" class="admin-panel" hidden></div>
 
       <div id="taps-panel" class="admin-panel" hidden>
         <label for="pub-picker" class="admin-label">Pub</label>

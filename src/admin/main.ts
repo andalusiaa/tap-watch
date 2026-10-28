@@ -7,6 +7,7 @@ import { adminApi, AdminError, SignedOut } from './adminApi';
 import { renderQueue } from './queue';
 import { confirmDeletes, createTapEditor } from './tapEditor';
 import { renderActivity } from './activity';
+import { createDashboard, waitingCount, type TabName } from './dashboard';
 import { renderIdeas } from './ideas';
 import { renderPages } from './pages';
 import { renderPubs } from './pubs';
@@ -21,7 +22,10 @@ const els = {
   workspace: byId('workspace'),
   signout: byId<HTMLButtonElement>('signout'),
   tabs: byId<HTMLFieldSetElement>('tabs'),
+  homeTabLabel: byId('home-tab-label'),
   queueTabLabel: byId('queue-tab-label'),
+  ideasTabLabel: byId('ideas-tab-label'),
+  homePanel: byId('home-panel'),
   queuePanel: byId('queue-panel'),
   tapsPanel: byId('taps-panel'),
   usagePanel: byId('usage-panel'),
@@ -37,7 +41,52 @@ let snapshot: Snapshot | null = null;
 
 let beers: Beer[] = [];
 
+/** How often the Home tab asks what's outstanding. Only while the page is on screen. */
+const POLL_MS = 30_000;
+let pollTimer = 0;
+let polling = false;
+
+const dashboard = createDashboard((tab) => goTo(tab));
+
+/** Reads the counts, updates the Home tab and puts the numbers on the tabs themselves. */
+async function pollDashboard(): Promise<void> {
+  if (polling || els.workspace.hidden) return;
+  polling = true;
+  try {
+    const d = await adminApi.dashboard();
+    dashboard.update(d);
+    const toCheck = d.queue.reports + d.queue.suggestions;
+    const waiting = waitingCount(d);
+    els.homeTabLabel.textContent = waiting ? `Home (${waiting})` : 'Home';
+    els.queueTabLabel.textContent = toCheck ? `To check (${toCheck})` : 'To check';
+    els.ideasTabLabel.textContent = d.ideas.pending ? `Ideas (${d.ideas.pending})` : 'Ideas';
+  } catch (error) {
+    if (error instanceof SignedOut) return showSignIn('Your session ended. Please sign in again.');
+    dashboard.setTrouble("Couldn't check just now. Trying again shortly.");
+  } finally {
+    polling = false;
+  }
+}
+
+function startPolling() {
+  clearInterval(pollTimer);
+  pollTimer = window.setInterval(() => {
+    if (!document.hidden) void pollDashboard();
+  }, POLL_MS);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearInterval(pollTimer);
+    return;
+  }
+  if (els.workspace.hidden) return;
+  void pollDashboard();
+  startPolling();
+});
+
 function showSignIn(message = '') {
+  clearInterval(pollTimer);
   els.workspace.hidden = true;
   els.signin.hidden = false;
   els.status.textContent = '';
@@ -51,7 +100,7 @@ async function refreshQueue() {
     const count = await renderQueue(els.queuePanel, {
       beers,
       onSignedOut: () => showSignIn('Your session ended. Please sign in again.'),
-      onDone: () => void refreshCount(),
+      onDone: () => void pollDashboard(),
     });
     els.queueTabLabel.textContent = count ? `To check (${count})` : 'To check';
   } catch (error) {
@@ -80,7 +129,11 @@ async function refreshPages() {
 
 async function refreshIdeas() {
   try {
-    await renderIdeas({ panel: els.ideasPanel, onSignedOut: () => showSignIn('Your session ended. Please sign in again.') });
+    await renderIdeas({
+      panel: els.ideasPanel,
+      onSignedOut: () => showSignIn('Your session ended. Please sign in again.'),
+      onChanged: () => void pollDashboard(),
+    });
   } catch (error) {
     if (error instanceof SignedOut) return showSignIn('Your session ended. Please sign in again.');
     els.ideasPanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load the messages. Check your connection and try again."));
@@ -101,7 +154,10 @@ async function refreshPubs() {
   try {
     await renderPubs({
       panel: els.pubsPanel,
-      onPubsChanged: () => void fillPubPicker(),
+      onPubsChanged: () => {
+        void fillPubPicker();
+        void pollDashboard();
+      },
       onSignedOut: () => showSignIn('Your session ended. Please sign in again.'),
     });
   } catch (error) {
@@ -118,16 +174,6 @@ async function fillPubPicker() {
     h('option', { value: '' }, 'Choose a pub'),
     ...pubs.map((p) => h('option', { value: p.id, selected: p.id === current }, p.is_active ? p.name : `${p.name} (closed)`)),
   );
-}
-
-async function refreshCount() {
-  try {
-    const { reports, suggestions } = await adminApi.queue();
-    const count = reports.length + suggestions.length;
-    els.queueTabLabel.textContent = count ? `To check (${count})` : 'To check';
-  } catch {
-    // The count is a nicety; ignore failures.
-  }
 }
 
 async function openPub(pubId: string) {
@@ -161,6 +207,7 @@ async function openPub(pubId: string) {
       try {
         await adminApi.saveListings(pub.id, changes);
         await openPub(pub.id);
+        void pollDashboard();
         const saved = els.pubEditor.querySelector<HTMLElement>('.save-status');
         if (saved) {
           saved.textContent = `Saved ${changes.length} ${changes.length === 1 ? 'change' : 'changes'}. The site updates within a minute.`;
@@ -195,7 +242,9 @@ async function showWorkspace() {
   await fillPubPicker();
   els.status.textContent = snapshot.sample ? 'The public site is still showing the made-up sample tap lists.' : '';
   els.workspace.hidden = false;
-  await refreshQueue();
+  els.homePanel.replaceChildren(dashboard.element);
+  await pollDashboard();
+  startPolling();
 }
 
 els.signinForm.addEventListener('submit', async (e) => {
@@ -217,8 +266,8 @@ els.signout.addEventListener('click', async () => {
   showSignIn('Signed out.');
 });
 
-els.tabs.addEventListener('change', (e) => {
-  const tab = (e.target as HTMLInputElement).value;
+function showTab(tab: string) {
+  els.homePanel.hidden = tab !== 'home';
   els.queuePanel.hidden = tab !== 'queue';
   els.tapsPanel.hidden = tab !== 'taps';
   els.usagePanel.hidden = tab !== 'usage';
@@ -232,7 +281,20 @@ els.tabs.addEventListener('change', (e) => {
   if (tab === 'pubs') void refreshPubs();
   if (tab === 'queue') void refreshQueue();
   if (tab === 'usage') void refreshUsage();
-});
+  if (tab === 'home') void pollDashboard();
+}
+
+els.tabs.addEventListener('change', (e) => showTab((e.target as HTMLInputElement).value));
+
+/** Opening a tab from the Home tab, as if its button had been pressed. */
+function goTo(tab: TabName) {
+  const radio = els.tabs.querySelector<HTMLInputElement>(`input[name="tab"][value="${tab}"]`);
+  if (radio) {
+    radio.checked = true;
+    radio.focus();
+  }
+  showTab(tab);
+}
 
 els.pubPicker.addEventListener('change', () => void openPub(els.pubPicker.value));
 

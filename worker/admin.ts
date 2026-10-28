@@ -7,6 +7,7 @@
 //   GET  /api/admin/pages, POST /api/admin/pages/:slug            → see pages.ts
 //   GET  /api/admin/feedback, POST /api/admin/feedback/:id        → see feedback.ts
 //   GET  /api/admin/activity?type=&pub=&before=           → see activity.ts
+//   GET  /api/admin/dashboard?area=                        → what needs a look (the home tab)
 //   GET  /api/admin/usage                                  → today's activity and limits
 //   GET  /api/admin/queue                                  → photo reports and suggestions to check
 //   GET  /api/admin/photo/:id/:n                           → photo n of a report (JPEG)
@@ -22,6 +23,7 @@ import { bumpCounter, deviceHash, readCounter, sameString, signToString } from '
 import { invalidateSnapshot, isAreaId } from './snapshot';
 import { normalise, slugify } from './text';
 import { getActivity, logAdmin } from './activity';
+import { getDashboard } from './dashboard';
 import { getFeedback, reviewFeedback } from './feedback';
 import { isPageSlug, listPages, savePage } from './pages';
 import { addPub, listPubs, setSample, updatePub } from './pubs';
@@ -502,6 +504,11 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
 
   let m: RegExpMatchArray | null;
   if (path === '/queue' && method === 'GET') return getQueue(env);
+  if (path === '/dashboard' && method === 'GET') {
+    const area = url.searchParams.get('area') ?? 'e17';
+    if (!isAreaId(area)) throw badRequest();
+    return getDashboard(env, area, now);
+  }
   if (path === '/usage' && method === 'GET') return getUsage(env, now);
   if (path === '/activity' && method === 'GET') return getActivity(env, url, now);
   if (path === '/pages' && method === 'GET') return listPages(env);
