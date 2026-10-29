@@ -23,10 +23,6 @@ const PAGE_NAMES: Record<string, string> = {
 const count = (n: number) => n.toLocaleString('en-GB');
 const plural = (n: number, one: string, many = `${one}s`) => `${count(n)} ${n === 1 ? one : many}`;
 
-function dayLabel(day: string): string {
-  return new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-}
-
 /** A labelled bar. `meter` keeps it to attributes, since the stylesheet forbids inline styles. */
 function bar(label: string, n: number, max: number, note?: string): HTMLElement {
   return h(
@@ -44,18 +40,94 @@ function barList(rows: { label: string; n: number; note?: string }[], empty: str
   return h('ul', { class: 'bar-list' }, rows.map((r) => bar(r.label, r.n, max, r.note)));
 }
 
-/** Days for a week's view, or whole weeks when the period is longer. */
-function series(s: Stats): { label: string; n: number }[] {
-  const rows = s.daily.map((d) => ({ label: dayLabel(d.day), n: d.page ?? 0 }));
-  if (s.days <= 31) return rows;
-  const weeks: { label: string; n: number }[] = [];
-  for (let i = 0; i < rows.length; i += 7) {
-    const week = rows.slice(i, i + 7);
-    const first = week[0];
-    if (!first) continue;
-    weeks.push({ label: `Week of ${first.label}`, n: week.reduce((sum, d) => sum + d.n, 0) });
+/** Five shades of green, so a busy day stands out from a quiet one at a glance. */
+function shade(n: number, max: number): number {
+  if (n <= 0) return 0;
+  return Math.min(5, Math.ceil((n / max) * 5));
+}
+
+const WEEKDAYS: [short: string, full: string][] = [
+  ['M', 'Monday'],
+  ['T', 'Tuesday'],
+  ['W', 'Wednesday'],
+  ['T', 'Thursday'],
+  ['F', 'Friday'],
+  ['S', 'Saturday'],
+  ['S', 'Sunday'],
+];
+
+/** Monday is the first column, so weekends sit together on the right. */
+const columnOf = (date: Date) => (date.getUTCDay() + 6) % 7;
+
+function monthTable(monthStart: Date, counts: Map<string, number>, max: number): HTMLElement {
+  const year = monthStart.getUTCFullYear();
+  const month = monthStart.getUTCMonth();
+  const lastDate = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+  const blank = () => ({ el: h('td', { class: 'cal-day cal-day--off' }), counted: false });
+  const cells = Array.from({ length: columnOf(monthStart) }, blank);
+  for (let date = 1; date <= lastDate; date++) {
+    const iso = new Date(Date.UTC(year, month, date)).toISOString().slice(0, 10);
+    const n = counts.get(iso);
+    // Outside the period being shown: an empty square, so only counted days carry a number.
+    if (n === undefined) {
+      cells.push(blank());
+      continue;
+    }
+    cells.push({
+      counted: true,
+      el: h(
+        'td',
+        {
+          class: `cal-day cal-day--${shade(n, max)}`,
+          'aria-label': `${date} ${monthStart.toLocaleDateString('en-GB', { month: 'long', timeZone: 'UTC' })}: ${plural(n, 'page')}`,
+        },
+        h('span', { class: 'cal-date' }, String(date)),
+        h('span', { class: 'cal-count' }, count(n)),
+      ),
+    });
   }
-  return weeks;
+  while (cells.length % 7) cells.push(blank());
+
+  // Weeks with nothing in them are left out, so a part-month doesn't sit in a sea of blanks.
+  const weeks: HTMLElement[] = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    const week = cells.slice(i, i + 7);
+    if (week.some((cell) => cell.counted)) weeks.push(h('tr', null, week.map((cell) => cell.el)));
+  }
+
+  return h(
+    'table',
+    { class: 'calendar' },
+    h('caption', null, monthStart.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })),
+    h('thead', null, h('tr', null, WEEKDAYS.map(([short, full]) => h('th', { scope: 'col' }, h('abbr', { title: full }, short))))),
+    h('tbody', null, weeks),
+  );
+}
+
+/** The period as a calendar, one table per month, each day shaded by how busy it was. */
+function calendar(s: Stats): HTMLElement {
+  const counts = new Map(s.daily.map((d) => [d.day, d.page ?? 0]));
+  const max = Math.max(1, ...counts.values());
+  const months: Date[] = [];
+  for (const iso of counts.keys()) {
+    const date = new Date(`${iso}T00:00:00Z`);
+    const first = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+    if (!months.some((m) => m.getTime() === first.getTime())) months.push(first);
+  }
+  months.sort((a, b) => a.getTime() - b.getTime());
+  return h(
+    'div',
+    { class: 'cal-months' },
+    months.map((month) => monthTable(month, counts, max)),
+    h(
+      'p',
+      { class: 'cal-key' },
+      h('span', null, 'Quiet'),
+      [1, 2, 3, 4, 5].map((level) => h('span', { class: `cal-swatch cal-day--${level}` })),
+      h('span', null, 'Busy'),
+    ),
+  );
 }
 
 function render(s: Stats, onPeriod: (days: number) => void): HTMLElement[] {
@@ -85,8 +157,8 @@ function render(s: Stats, onPeriod: (days: number) => void): HTMLElement[] {
         s.pages.map((p) => ({ label: PAGE_NAMES[p.key] ?? p.key, n: p.n })),
         'No pages opened yet.',
       ),
-      h('h3', { class: 'admin-label' }, s.days <= 31 ? 'Day by day' : 'Week by week'),
-      barList(series(s), 'Nothing yet.'),
+      h('h3', { class: 'admin-label' }, 'Day by day'),
+      calendar(s),
       h(
         'p',
         { class: 'form-help' },

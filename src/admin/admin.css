@@ -401,6 +401,109 @@
   margin-top: 0.75rem;
 }
 
+/* Day by day, as a calendar: the greener the square, the busier the day. */
+.cal-months {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.calendar {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 3px;
+}
+
+.calendar caption {
+  margin-bottom: 0.3rem;
+  text-align: left;
+  font-weight: 700;
+}
+
+.calendar th {
+  padding-bottom: 0.15rem;
+  font-size: var(--step--2);
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.calendar abbr {
+  text-decoration: none;
+}
+
+.cal-day {
+  height: 2.6rem;
+  border-radius: 4px;
+  text-align: center;
+  background: var(--wash);
+}
+
+.cal-date {
+  display: block;
+  font-size: 0.6rem;
+  line-height: 1.1;
+  color: var(--ink-muted);
+}
+
+.cal-count {
+  display: block;
+  font-size: var(--step--2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+/* Days outside the period: the square keeps its place in the week but stays empty. */
+.cal-day--off {
+  background: none;
+}
+
+.cal-day--0 {
+  background: var(--wash);
+}
+
+.cal-day--1 { background: #ddebe4; }
+.cal-day--2 { background: #b7d4c6; }
+.cal-day--3 { background: #8fbca6; }
+.cal-day--4 { background: #62a282; }
+
+.cal-day--5 {
+  background: var(--fresh);
+  color: var(--on-fresh);
+}
+
+.cal-day--5 .cal-date {
+  color: var(--on-fresh);
+}
+
+:root[data-theme="dark"] .cal-day--1 { background: #0a2819; }
+:root[data-theme="dark"] .cal-day--2 { background: #0e3b25; }
+:root[data-theme="dark"] .cal-day--3 { background: #134f31; }
+:root[data-theme="dark"] .cal-day--4 { background: #1a6a42; }
+
+:root[data-theme="dark"] .cal-day--5 {
+  background: var(--save);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .cal-day--5 .cal-date {
+  color: var(--ink);
+}
+
+.cal-key {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--step--2);
+  color: var(--ink-muted);
+}
+
+.cal-swatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 3px;
+}
+
 /* --- Usage tab --- */
 
 .usage-meter {
