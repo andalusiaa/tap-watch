@@ -345,6 +345,62 @@
   padding-left: 1.1rem;
 }
 
+/* --- Numbers tab --- */
+
+.numbers-big {
+  font-size: var(--step-2);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.numbers-big .card-meta {
+  display: block;
+  font-size: var(--step--1);
+  font-weight: 400;
+}
+
+.bar-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Label above, then the bar and its number on one line. */
+.bar-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.1rem 0.6rem;
+}
+
+.bar-label {
+  grid-column: 1 / -1;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bar-note {
+  margin-left: 0.4rem;
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.bar-row meter {
+  width: 100%;
+  height: 0.9rem;
+}
+
+.bar-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.admin-panel h3.admin-label {
+  margin-top: 0.75rem;
+}
+
 /* --- Usage tab --- */
 
 .usage-meter {

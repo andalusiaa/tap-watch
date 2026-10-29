@@ -1,6 +1,6 @@
 // The "Tell us" page: one message box, the same spam checks as every other public write.
 
-import { sendFeedback } from './api';
+import { primeToken, sendFeedback } from './api';
 import { byId } from './ui/dom';
 
 const MAX = 1000;
@@ -19,6 +19,9 @@ function updateCount() {
 }
 els.message.addEventListener('input', updateCount);
 updateCount();
+
+// Fetches the page token now rather than on send, which also counts the visit.
+void primeToken('feedback');
 
 els.form.addEventListener('submit', async (e) => {
   e.preventDefault();

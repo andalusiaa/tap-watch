@@ -1,4 +1,5 @@
 import { loadSnapshot, sendVote } from './api';
+import { cancelMiss, tally, tallyMiss } from './tally';
 import { createCatalogue, type Catalogue, type DispenseFilter } from './catalogue';
 import { applyVote, type VoteDirection } from './rules';
 import { mapPoints } from './mapPoints';
@@ -105,6 +106,8 @@ function start(catalogue: Catalogue) {
   els.banner.hidden = !catalogue.sample;
 
   function setState(patch: Partial<State>, how: 'push' | 'replace') {
+    if (patch.pubId && patch.pubId !== state.pubId) tally('pub', patch.pubId);
+    if (patch.view === 'map' && state.view !== 'map') tally('map');
     state = { ...state, ...patch };
     const url = urlFor(state);
     if (how === 'push') history.pushState({ sheet: Boolean(patch.pubId) }, '', url);
@@ -118,13 +121,19 @@ function start(catalogue: Catalogue) {
     form: els.form,
     catalogue,
     onSelect: (beer) => {
+      cancelMiss();
+      tally('search', beer.id);
       locationBar.onSearch();
       setState({ beerId: beer.id, noMatch: null, pubId: null }, 'push');
       // The beer is chosen: fold the filters away so the results have the screen.
       showPanel(false);
     },
-    onNoMatch: (query) => setState({ beerId: null, noMatch: query, pubId: null }, 'replace'),
+    onNoMatch: (query) => {
+      tallyMiss(query);
+      setState({ beerId: null, noMatch: query, pubId: null }, 'replace');
+    },
     onClear: () => {
+      cancelMiss();
       if (state.beerId || state.noMatch) setState({ beerId: null, noMatch: null }, 'replace');
     },
   });
@@ -404,7 +413,7 @@ if (themeChoice && window.tapWatchTheme) {
   });
 }
 
-loadSnapshot()
+loadSnapshot('home')
   .then((snapshot) => {
     const catalogue = createCatalogue(snapshot);
     // Votes from this device that the shared snapshot may not include yet.

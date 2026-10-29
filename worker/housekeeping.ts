@@ -1,6 +1,6 @@
 // Daily clean-up, run by the Cron Trigger in wrangler.jsonc (SPEC section 7).
 
-import { ADMIN_LOG, PHOTOS, PRIVACY } from './config';
+import { ADMIN_LOG, PHOTOS, PRIVACY, STATS } from './config';
 import { isoTime } from './http';
 import { rotateSalt } from './security';
 
@@ -9,7 +9,7 @@ export async function housekeeping(env: Env, now: number) {
   const hashCutoff = isoTime(now - PRIVACY.deviceHashMaxAgeMs);
   const photoCutoff = isoTime(now - PHOTOS.maxPendingMs);
 
-  const [votes, reports, suggestions, feedback, limits, staleReports, oldLog] = await db.batch<{ id: number }>([
+  const [votes, reports, suggestions, feedback, limits, staleReports, oldLog, oldStats] = await db.batch<{ id: number }>([
     // Forget which device sent each vote, report and suggestion once it is 30 days old.
     db.prepare('UPDATE votes SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
     db.prepare('UPDATE photo_reports SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
@@ -22,6 +22,8 @@ export async function housekeeping(env: Env, now: number) {
     db.prepare(`SELECT id FROM photo_reports WHERE status = 'pending' AND created_at < ? LIMIT 10`).bind(photoCutoff),
     // The Activity tab's record of admin changes is kept for a year.
     db.prepare('DELETE FROM admin_log WHERE created_at < ?').bind(isoTime(now - ADMIN_LOG.keepDays * 86_400_000)),
+    // Daily totals are about the site, not about anyone, but two years is plenty.
+    db.prepare('DELETE FROM stats WHERE day < ?').bind(isoTime(now - STATS.keepDays * 86_400_000).slice(0, 10)),
   ]);
 
   const expired = (staleReports?.results ?? []).map((r) => r.id);
@@ -48,6 +50,7 @@ export async function housekeeping(env: Env, now: number) {
     (votes?.meta.changes ?? 0) + (reports?.meta.changes ?? 0) + (suggestions?.meta.changes ?? 0) + (feedback?.meta.changes ?? 0);
   console.log(
     `Housekeeping: cleared ${cleared} device hashes, deleted ${limits?.meta.changes ?? 0} expired counters, ` +
-      `expired ${expired.length} unchecked photos, deleted ${oldLog?.meta.changes ?? 0} old admin log entries, salt rotated: ${rotated}`,
+      `expired ${expired.length} unchecked photos, deleted ${oldLog?.meta.changes ?? 0} old admin log entries, ` +
+      `deleted ${oldStats?.meta.changes ?? 0} old daily totals, salt rotated: ${rotated}`,
   );
 }

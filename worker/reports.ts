@@ -7,6 +7,7 @@ import { busy, guardPublicWrite, limitPerDevice } from './guard';
 import { ApiError, assertSameOrigin, badRequest, isoTime, json, readJsonBody } from './http';
 import { looksLikeJpeg, stripJpegMetadata } from './jpeg';
 import { bumpCounter, readCounter } from './security';
+import { countStat } from './stats';
 
 const isId = (value: unknown): value is string => typeof value === 'string' && /^[a-z0-9-]{1,80}$/.test(value);
 
@@ -90,6 +91,7 @@ export async function handleReport(request: Request, env: Env, now: number): Pro
       ),
       bumpCounter(db, `photos:${day}`, photos.length, now + 2 * 86_400_000),
       bumpCounter(db, guard.budget.key, LIMITS.reportWriteCost + LIMITS.photoWriteCost * photos.length, guard.budget.expiresAt),
+      countStat(db, now, 'photo'),
     ]);
   } catch (error) {
     // Don't leave half a report behind.
@@ -152,6 +154,7 @@ export async function handleSuggest(request: Request, env: Env, now: number): Pr
        VALUES (?, ?, ?, ?, 'pending', ?, ?)`,
     ).bind(pubId, beerId, beerId ? null : proposed, dispense, guard.device, isoTime(now)),
     bumpCounter(db, guard.budget.key, LIMITS.suggestionWriteCost, guard.budget.expiresAt),
+    countStat(db, now, 'beer'),
   ]);
 
   return json({ ok: true });

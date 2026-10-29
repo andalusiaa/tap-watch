@@ -8,6 +8,7 @@
 //   GET  /api/admin/feedback, POST /api/admin/feedback/:id        → see feedback.ts
 //   GET  /api/admin/activity?type=&pub=&before=           → see activity.ts
 //   GET  /api/admin/dashboard?area=                        → what needs a look (the home tab)
+//   GET  /api/admin/stats?days=                            → how the site is used (the Numbers tab)
 //   GET  /api/admin/usage                                  → today's activity and limits
 //   GET  /api/admin/queue                                  → photo reports and suggestions to check
 //   GET  /api/admin/photo/:id/:n                           → photo n of a report (JPEG)
@@ -24,6 +25,7 @@ import { invalidateSnapshot, isAreaId } from './snapshot';
 import { normalise, slugify } from './text';
 import { getActivity, logAdmin } from './activity';
 import { getDashboard } from './dashboard';
+import { getStats } from './stats';
 import { getFeedback, reviewFeedback } from './feedback';
 import { isPageSlug, listPages, savePage } from './pages';
 import { addPub, listPubs, setSample, updatePub } from './pubs';
@@ -510,6 +512,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL, now: num
     return getDashboard(env, area, now);
   }
   if (path === '/usage' && method === 'GET') return getUsage(env, now);
+  if (path === '/stats' && method === 'GET') return getStats(env, url, now);
   if (path === '/activity' && method === 'GET') return getActivity(env, url, now);
   if (path === '/pages' && method === 'GET') return listPages(env);
   if ((m = path.match(/^\/pages\/([a-z0-9-]{1,40})$/)) && method === 'POST') {

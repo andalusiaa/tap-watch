@@ -38,7 +38,13 @@ Tap Watch saves two small things in your browser, never sent anywhere:
 
 - your Light or Dark choice, if you've made one
 
-There are no advertising or tracking cookies, and no analytics.
+There are no advertising or tracking cookies, and nothing follows you from site to site.
+
+## Counting how the site is used
+
+Tap Watch keeps a daily tally of how it is being used: how many times each page was opened, which beers were searched for, which pub lists were opened and how often the map was used. Searches that found nothing are kept as the words typed, so missing beers can be added to the list.
+
+These are totals for a whole day and nothing else. There is no cookie, no identifier and no record of who did what, when, or in what order, so two visits can never be joined up - not even your own. The counting is done by Tap Watch itself: nothing is sent to Google, Meta or any analytics company, and the totals are deleted after two years.
 
 ## Other services
 

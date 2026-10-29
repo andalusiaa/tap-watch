@@ -9,6 +9,7 @@ import { confirmDeletes, createTapEditor } from './tapEditor';
 import { renderActivity } from './activity';
 import { createDashboard, waitingCount, type TabName } from './dashboard';
 import { renderIdeas } from './ideas';
+import { renderNumbers } from './numbers';
 import { renderPages } from './pages';
 import { renderPubs } from './pubs';
 import { renderUsage } from './usage';
@@ -31,6 +32,7 @@ const els = {
   usagePanel: byId('usage-panel'),
   pubsPanel: byId('pubs-panel'),
   activityPanel: byId('activity-panel'),
+  numbersPanel: byId('numbers-panel'),
   ideasPanel: byId('ideas-panel'),
   pagesPanel: byId('pages-panel'),
   pubPicker: byId<HTMLSelectElement>('pub-picker'),
@@ -106,6 +108,15 @@ async function refreshQueue() {
   } catch (error) {
     if (error instanceof SignedOut) return showSignIn('Please sign in.');
     els.queuePanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load the list. Check your connection and refresh."));
+  }
+}
+
+async function refreshNumbers() {
+  try {
+    await renderNumbers(els.numbersPanel);
+  } catch (error) {
+    if (error instanceof SignedOut) return showSignIn('Your session ended. Please sign in again.');
+    els.numbersPanel.replaceChildren(h('p', { class: 'form-status' }, "Couldn't load the numbers. Check your connection and try again."));
   }
 }
 
@@ -237,7 +248,7 @@ async function openPub(pubId: string) {
 async function showWorkspace() {
   els.signin.hidden = true;
   els.status.textContent = 'Loading…';
-  snapshot ??= await loadSnapshot();
+  snapshot ??= await loadSnapshot('admin');
   beers = [...snapshot.beers];
   await fillPubPicker();
   els.status.textContent = snapshot.sample ? 'The public site is still showing the made-up sample tap lists.' : '';
@@ -270,6 +281,7 @@ function showTab(tab: string) {
   els.homePanel.hidden = tab !== 'home';
   els.queuePanel.hidden = tab !== 'queue';
   els.tapsPanel.hidden = tab !== 'taps';
+  els.numbersPanel.hidden = tab !== 'numbers';
   els.usagePanel.hidden = tab !== 'usage';
   els.pubsPanel.hidden = tab !== 'pubs';
   els.activityPanel.hidden = tab !== 'activity';
@@ -280,6 +292,7 @@ function showTab(tab: string) {
   if (tab === 'ideas') void refreshIdeas();
   if (tab === 'pubs') void refreshPubs();
   if (tab === 'queue') void refreshQueue();
+  if (tab === 'numbers') void refreshNumbers();
   if (tab === 'usage') void refreshUsage();
   if (tab === 'home') void pollDashboard();
 }

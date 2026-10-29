@@ -12,22 +12,32 @@ let tokenReceivedAt = 0;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** A page token on its own, for pages that don't load the snapshot. */
-async function fetchToken(): Promise<void> {
-  const res = await fetch('/api/form-token', { headers: { Accept: 'application/json' } });
+/**
+ * A page token on its own, for pages that don't load the snapshot. `page` names the page so
+ * the server can add one to that page's daily total; leave it out and nothing is counted.
+ */
+async function fetchToken(page = ''): Promise<void> {
+  const res = await fetch(`/api/form-token${page ? `?page=${page}` : ''}`, { headers: { Accept: 'application/json' } });
   token = res.headers.get('X-Form-Token') ?? '';
   tokenReceivedAt = Date.now();
 }
 
-async function fetchSnapshot(): Promise<Snapshot> {
-  const res = await fetch(`/api/snapshot?area=${AREA_ID}`, { headers: { Accept: 'application/json' } });
+/** Asks for the page token when a page opens: it counts the visit, and the form is ready sooner. */
+export const primeToken = (page: string) => fetchToken(page).catch(() => undefined);
+
+/** The current page token, for anything that posts without going through sendWrite. */
+export const pageToken = () => token;
+
+async function fetchSnapshot(page = ''): Promise<Snapshot> {
+  const res = await fetch(`/api/snapshot?area=${AREA_ID}${page ? `&page=${page}` : ''}`, { headers: { Accept: 'application/json' } });
   if (!res.ok) throw new Error(`Snapshot request failed: ${res.status}`);
   token = res.headers.get('X-Form-Token') ?? '';
   tokenReceivedAt = Date.now();
   return (await res.json()) as Snapshot;
 }
 
-export const loadSnapshot = fetchSnapshot;
+/** `page` is 'home' for the public page (counted) or 'admin' for the admin page (not counted). */
+export const loadSnapshot = (page: 'home' | 'admin') => fetchSnapshot(page === 'home' ? 'home' : '');
 
 export type WriteResult<T = object> =
   | ({ ok: true } & Partial<T>)

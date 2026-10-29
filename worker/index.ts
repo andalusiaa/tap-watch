@@ -9,12 +9,13 @@ import { handleAdmin } from './admin';
 import { handleFeedback } from './feedback';
 import { getPage, pageSlugFrom } from './pages';
 import { handleReport, handleSuggest } from './reports';
+import { countPage, handleCount } from './stats';
 import { handleVote } from './vote';
 
 const methodNotAllowed = (allow: string) =>
   new ApiError(405, 'method_not_allowed', `Use ${allow} for this address.`);
 
-async function route(request: Request, env: Env): Promise<Response> {
+async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
   const now = Date.now();
 
@@ -25,6 +26,8 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (!isAreaId(area)) throw new ApiError(400, 'bad_request', 'Choose an area, for example ?area=e17.');
       const snapshot = await getSnapshotJson(env.DB, area, now);
       if (!snapshot) throw new ApiError(404, 'not_found', "We don't cover that area yet.");
+      // The home page says who it is; the admin page says 'admin' and isn't counted.
+      if (url.searchParams.get('page') === 'home') ctx.waitUntil(countPage(env.DB, now, 'home'));
       return jsonText(snapshot, 200, { 'X-Form-Token': await issueFormToken(env.APP_SECRET, now) });
     }
 
@@ -44,17 +47,27 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (request.method !== 'POST') throw methodNotAllowed('POST');
       return handleFeedback(request, env, now);
 
-    case '/api/form-token':
+    case '/api/form-token': {
       // A page token on its own, for pages that don't need the whole snapshot.
       if (request.method !== 'GET') throw methodNotAllowed('GET');
+      const page = url.searchParams.get('page');
+      if (page) ctx.waitUntil(countPage(env.DB, now, page));
       return json({ ok: true }, 200, { 'X-Form-Token': await issueFormToken(env.APP_SECRET, now) });
+    }
+
+    case '/api/count':
+      // How the site is used, as daily totals. Answers 204 whatever happens.
+      if (request.method !== 'POST') throw methodNotAllowed('POST');
+      return handleCount(request, env, now);
 
     default: {
       if (url.pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url, now);
       const page = pageSlugFrom(url.pathname);
       if (page) {
         if (request.method !== 'GET') throw methodNotAllowed('GET');
-        return getPage(env, page);
+        const words = await getPage(env, page);
+        ctx.waitUntil(countPage(env.DB, now, page));
+        return words;
       }
       throw new ApiError(404, 'not_found', "There's nothing at this address.");
     }
@@ -62,9 +75,9 @@ async function route(request: Request, env: Env): Promise<Response> {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     try {
-      return await route(request, env);
+      return await route(request, env, ctx);
     } catch (error) {
       if (error instanceof ApiError) return error.toResponse();
       // Log the problem, never the request (it would include the visitor's IP address).

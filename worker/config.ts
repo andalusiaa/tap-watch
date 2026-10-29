@@ -72,6 +72,11 @@ export const ADMIN_LOG = {
   keepDays: 365,
 } as const;
 
+export const STATS = {
+  /** How long the daily usage totals are kept. They name no one, but nothing is kept for ever. */
+  keepDays: 730,
+} as const;
+
 export const PRIVACY = {
   /** Device hashes are cleared from votes after this long. */
   deviceHashMaxAgeMs: 30 * DAY,

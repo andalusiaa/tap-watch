@@ -469,6 +469,57 @@ check('Pub and banner changes are logged', ['Renamed Arms: renamed from', 'Added
 r = await admin('/area/e17/sample', { cookie, body: { sample: false }, origin: 'https://evil.example' });
 check('Pub and banner changes need the same origin', r.status === 403);
 
+// --- Counting how the site is used ---
+const statOf = (kind, key = '') => sql(`SELECT COALESCE(SUM(n), 0) AS n FROM stats WHERE kind = '${kind}' AND key = '${key}'`)[0].n;
+const countTally = (events, { origin = API, tok } = {}) =>
+  fetch(`${API}/api/count`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin, 'CF-Connecting-IP': '203.0.113.240' },
+    body: JSON.stringify({ token: tok, events }),
+  });
+
+const countToken = await freshToken();
+// Earlier checks opened the About page too, so compare before and after.
+const aboutBefore = statOf('page', 'about');
+await fetch(`${API}/api/snapshot?area=e17&page=home`);
+await fetch(`${API}/api/snapshot?area=e17`);
+await fetch(`${API}/api/pages/about`);
+await sleep(1000);
+check('Opening the home page is counted once, and the admin page not at all', statOf('page', 'home') === 1, `home=${statOf('page', 'home')}`);
+check('Opening a words page is counted', statOf('page', 'about') === aboutBefore + 1, `${aboutBefore} → ${statOf('page', 'about')}`);
+
+r = await countTally([{ kind: 'search', key: 'guinness' }, { kind: 'pub', key: 'the-bell-e17' }, { kind: 'map' }, { kind: 'miss', key: 'Fizzy Lager 9%' }], { tok: countToken });
+check('Counts from the browser are taken, with no answer to read', r.status === 204);
+await sleep(200);
+check('A search, a pub list and a map open are counted', statOf('search', 'guinness') === 1 && statOf('pub', 'the-bell-e17') === 1 && statOf('map') === 1);
+check('Words that found nothing are tidied before being kept', statOf('miss', 'fizzy lager 9%') === 1, JSON.stringify(sql(`SELECT key, n FROM stats WHERE kind = 'miss'`)));
+
+await countTally([{ kind: 'search', key: 'not-a-real-beer' }, { kind: 'pub', key: 'not-a-real-pub' }], { tok: countToken });
+await sleep(200);
+check('Made-up beers and pubs are not counted', sql(`SELECT COUNT(*) AS n FROM stats WHERE key LIKE 'not-a-real-%'`)[0].n === 0);
+await countTally([{ kind: 'page', key: 'home' }, { kind: 'vote' }], { tok: countToken });
+await sleep(200);
+check('A browser cannot invent page views or votes', statOf('page', 'home') === 1 && statOf('vote') === sql(`SELECT COALESCE(SUM(n), 0) AS n FROM stats WHERE kind = 'vote'`)[0].n);
+r = await countTally([{ kind: 'map' }], { origin: 'https://evil.example', tok: countToken });
+await sleep(200);
+check('Counts from another site are ignored', r.status === 204 && statOf('map') === 1);
+r = await countTally([{ kind: 'map' }], { tok: 'rubbish' });
+await sleep(200);
+check('Counts without a real page token are ignored', r.status === 204 && statOf('map') === 1);
+check('Votes, photos, submissions and messages are counted as they happen',
+  statOf('vote') > 0 && statOf('photo') > 0 && statOf('beer') > 0 && statOf('message') > 0,
+  `vote=${statOf('vote')} photo=${statOf('photo')} beer=${statOf('beer')} message=${statOf('message')}`);
+
+check('The numbers need sign-in', (await admin('/stats?days=30')).status === 401);
+r = await admin('/stats?days=30', { cookie });
+check('The numbers come back with totals and top lists',
+  r.status === 200 && r.body.days === 30 && r.body.daily.length === 30 &&
+    r.body.totals.page === sql(`SELECT SUM(n) AS n FROM stats WHERE kind = 'page'`)[0].n &&
+    r.body.searches.some((x) => x.key === 'guinness' && x.name) && r.body.pubs.some((x) => x.key === 'the-bell-e17'),
+  JSON.stringify(r.body).slice(0, 400));
+check('A silly period falls back to 30 days', (await admin('/stats?days=4000', { cookie })).body.days === 30);
+check('The numbers say nothing about any person', !JSON.stringify(r.body).includes('device'));
+
 // --- The admin home tab ---
 check('The dashboard needs sign-in', (await admin('/dashboard?area=e17')).status === 401);
 check('The dashboard refuses a made-up area', (await admin('/dashboard?area=NOT AN AREA', { cookie })).status === 400);

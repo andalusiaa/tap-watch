@@ -148,6 +148,22 @@ export interface Dashboard {
   usage: { writes: number; write_budget: number; photos: number; photos_cap: number };
 }
 
+export interface Stats {
+  now: string;
+  /** 7, 30 or 90. */
+  days: number;
+  from: string;
+  /** The first day anything was counted, or null before there is anything. */
+  counting_since: string | null;
+  /** One entry per day in the period, with a count for each kind that happened. */
+  daily: { day: string; page?: number; search?: number; miss?: number; pub?: number; map?: number; vote?: number; photo?: number; beer?: number; message?: number }[];
+  pages: { key: string; n: number }[];
+  searches: { key: string; n: number; name: string | null }[];
+  misses: { key: string; n: number }[];
+  pubs: { key: string; n: number; name: string | null }[];
+  totals: { page: number; search: number; miss: number; pub: number; map: number; vote: number; photo: number; beer: number; message: number };
+}
+
 export interface Usage {
   now: string;
   today: { votes: number; reports: number; suggestions: number; photos: number; writes: number };
@@ -182,6 +198,7 @@ export const adminApi = {
   signOut: () => call<{ ok: true }>('/logout', {}),
   dashboard: () => call<Dashboard>('/dashboard?area=e17'),
   usage: () => call<Usage>('/usage'),
+  stats: (days: number) => call<Stats>(`/stats?days=${days}`),
   pages: () => call<{ pages: SitePage[] }>('/pages'),
   savePage: (slug: string, title: string, body: string) => call<{ ok: true }>(`/pages/${slug}`, { title, body }),
   feedback: () => call<{ pending: FeedbackMessage[]; kept: FeedbackMessage[] }>('/feedback'),

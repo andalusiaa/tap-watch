@@ -7,6 +7,7 @@ import { guardPublicWrite, limitPerDevice } from './guard';
 import { ApiError, assertSameOrigin, badRequest, isoTime, json, readJsonBody } from './http';
 import { bumpCounter } from './security';
 import { invalidateSnapshot } from './snapshot';
+import { countStat } from './stats';
 
 interface ListingRow extends Listing {
   area_id: string;
@@ -79,9 +80,10 @@ export async function handleVote(request: Request, env: Env, now: number): Promi
     ).bind(outcome.status, outcome.last_confirmed_at, outcome.reported_gone_at, source, stamp, listingId),
     invalidateSnapshot(db, listing.area_id),
     bumpCounter(db, budget.key, LIMITS.voteWriteCost, budget.expiresAt),
+    countStat(db, now, 'vote'),
     db.prepare(`SELECT ${LISTING_COLUMNS} FROM listings l WHERE l.id = ?`).bind(listingId),
   ]);
 
-  const updated = results[4]?.results[0] as Listing | undefined;
+  const updated = results[5]?.results[0] as Listing | undefined;
   return json({ ok: true, listing: updated });
 }

@@ -11,6 +11,7 @@ import { LIMITS } from './config';
 import { guardPublicWrite, limitPerDevice } from './guard';
 import { ApiError, assertSameOrigin, badRequest, isoTime, json, readJsonBody } from './http';
 import { bumpCounter } from './security';
+import { countStat } from './stats';
 
 export async function handleFeedback(request: Request, env: Env, now: number): Promise<Response> {
   assertSameOrigin(request);
@@ -32,6 +33,7 @@ export async function handleFeedback(request: Request, env: Env, now: number): P
     db.prepare('INSERT INTO feedback (message, status, device_hash, created_at) VALUES (?, ?, ?, ?)')
       .bind(message, 'pending', guard.device, isoTime(now)),
     bumpCounter(db, guard.budget.key, LIMITS.feedbackWriteCost, guard.budget.expiresAt),
+    countStat(db, now, 'message'),
   ]);
   return json({ ok: true });
 }
