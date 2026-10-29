@@ -18,7 +18,7 @@ export const GROUPS: { id: Category | 'alcohol_free'; label: string }[] = [
   { id: 'lager', label: 'Lager' },
   { id: 'stout', label: 'Stout' },
   { id: 'pale_ipa', label: 'Pale and IPA' },
-  { id: 'bitter_cask', label: 'Bitter and cask ale' },
+  { id: 'bitter_cask', label: 'Ales and bitters' },
   { id: 'cider', label: 'Cider' },
   { id: 'alcohol_free', label: 'Alcohol-free' },
   { id: 'other', label: 'Other' },

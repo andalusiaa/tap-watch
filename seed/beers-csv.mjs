@@ -20,9 +20,15 @@ const STYLES = {
   lager: 'Lager',
   stout: 'Stout or porter',
   pale_ipa: 'Pale ale or IPA',
-  bitter_cask: 'Bitter or cask ale',
+  bitter_cask: 'Ales and bitters',
   cider: 'Cider',
   other: 'Other',
+};
+
+/** What that group used to be called, so a spreadsheet saved before the rename still loads. */
+const OLD_STYLES = {
+  'bitter or cask ale': 'bitter_cask',
+  'bitter and cask ale': 'bitter_cask',
 };
 
 const COLUMNS = {
@@ -109,6 +115,7 @@ function parseStyle(value, line) {
   for (const [key, label] of Object.entries(STYLES)) {
     if (wanted === key || wanted === label.toLowerCase()) return key;
   }
+  if (OLD_STYLES[wanted]) return OLD_STYLES[wanted];
   throw new Error(`Line ${line}: style "${value}" should be one of: ${Object.values(STYLES).join(', ')}`);
 }
 

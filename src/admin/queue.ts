@@ -9,7 +9,7 @@ const CATEGORIES: [string, string][] = [
   ['lager', 'Lager'],
   ['stout', 'Stout or porter'],
   ['pale_ipa', 'Pale ale or IPA'],
-  ['bitter_cask', 'Bitter or cask ale'],
+  ['bitter_cask', 'Ales and bitters'],
   ['cider', 'Cider'],
   ['other', 'Other'],
 ];

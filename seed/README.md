@@ -39,7 +39,7 @@ A map opens in your web browser. Green pins are pubs set to `yes`; grey pins are
 ## Updating the beer list (as a spreadsheet)
 
 1. `npm run beers:export` saves the current live list as `seed/out/beer-list.csv`. It includes any beers added on the admin page.
-2. Open it in Numbers, Excel or Google Sheets. Add a row for a new beer (leave its ID blank), change any details, or delete a row to take a beer off the list. Style must be one of: Lager, Stout or porter, Pale ale or IPA, Bitter or cask ale, Cider, Other. Separate other spellings with semicolons.
+2. Open it in Numbers, Excel or Google Sheets. Add a row for a new beer (leave its ID blank), change any details, or delete a row to take a beer off the list. Style must be one of: Lager, Stout or porter, Pale ale or IPA, Ales and bitters, Cider, Other. Separate other spellings with semicolons.
 3. Save it as CSV (in Numbers: File → Export To → CSV).
 4. `npm run beers:import -- path/to/the-file.csv` checks it and says what was added, changed or taken off.
 5. `npm run db:beers:remote` updates the live site. Pubs and tap lists are not touched.
