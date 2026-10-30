@@ -48,6 +48,9 @@ export interface QueueSuggestion {
   proposed_beer_name: string | null;
   dispense: Dispense | null;
   created_at: string;
+  /** How that pub's tap list stands today, to help judge the claim. */
+  pub_beers: number | null;
+  pub_last_checked: string | null;
 }
 
 export interface NewBeer {

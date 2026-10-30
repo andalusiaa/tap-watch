@@ -1328,6 +1328,13 @@ input[type="file"]:focus-visible + .file-button {
   overflow: hidden;
 }
 
+/* Next to the "someone says it's on" badge: what to do about it. */
+.tap-prompt {
+  margin-left: 0.4rem;
+  font-size: var(--step--2);
+  color: var(--ink-muted);
+}
+
 .vote-note {
   grid-area: note;
   margin-top: 0.2rem;

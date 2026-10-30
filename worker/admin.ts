@@ -162,6 +162,21 @@ async function listingStatements(
         .prepare('DELETE FROM listings WHERE pub_id = ? AND beer_id = ? AND dispense = ?')
         .bind(pubId, c.beer_id, c.dispense);
     }
+    if (c.set === 'on' && source === 'suggestion') {
+      // Nobody has seen this but the person who sent it, so it goes on unconfirmed and waits
+      // for a 👍 from someone else. An entry that is already confirmed is left alone.
+      return db
+        .prepare(
+          `INSERT INTO listings (pub_id, beer_id, dispense, status, source, last_confirmed_at, updated_at)
+           VALUES (?1, ?2, ?3, 'likely', ?4, NULL, ?5)
+           ON CONFLICT (pub_id, beer_id, dispense) DO UPDATE SET
+             status = CASE WHEN listings.status = 'confirmed' THEN 'confirmed' ELSE 'likely' END,
+             source = CASE WHEN listings.status = 'confirmed' THEN listings.source ELSE ?4 END,
+             reported_gone_at = NULL,
+             updated_at = ?5`,
+        )
+        .bind(pubId, c.beer_id, c.dispense, source, now);
+    }
     return c.set === 'on'
       ? db
           .prepare(
@@ -253,7 +268,10 @@ async function getQueue(env: Env): Promise<Response> {
     ),
     db.prepare(
       `SELECT s.id, s.pub_id, p.name AS pub_name, s.beer_id, b.name AS beer_name, s.proposed_beer_name,
-              s.dispense, s.created_at
+              s.dispense, s.created_at,
+              (SELECT COUNT(*) FROM listings l WHERE l.pub_id = s.pub_id AND l.status != 'removed') AS pub_beers,
+              (SELECT MAX(l.last_confirmed_at) FROM listings l WHERE l.pub_id = s.pub_id AND l.status != 'removed')
+                AS pub_last_checked
        FROM suggestions s
        LEFT JOIN pubs p ON p.id = s.pub_id
        LEFT JOIN beers b ON b.id = s.beer_id

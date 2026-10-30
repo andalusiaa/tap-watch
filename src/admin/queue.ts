@@ -166,6 +166,14 @@ function field(label: string, control: HTMLElement): HTMLElement {
   return h('div', null, h('label', { for: control.id }, label), control);
 }
 
+/** What that pub's tap list looks like already, so a claim can be weighed against it. */
+function pubStanding(s: QueueSuggestion): string {
+  const beers = s.pub_beers ?? 0;
+  const listed = beers === 0 ? 'nothing listed yet' : `${beers} ${beers === 1 ? 'beer' : 'beers'} listed`;
+  const checked = s.pub_last_checked ? `last checked ${sentAgo(s.pub_last_checked)}` : 'never checked';
+  return `${s.pub_name}: ${listed}, ${checked}.`;
+}
+
 function suggestionCard(ctx: Context, s: QueueSuggestion): HTMLElement {
   const id = `suggestion-${++cardCount}`;
   const status = h('p', { class: 'form-status', role: 'status' });
@@ -211,7 +219,10 @@ function suggestionCard(ctx: Context, s: QueueSuggestion): HTMLElement {
     { class: 'card' },
     h('h2', null, isNew ? `New beer: ${s.proposed_beer_name}${served}${where}` : `${s.beer_name}${served}${where}`),
     h('p', { class: 'card-meta' }, `Submitted ${sentAgo(s.created_at)}`),
-    s.pub_name ? null : h('p', { class: 'form-help' }, 'No pub was given, so approving only adds the beer to the list.'),
+    s.pub_name ? h('p', { class: 'card-meta' }, pubStanding(s)) : null,
+    s.pub_name
+      ? h('p', { class: 'form-help' }, 'Approving puts it on the site as unconfirmed, until someone else taps 👍 for it.')
+      : h('p', { class: 'form-help' }, 'No pub was given, so approving only adds the beer to the list.'),
     newBeerForm,
     h('div', { class: 'card-actions' }, approve, reject),
     status,

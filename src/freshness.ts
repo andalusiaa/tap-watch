@@ -26,7 +26,7 @@ export function freshnessOf(listing: Listing, now: number): { state: Freshness; 
     return { state: 'gone', label: `Reported gone${when}` };
   }
   if (!listing.last_confirmed_at) {
-    return { state: 'likely', label: 'Likely — not yet checked' };
+    return { state: 'likely', label: "Someone says it's on" };
   }
   const days = daysSince(listing.last_confirmed_at, now);
   const ago = timeAgo(listing.last_confirmed_at, now);

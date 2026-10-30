@@ -299,7 +299,43 @@ check('"When sent" overrides the photo date', r.status === 200 &&
 // Suggestions: approve the listed beer, add the new one as a new beer.
 const [known, fresh] = sql('SELECT id, beer_id FROM suggestions ORDER BY id');
 r = await admin(`/suggestion/${known.id}`, { cookie, body: { action: 'approve' } });
-check('Approving a suggestion adds the beer to the pub', r.status === 200 && sql(`SELECT status, source FROM listings WHERE pub_id = '${pubId}' AND beer_id = 'lucky-saint' AND dispense = 'keg'`)[0]?.status === 'confirmed', JSON.stringify(r.body));
+const suggested = () => sql(`SELECT id, status, source, last_confirmed_at FROM listings WHERE pub_id = '${pubId}' AND beer_id = 'lucky-saint' AND dispense = 'keg'`)[0];
+check('Approving a suggestion adds the beer to the pub, but unconfirmed',
+  r.status === 200 && suggested()?.status === 'likely' && suggested()?.source === 'suggestion' && suggested()?.last_confirmed_at === null,
+  JSON.stringify({ body: r.body, row: suggested() }));
+
+// Only somebody else can confirm it: the person who reported it can't vouch for themselves.
+const asSuggester = (body, tok) =>
+  fetch(`${API}/api/vote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: API, 'User-Agent': 'check-api suggester', 'CF-Connecting-IP': '203.0.113.200' },
+    body: JSON.stringify({ hp: '', token: tok, ...body }),
+  }).then(async (res) => ({ status: res.status, body: await res.json() }));
+const suggestedId = suggested().id;
+r = await asSuggester({ listing_id: suggestedId, direction: 1 }, token);
+check('A 👍 from whoever reported the beer leaves it unconfirmed',
+  r.status === 200 && suggested().status === 'likely' && suggested().last_confirmed_at === null, JSON.stringify({ r, row: suggested() }));
+check('Their vote is still counted, so the buttons settle', sql(`SELECT COUNT(*) AS n FROM votes WHERE listing_id = ${suggestedId}`)[0].n === 1);
+
+r = await carol({ listing_id: suggestedId, direction: 1 }, token);
+check('A 👍 from anyone else confirms it and dates it',
+  r.status === 200 && suggested().status === 'confirmed' && Date.now() - Date.parse(suggested().last_confirmed_at) < 60_000,
+  JSON.stringify({ r, row: suggested() }));
+
+// An unconfirmed report nobody backs up is hidden after 8 weeks, not deleted.
+sql(`INSERT INTO listings (pub_id, beer_id, dispense, status, source, last_confirmed_at, updated_at)
+     VALUES ('${pubId}', 'carling', 'cask', 'likely', 'suggestion', NULL, '2026-01-01T00:00:00.000Z')`);
+const strandedId = sql(`SELECT id FROM listings WHERE pub_id = '${pubId}' AND beer_id = 'carling' AND dispense = 'cask'`)[0].id;
+const versionBefore = sql('SELECT version FROM snapshot_cache LIMIT 1')[0].version;
+await fetch(`${API}/cdn-cgi/handler/scheduled`);
+await sleep(600);
+check('An unconfirmed beer nobody confirms is hidden after 8 weeks',
+  sql(`SELECT status FROM listings WHERE id = ${strandedId}`)[0].status === 'removed', JSON.stringify(sql(`SELECT * FROM listings WHERE id = ${strandedId}`)));
+check('Hiding it is logged and the beer lists are rebuilt',
+  sql('SELECT version FROM snapshot_cache LIMIT 1')[0].version > versionBefore &&
+    sql(`SELECT COUNT(*) AS n FROM admin_log WHERE action = 'unconfirmed_hidden'`)[0].n === 1);
+check('A beer confirmed by a visitor is left alone by the clean-up',
+  sql(`SELECT status FROM listings WHERE id = ${suggestedId}`)[0].status === 'confirmed');
 r = await admin(`/suggestion/${fresh.id}`, { cookie, body: { action: 'approve', beer: { name: 'Walthamstow Wonder', brewery: 'Test Brewery', category: 'pale_ipa', abv: 0.4, is_alcohol_free: false, aliases: [] } } });
 check('Inconsistent alcohol-free details are refused', r.status === 400 && r.body.error === 'invalid_beer', JSON.stringify(r.body));
 r = await admin(`/suggestion/${fresh.id}`, { cookie, body: { action: 'approve', beer: { name: 'Walthamstow Wonder', brewery: 'Test Brewery', category: 'pale_ipa', abv: 4.2, is_alcohol_free: false, aliases: ['guiness'] } } });

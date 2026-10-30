@@ -52,6 +52,17 @@ export async function handleVote(request: Request, env: Env, now: number): Promi
     throw new ApiError(404, 'not_found', "We couldn't find that beer at this pub. It may have been removed.");
   }
 
+  // An unconfirmed beer needs a 👍 from somebody other than whoever reported it. Submissions
+  // keep the device hash for 30 days, which is how long an unconfirmed listing has to live.
+  let fromSubmitter = false;
+  if (direction === 1 && listing.status === 'likely') {
+    const own = await db
+      .prepare('SELECT 1 FROM suggestions WHERE device_hash = ? AND pub_id = ? AND beer_id = ? LIMIT 1')
+      .bind(device, listing.pub_id, listing.beer_id)
+      .first();
+    fromSubmitter = !!own;
+  }
+
   // "Removed" needs a 👎 from a different device than the one(s) that reported it gone.
   let fromDifferentDevice = true;
   if (direction === -1 && listing.status === 'reported_gone' && listing.reported_gone_at) {
@@ -63,7 +74,7 @@ export async function handleVote(request: Request, env: Env, now: number): Promi
   }
 
   const stamp = isoTime(now);
-  const outcome = applyVote(listing, direction as VoteDirection, { now: stamp, fromDifferentDevice });
+  const outcome = applyVote(listing, direction as VoteDirection, { now: stamp, fromDifferentDevice, fromSubmitter });
   const source = direction === 1 ? 'vote' : null;
 
   const results = await db.batch([

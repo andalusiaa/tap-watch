@@ -72,6 +72,15 @@ export const ADMIN_LOG = {
   keepDays: 365,
 } as const;
 
+export const LISTINGS = {
+  /**
+   * A beer reported by a visitor that nobody else confirms is hidden after this long, so a
+   * wrong guess doesn't sit on the site for ever. Hidden, not deleted: the admin Tap lists
+   * tab can put it back.
+   */
+  unconfirmedMaxDays: 56,
+} as const;
+
 export const STATS = {
   /** How long the daily usage totals are kept. They name no one, but nothing is kept for ever. */
   keepDays: 730,

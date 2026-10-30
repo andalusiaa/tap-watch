@@ -1,7 +1,8 @@
 // Daily clean-up, run by the Cron Trigger in wrangler.jsonc (SPEC section 7).
 
-import { ADMIN_LOG, PHOTOS, PRIVACY, STATS } from './config';
+import { ADMIN_LOG, LISTINGS, PHOTOS, PRIVACY, STATS } from './config';
 import { isoTime } from './http';
+import { logAdmin } from './activity';
 import { rotateSalt } from './security';
 
 export async function housekeeping(env: Env, now: number) {
@@ -9,7 +10,8 @@ export async function housekeeping(env: Env, now: number) {
   const hashCutoff = isoTime(now - PRIVACY.deviceHashMaxAgeMs);
   const photoCutoff = isoTime(now - PHOTOS.maxPendingMs);
 
-  const [votes, reports, suggestions, feedback, limits, staleReports, oldLog, oldStats] = await db.batch<{ id: number }>([
+  const [votes, reports, suggestions, feedback, limits, staleReports, oldLog, oldStats, unconfirmed] =
+    await db.batch<{ id: number }>([
     // Forget which device sent each vote, report and suggestion once it is 30 days old.
     db.prepare('UPDATE votes SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
     db.prepare('UPDATE photo_reports SET device_hash = NULL WHERE device_hash IS NOT NULL AND created_at < ?').bind(hashCutoff),
@@ -24,7 +26,25 @@ export async function housekeeping(env: Env, now: number) {
     db.prepare('DELETE FROM admin_log WHERE created_at < ?').bind(isoTime(now - ADMIN_LOG.keepDays * 86_400_000)),
     // Daily totals are about the site, not about anyone, but two years is plenty.
     db.prepare('DELETE FROM stats WHERE day < ?').bind(isoTime(now - STATS.keepDays * 86_400_000).slice(0, 10)),
+    // Beers a visitor reported that nobody else has confirmed since. Hidden, not deleted.
+    db
+      .prepare(
+        `UPDATE listings SET status = 'removed', updated_at = ?1
+         WHERE status = 'likely' AND source = 'suggestion' AND last_confirmed_at IS NULL AND updated_at < ?2`,
+      )
+      .bind(isoTime(now), isoTime(now - LISTINGS.unconfirmedMaxDays * 86_400_000)),
   ]);
+
+  const hidden = unconfirmed?.meta.changes ?? 0;
+  if (hidden) {
+    await db.batch([
+      // Every area's cached beer list has to be rebuilt, and the change belongs in Activity.
+      db.prepare('UPDATE snapshot_cache SET version = version + 1'),
+      logAdmin(db, now, 'unconfirmed_hidden', null,
+        `Hid ${hidden} ${hidden === 1 ? 'beer' : 'beers'} reported by visitors that nobody confirmed within ` +
+          `${LISTINGS.unconfirmedMaxDays} days.`),
+    ]);
+  }
 
   const expired = (staleReports?.results ?? []).map((r) => r.id);
   if (expired.length) {
@@ -51,6 +71,7 @@ export async function housekeeping(env: Env, now: number) {
   console.log(
     `Housekeeping: cleared ${cleared} device hashes, deleted ${limits?.meta.changes ?? 0} expired counters, ` +
       `expired ${expired.length} unchecked photos, deleted ${oldLog?.meta.changes ?? 0} old admin log entries, ` +
-      `deleted ${oldStats?.meta.changes ?? 0} old daily totals, salt rotated: ${rotated}`,
+      `deleted ${oldStats?.meta.changes ?? 0} old daily totals, hid ${hidden} unconfirmed beers, ` +
+      `salt rotated: ${rotated}`,
   );
 }

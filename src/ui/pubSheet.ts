@@ -81,7 +81,12 @@ export function setupPubSheet(o: Options) {
         dispenseLabel(listing.dispense),
         beer.af ? [' ', alcoholFreeLabel(beer)] : null,
       ),
-      h('p', { class: 'tap-status' }, freshnessBadge(listing, now)),
+      h(
+        'p',
+        { class: 'tap-status' },
+        freshnessBadge(listing, now),
+        listing.status === 'likely' ? h('span', { class: 'tap-prompt' }, 'Tap 👍 if you see it') : null,
+      ),
       voteControls(listing, beer, note),
       note ? h('p', { class: 'vote-note', tabindex: '-1', 'data-vote-status': '' }, note) : null,
     );
@@ -101,6 +106,9 @@ export function setupPubSheet(o: Options) {
         .sort(
           (a, b) =>
             Number(a.status === 'reported_gone') - Number(b.status === 'reported_gone') ||
+            // Beers someone has reported but nobody has confirmed go first, where they are
+            // seen and can be settled one way or the other.
+            Number(a.status !== 'likely') - Number(b.status !== 'likely') ||
             (o.catalogue.beer(a.beer_id)?.name ?? '').localeCompare(o.catalogue.beer(b.beer_id)?.name ?? '') ||
             freshnessRank(a, now) - freshnessRank(b, now),
         );

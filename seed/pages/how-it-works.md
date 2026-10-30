@@ -24,9 +24,13 @@ Each phone can vote on each beer once a day.
 
 - Grey not checked for over 6 months, so it may well have changed
 
+- A dashed outline someone has reported this beer but nobody else has confirmed it yet
+
 ## Adding to the list
 
 Spotted a beer that isn't listed, or a list that's out of date? Open the pub and use **Submit a beer** or **Send photos of the taps**. Everything sent in is checked before it goes on the site.
+
+A beer someone submits goes on the pub's list marked **Someone says it's on**, at the top where it can be seen, until somebody else in that pub taps 👍 for it. Then it becomes an ordinary listing with today's date. You can't confirm your own report: it takes two people. Photos are different, because the picture shows the bar, so an approved photo counts as checked straight away. If nobody confirms a submitted beer within 8 weeks, it quietly comes off the list.
 
 The date that the photo was taken is read during the upload process, and so if you took a photo last week but forgot to send it in, the system will recognise that the data as accurate on the date the photo was taken.
 
