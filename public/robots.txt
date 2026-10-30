@@ -1,0 +1,13 @@
+# Tap Watch is open to search engines and AI assistants: the whole point is that
+# people can find which pub has their beer on. Only the admin page is off limits.
+#
+# Content-Signal is Cloudflare's wording for what crawlers may do with the pages
+# (search = list us in results, ai-input = answer someone's question using us,
+# ai-train = train a model on us).
+
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Allow: /
+Disallow: /admin/
+
+Sitemap: https://tap-watch.gage-tristan.workers.dev/sitemap.xml

@@ -26,7 +26,7 @@ Still to do before launch:
 1. Tristan's walkaround data.
 2. A Lighthouse check on the live site (target 95+ for speed and accessibility on a phone).
 3. Turn the test banner off on the admin Pubs tab, and add `hidden` to the banner in `index.html`. It starts visible so the page doesn't jump while loading.
-4. Remove the `noindex` tag from `index.html` so search engines can list the site.
+4. ~~Remove the `noindex` tag from `index.html` so search engines can list the site.~~ Done on 2026-10-30: the public pages are open to search engines and AI assistants, `public/robots.txt` and `public/sitemap.xml` say so, and only `/admin/` and the 404 page are kept out.
 5. Add contact details to the Privacy page. Tristan has put this on hold for now.
 
 Operator core ranges are in Phase 5 but lowest priority, because most E17 pubs are independents.

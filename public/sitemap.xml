@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The pages worth listing in a search engine. Add a new page here as well as to
+     vite.config.ts. The beer search itself lives on the home page. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://tap-watch.gage-tristan.workers.dev/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://tap-watch.gage-tristan.workers.dev/about/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://tap-watch.gage-tristan.workers.dev/how-it-works/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://tap-watch.gage-tristan.workers.dev/faq/</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://tap-watch.gage-tristan.workers.dev/feedback/</loc><changefreq>yearly</changefreq></url>
+  <url><loc>https://tap-watch.gage-tristan.workers.dev/privacy/</loc><changefreq>yearly</changefreq></url>
+</urlset>
