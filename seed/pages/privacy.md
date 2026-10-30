@@ -10,7 +10,7 @@ If you type a postcode instead, it's sent to [postcodes.io](https://postcodes.io
 
 ## Votes, beer submissions and photos
 
-Tap Watch never stores your internet (IP) address. To stop people voting many times, each vote or submission is stored with a scrambled code made from your internet address and browser type. The code can't be turned back into your address; the way it’s created changes every 30 days, and codes are wiped after 30 days.
+Tap Watch never stores your internet (IP) address. To stop people voting many times, it needs to tell one phone from another, so your browser keeps a random number of its own: made up the first time you visit, meaning nothing, tied to nobody. Each vote, photo or submission is stored with a scrambled code made from that number. The code can't be turned back into anything about you; the way it’s made changes every 30 days, and codes are wiped after 30 days. If your browser won't save the number — private browsing, say — the code is made from your internet address and browser type instead, and the address still isn't stored.
 
 While the code is kept, the admin dashboard of Tap Watch can report when several votes, photos or submissions came from the same device, shown as a random made-up name like "Amber Otter 17". This helps spot spam and appreciate regular helpers. It never shows who you are.
 
@@ -32,13 +32,15 @@ A message sent through [Tell us](/feedback/) is stored with the same scrambled c
 
 ## On your device
 
-Tap Watch saves two small things in your browser, never sent anywhere:
+Tap Watch saves three small things in your browser:
 
-- which beers you've voted on in the last 24 hours, so the buttons show you've voted
+- which beers you've voted on in the last 24 hours, so the buttons show you've voted. Never sent anywhere
 
-- your Light or Dark choice, if you've made one
+- your Light or Dark choice, if you've made one. Never sent anywhere
 
-There are no advertising or tracking cookies, and nothing follows you from site to site.
+- the random number above. It goes with a vote, photo or submission, so the same device isn't counted twice, and is only ever stored as the scrambled code
+
+There are no advertising or tracking cookies, and nothing follows you from site to site. Clearing this site's stored data clears all three.
 
 ## Counting how the site is used
 

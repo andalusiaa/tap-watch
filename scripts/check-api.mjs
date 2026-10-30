@@ -25,6 +25,16 @@ function check(name, condition, detail = '') {
   if (!condition) failures++;
 }
 
+// The local server drops keep-alive connections that have gone quiet, and one slow database
+// call between two posts is long enough for that, so a dropped connection is retried once.
+async function ask(url, init) {
+  try {
+    return await fetch(url, init);
+  } catch {
+    return fetch(url, init);
+  }
+}
+
 function sql(command) {
   const out = execFileSync('npx', ['wrangler', 'd1', 'execute', 'tap-watch', '--local', '--json', '--command', command], {
     encoding: 'utf8',
@@ -40,23 +50,27 @@ async function signedToken(issuedAt) {
 }
 
 async function freshToken() {
-  const res = await fetch(`${API}/api/snapshot?area=e17`);
+  const res = await ask(`${API}/api/snapshot?area=e17`);
   return res.headers.get('X-Form-Token');
 }
 
+// A browser's own random number, the thing the server now tells devices apart by.
+const newDeviceId = () => Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('hex');
+
 // Each "device" gets its own address too, so the per-address flood limit doesn't
-// interfere with the per-device rules being checked.
+// interfere with the per-device rules being checked. `id` can be fixed to share one
+// browser number between two addresses, or set to '' to send none at all.
 let deviceCount = 0;
-function device(name) {
-  const ip = `203.0.113.${++deviceCount}`;
+function device(name, { ip = `203.0.113.${++deviceCount}`, id = newDeviceId() } = {}) {
   return (body, token) =>
-    fetch(`${API}/api/vote`, {
+    ask(`${API}/api/vote`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Origin: API,
         'User-Agent': `check-api ${name}`,
         'CF-Connecting-IP': ip,
+        ...(id ? { 'X-Tap-Device': id } : {}),
       },
       body: JSON.stringify({ hp: '', token, ...body }),
     }).then(async (r) => ({ status: r.status, body: await r.json() }));
@@ -127,11 +141,47 @@ for (let i = 0; i < 25; i++) {
 }
 check('Rapid-fire requests from one address are slowed down', codes.includes('too_many'), codes.join(','));
 
+// --- Telling devices apart -----------------------------------------------------------
+// A phone's address changes when it moves between Wi-Fi and mobile data, and a whole pub
+// shares one address, so the browser's own random number is what counts now.
+const votePub = sql("SELECT id FROM pubs WHERE is_active = 1 ORDER BY id LIMIT 1")[0].id;
+const spareBeers = sql(`SELECT id FROM beers WHERE is_active = 1 AND id NOT IN (SELECT beer_id FROM listings WHERE pub_id = '${votePub}') ORDER BY id LIMIT 3`).map((b) => b.id);
+const nowIso = new Date().toISOString();
+sql(spareBeers.map((beerId) => `INSERT INTO listings (pub_id, beer_id, dispense, status, source, last_confirmed_at, updated_at)
+       VALUES ('${votePub}', '${beerId}', 'keg', 'confirmed', 'admin', '${nowIso}', '${nowIso}')`).join(';'));
+const spareListings = spareBeers.map(
+  (beerId) => sql(`SELECT id FROM listings WHERE pub_id = '${votePub}' AND beer_id = '${beerId}' AND dispense = 'keg'`)[0].id,
+);
+
+const roamingId = newDeviceId();
+const onWifi = device('roamer wifi', { id: roamingId });
+const onMobile = device('roamer mobile', { id: roamingId });
+r = await onWifi({ listing_id: spareListings[0], direction: 1 }, token);
+check('A vote from a browser with its own number is accepted', r.status === 200 && r.body.listing, JSON.stringify(r));
+r = await onMobile({ listing_id: spareListings[0], direction: 1 }, token);
+check('The same browser on another network is still the same device', r.status === 429 && r.body.error === 'already_voted', JSON.stringify(r));
+
+const sharedWifi = { ip: '203.0.113.90' };
+const firstDrinker = device('shared', sharedWifi);
+const secondDrinker = device('shared', sharedWifi);
+r = await firstDrinker({ listing_id: spareListings[1], direction: 1 }, token);
+check('One person on a pub\'s Wi-Fi can vote', r.status === 200 && r.body.listing, JSON.stringify(r));
+r = await secondDrinker({ listing_id: spareListings[1], direction: 1 }, token);
+check('The next person on the same Wi-Fi counts as somebody else', r.status === 200 && r.body.listing, JSON.stringify(r));
+
+const noStorage = { ip: '203.0.113.91', id: '' };
+r = await device('private', noStorage)({ listing_id: spareListings[2], direction: 1 }, token);
+check('A browser that can\'t store a number can still vote', r.status === 200 && r.body.listing, JSON.stringify(r));
+r = await device('private', noStorage)({ listing_id: spareListings[2], direction: 1 }, token);
+check('Without a number the address and browser are used instead', r.status === 429 && r.body.error === 'already_voted', JSON.stringify(r));
+r = await device('private', { ...noStorage, id: 'pretend-number' })({ listing_id: spareListings[2], direction: 1 }, token);
+check('A made-up number is ignored, not trusted', r.status === 429 && r.body.error === 'already_voted', JSON.stringify(r));
+
 // --- Housekeeping ------------------------------------------------------------------
 const old = new Date(Date.now() - 31 * 86_400_000).toISOString();
 sql(`INSERT INTO votes (listing_id, direction, device_hash, created_at) VALUES (${likely}, 1, 'feedfacefeedfacefeedfacefeedface', '${old}')`);
 sql(`INSERT INTO rate_limits (key, count, expires_at) VALUES ('check-api:expired', 1, '${old}')`);
-const cron = await fetch(`${API}/cdn-cgi/handler/scheduled?cron=${encodeURIComponent('17 3 * * *')}`);
+const cron = await ask(`${API}/cdn-cgi/handler/scheduled?cron=${encodeURIComponent('17 3 * * *')}`);
 await sleep(500);
 check('Daily clean-up runs', cron.ok, String(cron.status));
 check('Clean-up clears device hashes older than 30 days', sql(`SELECT device_hash FROM votes WHERE created_at = '${old}'`)[0]?.device_hash === null);
@@ -152,6 +202,7 @@ const fakeJpeg = Buffer.concat([
 
 function reporter(name) {
   const ip = `203.0.113.${++deviceCount}`;
+  const id = newDeviceId();
   return (fields, file = { bytes: fakeJpeg, type: 'image/jpeg' }, copies = 1, takenAt) => {
     const form = new FormData();
     for (const [k, v] of Object.entries({ hp: '', token, ...fields })) form.set(k, v);
@@ -159,9 +210,9 @@ function reporter(name) {
       form.append('photo', new Blob([file.bytes], { type: file.type }), `taps-${i + 1}.jpg`);
       form.append('taken_at', takenAt ?? '');
     }
-    return fetch(`${API}/api/report`, {
+    return ask(`${API}/api/report`, {
       method: 'POST',
-      headers: { Origin: API, 'User-Agent': `check-api ${name}`, 'CF-Connecting-IP': ip },
+      headers: { Origin: API, 'User-Agent': `check-api ${name}`, 'CF-Connecting-IP': ip, 'X-Tap-Device': id },
       body: form,
     }).then(async (res) => ({ status: res.status, body: await res.json() }));
   };
@@ -190,14 +241,19 @@ const reportImages = sql(`SELECT position, photo_key FROM photo_report_images WH
 check('Report stores both photos, a device hash and the note', reportImages.length === 2 && reportImages.every((i) => i.photo_key?.startsWith('reports/')) && /^[0-9a-f]{32}$/.test(report.device_hash) && report.note === 'Taps by the window', JSON.stringify({ report, reportImages }));
 
 // --- Suggestions ---------------------------------------------------------------------
-const suggester = device('suggester');
+const suggesterId = newDeviceId();
 const suggest = (body) =>
-  fetch(`${API}/api/suggest`, {
+  ask(`${API}/api/suggest`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: API, 'User-Agent': 'check-api suggester', 'CF-Connecting-IP': '203.0.113.200' },
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: API,
+      'User-Agent': 'check-api suggester',
+      'CF-Connecting-IP': '203.0.113.200',
+      'X-Tap-Device': suggesterId,
+    },
     body: JSON.stringify({ hp: '', token, ...body }),
   }).then(async (res) => ({ status: res.status, body: await res.json() }));
-void suggester;
 r = await suggest({ pub_id: pubId, beer_id: 'lucky-saint', dispense: 'keg' });
 check('Suggestion of a listed beer is accepted', r.status === 200, JSON.stringify(r));
 r = await suggest({ pub_id: pubId, proposed_beer_name: '  Walthamstow   Wonder  ', dispense: 'cask' });
@@ -220,7 +276,7 @@ const adminHeaders = (cookie = '', ip = '203.0.113.250') => ({
   ...(cookie ? { Cookie: cookie } : {}),
 });
 const admin = (path, { body, cookie, origin = API } = {}) =>
-  fetch(`${API}/api/admin${path}`, {
+  ask(`${API}/api/admin${path}`, {
     method: body === undefined ? 'GET' : 'POST',
     headers: { ...adminHeaders(cookie), Origin: origin },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -304,21 +360,19 @@ check('Approving a suggestion adds the beer to the pub, but unconfirmed',
   r.status === 200 && suggested()?.status === 'likely' && suggested()?.source === 'suggestion' && suggested()?.last_confirmed_at === null,
   JSON.stringify({ body: r.body, row: suggested() }));
 
-// Only somebody else can confirm it: the person who reported it can't vouch for themselves.
-const asSuggester = (body, tok) =>
-  fetch(`${API}/api/vote`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: API, 'User-Agent': 'check-api suggester', 'CF-Connecting-IP': '203.0.113.200' },
-    body: JSON.stringify({ hp: '', token: tok, ...body }),
-  }).then(async (res) => ({ status: res.status, body: await res.json() }));
+// Only somebody else can confirm it: the person who reported it can't vouch for themselves,
+// even from a different address and browser (their phone's own number gives them away).
+const asSuggester = device('somewhere else', { id: suggesterId });
 const suggestedId = suggested().id;
 r = await asSuggester({ listing_id: suggestedId, direction: 1 }, token);
-check('A 👍 from whoever reported the beer leaves it unconfirmed',
+check('A 👍 from whoever reported the beer leaves it unconfirmed, wherever they are',
   r.status === 200 && suggested().status === 'likely' && suggested().last_confirmed_at === null, JSON.stringify({ r, row: suggested() }));
 check('Their vote is still counted, so the buttons settle', sql(`SELECT COUNT(*) AS n FROM votes WHERE listing_id = ${suggestedId}`)[0].n === 1);
 
-r = await carol({ listing_id: suggestedId, direction: 1 }, token);
-check('A 👍 from anyone else confirms it and dates it',
+// And the next person in that pub is a different device, though they share its Wi-Fi.
+const neighbour = device('suggester', { ip: '203.0.113.200' });
+r = await neighbour({ listing_id: suggestedId, direction: 1 }, token);
+check('A 👍 from someone else on the same pub Wi-Fi confirms it and dates it',
   r.status === 200 && suggested().status === 'confirmed' && Date.now() - Date.parse(suggested().last_confirmed_at) < 60_000,
   JSON.stringify({ r, row: suggested() }));
 
@@ -327,7 +381,7 @@ sql(`INSERT INTO listings (pub_id, beer_id, dispense, status, source, last_confi
      VALUES ('${pubId}', 'carling', 'cask', 'likely', 'suggestion', NULL, '2026-01-01T00:00:00.000Z')`);
 const strandedId = sql(`SELECT id FROM listings WHERE pub_id = '${pubId}' AND beer_id = 'carling' AND dispense = 'cask'`)[0].id;
 const versionBefore = sql('SELECT version FROM snapshot_cache LIMIT 1')[0].version;
-await fetch(`${API}/cdn-cgi/handler/scheduled`);
+await ask(`${API}/cdn-cgi/handler/scheduled`);
 await sleep(600);
 check('An unconfirmed beer nobody confirms is hidden after 8 weeks',
   sql(`SELECT status FROM listings WHERE id = ${strandedId}`)[0].status === 'removed', JSON.stringify(sql(`SELECT * FROM listings WHERE id = ${strandedId}`)));
@@ -369,7 +423,7 @@ execFileSync('npx', ['wrangler', 'kv', 'key', 'put', staleKey, 'old-photo', '--b
 const staleDate = new Date(Date.now() - 31 * 86_400_000).toISOString();
 sql(`INSERT INTO photo_reports (pub_id, status, device_hash, created_at) VALUES ('${pubId}', 'pending', 'feedfacefeedfacefeedfacefeedface', '${staleDate}')`);
 sql(`INSERT INTO photo_report_images (report_id, position, photo_key) SELECT id, 1, '${staleKey}' FROM photo_reports WHERE created_at = '${staleDate}'`);
-await fetch(`${API}/cdn-cgi/handler/scheduled?cron=${encodeURIComponent('17 3 * * *')}`);
+await ask(`${API}/cdn-cgi/handler/scheduled?cron=${encodeURIComponent('17 3 * * *')}`);
 await sleep(800);
 const stale = sql(`SELECT r.status, i.photo_key, r.device_hash FROM photo_reports r JOIN photo_report_images i ON i.report_id = r.id WHERE r.created_at = '${staleDate}'`)[0];
 const kvLeft = execFileSync('npx', ['wrangler', 'kv', 'key', 'list', '--binding', 'PHOTOS', '--local'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
@@ -406,9 +460,9 @@ r = await admin('/activity?type=nonsense&pub=', { cookie });
 check('An unknown activity type is refused', r.status === 400);
 
 // --- Editable pages ---
-r = await fetch(`${API}/api/pages/about`).then(async (res) => ({ status: res.status, body: await res.json() }));
+r = await ask(`${API}/api/pages/about`).then(async (res) => ({ status: res.status, body: await res.json() }));
 check('Anyone can read a page', r.status === 200 && r.body.title.length > 3 && r.body.body.includes('##'), JSON.stringify(r.body).slice(0, 120));
-r = await fetch(`${API}/api/pages/not-a-page`).then(async (res) => ({ status: res.status }));
+r = await ask(`${API}/api/pages/not-a-page`).then(async (res) => ({ status: res.status }));
 check('An unknown page is a 404', r.status === 404);
 r = await admin('/pages');
 check('Editing pages needs sign-in', r.status === 401);
@@ -416,7 +470,7 @@ r = await admin('/pages', { cookie });
 check('The admin sees every page', r.status === 200 && r.body.pages.length === 4, JSON.stringify(r.body.pages?.map((p) => p.slug)));
 r = await admin('/pages/about', { cookie, body: { title: 'About Tap Watch', body: '## Hello\n\nA new first line.' } });
 check('A page can be saved', r.status === 200);
-r = await fetch(`${API}/api/pages/about`).then(async (res) => res.json());
+r = await ask(`${API}/api/pages/about`).then(async (res) => res.json());
 check('The saved words are what visitors get', r.body.includes('A new first line.'));
 r = await admin('/pages/about', { cookie, body: { title: 'About', body: '<script>alert(1)</script>' } });
 check('HTML in a page is refused', r.status === 400 && r.body.error === 'no_html', JSON.stringify(r.body));
@@ -429,11 +483,11 @@ check('Page edits need the same origin', r.status === 403);
 check('A page edit is logged', sql(`SELECT COUNT(*) AS n FROM admin_log WHERE action = 'page_edited'`)[0].n >= 1);
 
 // --- Feedback box ---
-const tokenRes = await fetch(`${API}/api/form-token`);
+const tokenRes = await ask(`${API}/api/form-token`);
 const plainToken = tokenRes.headers.get('X-Form-Token');
 check('The token endpoint hands out a page token', tokenRes.status === 200 && typeof plainToken === 'string' && plainToken.length > 10);
 const tell = (message, extra = {}, ip = '203.0.113.180') =>
-  fetch(`${API}/api/feedback`, {
+  ask(`${API}/api/feedback`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: API, 'User-Agent': 'check-api teller', 'CF-Connecting-IP': ip },
     body: JSON.stringify({ hp: '', token: plainToken, message, ...extra }),
@@ -448,7 +502,7 @@ r = await tell('x'.repeat(1_001));
 check('An over-long message is refused', r.status === 400);
 r = await tell('spam', { hp: 'http://spam.example' });
 check('A filled spam trap is quietly ignored', r.status === 200 && sql(`SELECT COUNT(*) AS n FROM feedback WHERE message = 'spam'`)[0].n === 0);
-r = await fetch(`${API}/api/feedback`, {
+r = await ask(`${API}/api/feedback`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' },
   body: JSON.stringify({ message: 'hello', hp: '', token: plainToken }),
@@ -508,7 +562,7 @@ check('Pub and banner changes need the same origin', r.status === 403);
 // --- Counting how the site is used ---
 const statOf = (kind, key = '') => sql(`SELECT COALESCE(SUM(n), 0) AS n FROM stats WHERE kind = '${kind}' AND key = '${key}'`)[0].n;
 const countTally = (events, { origin = API, tok } = {}) =>
-  fetch(`${API}/api/count`, {
+  ask(`${API}/api/count`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: origin, 'CF-Connecting-IP': '203.0.113.240' },
     body: JSON.stringify({ token: tok, events }),
@@ -517,9 +571,9 @@ const countTally = (events, { origin = API, tok } = {}) =>
 const countToken = await freshToken();
 // Earlier checks opened the About page too, so compare before and after.
 const aboutBefore = statOf('page', 'about');
-await fetch(`${API}/api/snapshot?area=e17&page=home`);
-await fetch(`${API}/api/snapshot?area=e17`);
-await fetch(`${API}/api/pages/about`);
+await ask(`${API}/api/snapshot?area=e17&page=home`);
+await ask(`${API}/api/snapshot?area=e17`);
+await ask(`${API}/api/pages/about`);
 await sleep(1000);
 check('Opening the home page is counted once, and the admin page not at all', statOf('page', 'home') === 1, `home=${statOf('page', 'home')}`);
 check('Opening a words page is counted', statOf('page', 'about') === aboutBefore + 1, `${aboutBefore} → ${statOf('page', 'about')}`);

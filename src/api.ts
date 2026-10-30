@@ -1,6 +1,7 @@
 // Talking to the Tap Watch API (same origin, so no CORS needed).
 
 import { AREA_ID } from './config';
+import { deviceId } from './device';
 import type { VoteDirection } from './rules';
 import type { Dispense, ServerListing, Snapshot } from './types';
 
@@ -48,9 +49,16 @@ async function sendWrite<T>(url: string, makeBody: (token: string) => BodyInit, 
   const post = async () => {
     const wait = tokenReceivedAt + MIN_TOKEN_AGE_MS - Date.now();
     if (wait > 0) await sleep(wait);
+    const id = deviceId();
     const res = await fetch(url, {
       method: 'POST',
-      headers: json ? { 'Content-Type': 'application/json', Accept: 'application/json' } : { Accept: 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        ...(json ? { 'Content-Type': 'application/json' } : {}),
+        // Tells the server this device apart from the next one. Left out when the browser
+        // can't store it; the server then falls back to the address and browser.
+        ...(id ? { 'X-Tap-Device': id } : {}),
+      },
       body: makeBody(token),
     });
     const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;

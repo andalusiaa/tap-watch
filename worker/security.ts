@@ -103,14 +103,24 @@ async function currentSalt(db: D1Database, now: number): Promise<string> {
   return row.salt;
 }
 
+/** The random number a browser keeps for itself (src/device.ts). */
+const DEVICE_ID = /^[0-9a-f]{32}$/;
+
 /**
- * HMAC-SHA-256 of (salt, IP address, browser). The secret key lives in a Cloudflare
- * secret and the salt in the database, so neither alone can reverse a hash.
+ * HMAC-SHA-256 of (salt, whatever tells this device apart). The secret key lives in a
+ * Cloudflare secret and the salt in the database, so neither alone can reverse a hash.
+ *
+ * Normally that is the random number the browser keeps and sends with each write: it holds
+ * still when a phone hops between Wi-Fi and mobile data, and differs for each person on one
+ * pub's Wi-Fi. Browsers that can't store it send nothing, and we fall back to the address
+ * and browser, as every request did before.
  */
 export async function deviceHash(request: Request, env: Env, now: number): Promise<string> {
+  const salt = await currentSalt(env.DB, now);
+  const id = request.headers.get('X-Tap-Device') ?? '';
+  if (DEVICE_ID.test(id)) return toHex(await sign(env.APP_SECRET, `device:${salt}:id:${id}`)).slice(0, 32);
   const ip = request.headers.get('CF-Connecting-IP') ?? '';
   const browser = (request.headers.get('User-Agent') ?? '').slice(0, 512);
-  const salt = await currentSalt(env.DB, now);
   return toHex(await sign(env.APP_SECRET, `device:${salt}:${ip}:${browser}`)).slice(0, 32);
 }
 
